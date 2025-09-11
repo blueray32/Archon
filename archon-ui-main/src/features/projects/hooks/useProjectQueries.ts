@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSmartPolling } from "../../ui/hooks";
+import { usePolling } from "../../ui/hooks";
 import { useToast } from "../../ui/hooks/useToast";
 import { projectService, taskService } from "../services";
 import type { CreateProjectRequest, Project, UpdateProjectRequest } from "../types";
@@ -19,13 +19,11 @@ export const projectKeys = {
 
 // Fetch all projects with smart polling
 export function useProjects() {
-  const { refetchInterval } = useSmartPolling(20000); // 20 second base interval for projects
-
-  return useQuery<Project[]>({
-    queryKey: projectKeys.lists(),
-    queryFn: () => projectService.listProjects(),
-    refetchInterval, // Smart interval based on page visibility/focus
-    refetchOnWindowFocus: true, // Refetch immediately when tab gains focus (ETag makes this cheap)
+  return usePolling<Project[]>({
+    key: projectKeys.lists(),
+    fetcher: () => projectService.listProjects(),
+    baseInterval: 20000, // 20s base interval
+    refetchOnWindowFocus: true, // Refetch when tab gains focus (ETag makes this cheap)
     staleTime: 15000, // Consider data stale after 15 seconds
   });
 }

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { callAPIWithETag } from "../../../features/projects/shared/apiWithEtag";
+import { useSmartPolling } from "../../../features/ui/hooks";
 import type { HealthResponse } from "../types";
 
 /**
@@ -7,16 +8,18 @@ import type { HealthResponse } from "../types";
  * Uses ETag caching for bandwidth reduction (~70% savings per project docs)
  */
 export function useBackendHealth() {
+  const { refetchInterval } = useSmartPolling(30000);
+
   return useQuery<HealthResponse>({
     queryKey: ["backend", "health"],
     queryFn: ({ signal }) => {
       // Use existing ETag infrastructure with timeout
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
-      
+
       // Chain signals: React Query's signal + our timeout
       if (signal) {
-        signal.addEventListener('abort', () => controller.abort());
+        signal.addEventListener("abort", () => controller.abort());
       }
 
       return callAPIWithETag<HealthResponse>("/api/health", {
@@ -37,8 +40,8 @@ export function useBackendHealth() {
       // Exponential backoff: 1.5s, 2.25s, 3.375s, etc.
       return Math.min(1500 * 1.5 ** attemptIndex, 10000);
     },
-    // Refetch every 30 seconds when healthy
-    refetchInterval: 30000,
+    // Smart refetch (every 30s when active; pause when hidden)
+    refetchInterval,
     // Keep trying to connect on window focus
     refetchOnWindowFocus: true,
     // Consider data fresh for 20 seconds

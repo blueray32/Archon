@@ -1,5 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSmartPolling } from "../../../ui/hooks";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { usePolling } from "../../../ui/hooks";
 import { useToast } from "../../../ui/hooks/useToast";
 import { projectKeys } from "../../hooks/useProjectQueries";
 import { taskService } from "../services";
@@ -12,18 +12,16 @@ export const taskKeys = {
 
 // Fetch tasks for a specific project
 export function useProjectTasks(projectId: string | undefined, enabled = true) {
-  const { refetchInterval } = useSmartPolling(5000); // 5 second base interval for faster MCP updates
-
-  return useQuery<Task[]>({
-    queryKey: projectId ? taskKeys.all(projectId) : ["tasks-undefined"],
-    queryFn: async () => {
+  return usePolling<Task[]>({
+    key: projectId ? taskKeys.all(projectId) : ["tasks-undefined"],
+    fetcher: async () => {
       if (!projectId) throw new Error("No project ID");
       return taskService.getTasksByProject(projectId);
     },
     enabled: !!projectId && enabled,
-    refetchInterval, // Smart interval based on page visibility/focus
-    refetchOnWindowFocus: true, // Refetch immediately when tab gains focus (ETag makes this cheap)
-    staleTime: 10000, // Consider data stale after 10 seconds
+    baseInterval: 5000, // 5s base interval for faster MCP updates
+    refetchOnWindowFocus: true,
+    staleTime: 10000,
   });
 }
 

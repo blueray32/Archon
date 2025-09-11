@@ -57,8 +57,8 @@ export const DocumentViewer = ({ document }: DocumentViewerProps) => {
                 <p>{value}</p>
               ) : Array.isArray(value) ? (
                 <ul className="list-disc pl-5">
-                  {value.map((item, i) => (
-                    <li key={`${key}-item-${i}`}>
+                  {value.map((item) => (
+                    <li key={`${key}-${typeof item === "object" ? JSON.stringify(item) : String(item)}`}>
                       {typeof item === "object" ? JSON.stringify(item, null, 2) : String(item)}
                     </li>
                   ))}
