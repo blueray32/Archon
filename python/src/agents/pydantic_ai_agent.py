@@ -77,6 +77,40 @@ You are operating in PRP Mode for Pydantic AI:
 """
             )
 
+        # Provide a minimal, canonical example as a fallback when examples are requested
+        @agent.system_prompt
+        async def example_fallback(ctx: RunContext[RagDependencies]) -> str:
+            return (
+                """
+If the user asks for a short example of using PydanticAI Agent and relevant documentation is unavailable,
+provide this concise Python example instead:
+
+```python
+from pydantic import BaseModel
+from pydantic_ai import Agent, RunContext
+
+class Deps(BaseModel):
+    project_id: str | None = None
+
+agent = Agent(
+    model="openai:gpt-4o-mini",
+    deps_type=Deps,
+    system_prompt="You are a helpful assistant. Keep answers short."
+)
+
+@agent.tool
+async def hello(ctx: RunContext[Deps], name: str) -> str:
+    return f"Hello, {name}!"
+
+# In an async context
+# result = await agent.run("Say hello to Ciaran", Deps(project_id="demo"))
+# print(result.data if hasattr(result, "data") else result)
+```
+
+Keep the response brief and include a one‑line note that this is a minimal fallback example.
+"""
+            )
+
         # Optional tool: record PRP step into a JSONL context-bundle
         @agent.tool
         async def prp_record_step(
@@ -104,4 +138,3 @@ You are operating in PRP Mode for Pydantic AI:
                 return "record failed"
 
         return agent
-
