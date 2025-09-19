@@ -4,6 +4,8 @@ import * as Popover from '@radix-ui/react-popover';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { ArchonLoadingSpinner, EdgeLitEffect } from '../animations/Animations';
 import { agentChatService, ChatMessage } from '../../services/agentChatService';
+import { AgentSwitcher } from '../../agents/AgentSwitcher';
+import { useAgentState } from '../../agents/AgentContext';
 
 /**
  * Props for the VoiceEnabledChatPanel component
@@ -19,6 +21,7 @@ interface VoiceEnabledChatPanelProps {
  * Adds speech-to-text input and text-to-speech output to the Spanish tutor chat
  */
 export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props => {
+  const { selectedAgentId } = useAgentState();
   // Existing chat state
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -637,7 +640,8 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
 
       await agentChatService.sendMessage(sessionId, {
         message: textToSend,
-        context
+        context,
+        agentId: selectedAgentId,
       });
 
       if (!messageText) {
@@ -676,9 +680,9 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
     >
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-black/40">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <img src="/logo-neon.png" alt="Archon" className="w-6 h-6" />
-          <span className="font-semibold text-gray-900 dark:text-white">Profesora María</span>
+          <AgentSwitcher label="Agent" />
           {isVoiceEnabled && (
             <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-1 rounded-full">
               Voice

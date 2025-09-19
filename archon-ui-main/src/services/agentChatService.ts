@@ -25,6 +25,7 @@ interface ChatRequest {
   message: string;
   project_id?: string;
   context?: Record<string, any>;
+  agentId?: string;
 }
 
 class AgentChatService {

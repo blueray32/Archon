@@ -2,6 +2,8 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Send, User, WifiOff, RefreshCw, BookOpen, Search } from 'lucide-react';
 import { ArchonLoadingSpinner, EdgeLitEffect } from '../animations/Animations';
 import { agentChatService, ChatMessage } from '../../services/agentChatService';
+import { AgentSwitcher } from '../../agents/AgentSwitcher';
+import { useAgentState } from '../../agents/AgentContext';
 
 /**
  * Props for the ArchonChatPanel component
@@ -16,6 +18,7 @@ interface ArchonChatPanelProps {
  * loading states, and input functionality connected to real AI agents.
  */
 export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
+  const { selectedAgentId } = useAgentState();
   // State for messages, session, and other chat functionality
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -205,7 +208,8 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
       // Send message to agent via service
       await agentChatService.sendMessage(sessionId, {
         message: inputValue.trim(),
-        context
+        context,
+        agentId: selectedAgentId,
       });
       setInputValue('');
       setConnectionError(null);
@@ -266,14 +270,12 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-zinc-800/80">
           <div className="flex flex-col gap-2">
-            <div className="flex items-center">
+            <div className="flex items-center gap-3">
               {/* Archon Logo - No animation in header */}
-              <div className="relative w-8 h-8 mr-3 flex items-center justify-center">
+              <div className="relative w-8 h-8 flex items-center justify-center">
                 <img src="/logo-neon.png" alt="Archon" className="w-6 h-6 z-10 relative" />
               </div>
-              <h2 className="text-gray-800 dark:text-white font-medium z-10 relative">
-                Spanish Tutor - Profesora María
-              </h2>
+              <AgentSwitcher label="Agent" />
             </div>
           </div>
           
