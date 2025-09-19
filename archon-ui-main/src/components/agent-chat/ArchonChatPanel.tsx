@@ -217,11 +217,23 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
     if (!inputValue.trim() || !sessionId) return;
 
     try {
-      // Add context for Spanish tutor agent
-      const context = {
-        student_level: 'intermediate',
-        conversation_mode: 'casual',
-      };
+      // Build context based on selected agent
+      const context = (() => {
+        if (selectedAgentId === 'profesora-maria') {
+          return {
+            student_level: 'intermediate',
+            conversation_mode: 'casual',
+          };
+        }
+        if (selectedAgentId === 'pydantic-ai') {
+          return {
+            domain: 'pydantic-ai',
+            knowledge_source: 'llmstxt',
+            dataset_hint: 'Pydantic Documentation - Llms-Full.Txt',
+          };
+        }
+        return {} as Record<string, any>;
+      })();
 
       // Send message to agent via service
       await agentChatService.sendMessage(sessionId, {

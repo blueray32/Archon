@@ -632,13 +632,29 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
     if (!textToSend || !sessionId) return;
 
     try {
-      // Add context including voice information
-      const context = {
-        student_level: 'intermediate',
-        conversation_mode: 'casual',
+      // Add context including voice information; tailor for selected agent
+      const base = {
         input_method: messageText ? 'voice' : 'text',
         voice_enabled: isVoiceEnabled
-      };
+      } as Record<string, any>;
+      const context = (() => {
+        if (selectedAgentId === 'profesora-maria') {
+          return {
+            ...base,
+            student_level: 'intermediate',
+            conversation_mode: 'casual',
+          };
+        }
+        if (selectedAgentId === 'pydantic-ai') {
+          return {
+            ...base,
+            domain: 'pydantic-ai',
+            knowledge_source: 'llmstxt',
+            dataset_hint: 'Pydantic Documentation - Llms-Full.Txt',
+          };
+        }
+        return base;
+      })();
 
       await agentChatService.sendMessage(sessionId, {
         message: textToSend,

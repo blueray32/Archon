@@ -8,13 +8,14 @@ export type Agent = {
 
 export const AGENTS: Agent[] = [
   { id: "profesora-maria", label: "Profesora María", description: "Spanish tutor agent" },
-  { id: "reviewer", label: "Reviewer", description: "Code & doc reviewer" },
+  { id: "pydantic-ai", label: "Pydantic AI", description: "Expert on Pydantic AI & Pydantic docs (llmstxt)" },
   { id: "researcher", label: "Researcher", description: "R&D context gatherer" },
 ];
 
 // Map UI agent ids to backend agent_type identifiers
 const AGENT_TYPE_MAP: Record<string, string> = {
   'profesora-maria': 'spanish_tutor',
+  'pydantic-ai': 'reviewer',
   'reviewer': 'reviewer',
   'researcher': 'researcher',
 };
