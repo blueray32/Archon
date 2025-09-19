@@ -90,7 +90,6 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
   // Track the last spoken message to avoid duplicates
   const lastSpokenIdRef = useRef<string | null>(null);
   const ensuredPydanticKBRef = useRef<boolean>(false);
-  const [pydanticKBStatus, setPydanticKBStatus] = useState<'idle' | 'checking' | 'present' | 'seeding' | 'error'>('idle');
 
   // Check for Web Speech API support
   useEffect(() => {
@@ -548,23 +547,18 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
         if (selectedAgentId === 'pydantic-ai' && !ensuredPydanticKBRef.current) {
           ensuredPydanticKBRef.current = true;
           try {
-            setPydanticKBStatus('checking');
             const items = await knowledgeBaseService.getKnowledgeItems({ search: 'Pydantic Documentation - Llms-Full.Txt', per_page: 5 });
             const found = items.items?.some(i => i.title?.toLowerCase().includes('pydantic') && i.title.toLowerCase().includes('llms-full'));
             if (!found) {
-              setPydanticKBStatus('seeding');
               await knowledgeBaseService.crawlUrl({
                 url: 'https://ai.pydantic.dev/llms-full.txt',
                 knowledge_type: 'technical',
                 tags: ['pydantic', 'llmstxt'],
                 max_depth: 0,
               });
-            } else {
-              setPydanticKBStatus('present');
             }
           } catch (e) {
             console.warn('Pydantic KB ensure failed (non-fatal):', e);
-            setPydanticKBStatus('error');
           }
         }
 
@@ -746,39 +740,6 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
         <div className="flex items-center gap-3">
           <img src="/logo-neon.png" alt="Archon" className="w-6 h-6" />
           <AgentSwitcher label="Agent" />
-          {selectedAgentId === 'pydantic-ai' && (
-            <span
-              className={
-                `text-xs px-2 py-0.5 rounded-full border ` +
-                (pydanticKBStatus === 'present'
-                  ? 'border-green-300 text-green-700 bg-green-50'
-                  : pydanticKBStatus === 'seeding'
-                  ? 'border-yellow-300 text-yellow-700 bg-yellow-50'
-                  : pydanticKBStatus === 'checking'
-                  ? 'border-blue-300 text-blue-700 bg-blue-50'
-                  : pydanticKBStatus === 'error'
-                  ? 'border-red-300 text-red-700 bg-red-50'
-                  : 'border-gray-300 text-gray-600 bg-gray-50')
-              }
-              title={
-                pydanticKBStatus === 'present'
-                  ? 'Pydantic docs detected in Knowledge Base'
-                  : pydanticKBStatus === 'seeding'
-                  ? 'Seeding Pydantic docs via crawl'
-                  : pydanticKBStatus === 'checking'
-                  ? 'Checking for Pydantic docs in Knowledge Base'
-                  : pydanticKBStatus === 'error'
-                  ? 'Could not verify Pydantic docs (non-fatal)'
-                  : 'Idle'
-              }
-            >
-              {pydanticKBStatus === 'present' && 'Pydantic Docs'}
-              {pydanticKBStatus === 'seeding' && 'Seeding Docs...'}
-              {pydanticKBStatus === 'checking' && 'Checking Docs...'}
-              {pydanticKBStatus === 'error' && 'Docs Check Error'}
-              {pydanticKBStatus === 'idle' && 'Docs'}
-            </span>
-          )}
           {isVoiceEnabled && (
             <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-1 rounded-full">
               Voice
