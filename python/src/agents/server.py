@@ -26,6 +26,7 @@ from pydantic import BaseModel
 # Import our PydanticAI agents
 from .document_agent import DocumentAgent
 from .rag_agent import RagAgent
+from .pydantic_ai_agent import PydanticAIAgent
 from .spanish_tutor_agent import SpanishTutorAgent
 
 # Configure logging
@@ -57,8 +58,7 @@ AVAILABLE_AGENTS = {
     "document": DocumentAgent,
     "rag": RagAgent,
     "spanish_tutor": SpanishTutorAgent,
-    # UI may refer to a dedicated Pydantic AI agent; map to RAG implementation
-    "pydantic_ai": RagAgent,
+    "pydantic_ai": PydanticAIAgent,
 }
 
 # Global credentials storage
