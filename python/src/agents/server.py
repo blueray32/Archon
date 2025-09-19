@@ -57,6 +57,8 @@ AVAILABLE_AGENTS = {
     "document": DocumentAgent,
     "rag": RagAgent,
     "spanish_tutor": SpanishTutorAgent,
+    # UI may refer to a dedicated Pydantic AI agent; map to RAG implementation
+    "pydantic_ai": RagAgent,
 }
 
 # Global credentials storage
@@ -180,7 +182,7 @@ async def run_agent(request: AgentRequest):
         agent = app.state.agents[request.agent_type]
 
         # Prepare dependencies based on agent type
-        if request.agent_type == "rag":
+        if request.agent_type in ("rag", "pydantic_ai"):
             from .rag_agent import RagDependencies
 
             deps = RagDependencies(
@@ -258,7 +260,7 @@ async def stream_agent(agent_type: str, request: AgentRequest):
         try:
             # Prepare dependencies based on agent type
             # Import dependency classes
-            if agent_type == "rag":
+            if agent_type in ("rag", "pydantic_ai"):
                 from .rag_agent import RagDependencies
 
                 deps = RagDependencies(
