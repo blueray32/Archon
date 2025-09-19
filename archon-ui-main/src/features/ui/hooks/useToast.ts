@@ -1,6 +1,5 @@
 import { AlertCircle, CheckCircle, Info, XCircle } from "lucide-react";
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
-import { createOptimisticId } from "../../shared/optimistic";
+import { createContext, useCallback, useContext, useState } from "react";
 
 // Toast types
 interface Toast {
@@ -13,7 +12,6 @@ interface Toast {
 // Toast context type
 interface ToastContextType {
   showToast: (message: string, type?: Toast["type"], duration?: number) => void;
-  removeToast: (id: string) => void;
 }
 
 // Create context
@@ -37,38 +35,23 @@ export function useToast() {
  */
 export function createToastContext() {
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const timeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   const showToast = useCallback((message: string, type: Toast["type"] = "info", duration = 4000) => {
-    const id = createOptimisticId();
+    const id = Date.now().toString();
     const newToast: Toast = { id, message, type, duration };
 
     setToasts((prev) => [...prev, newToast]);
 
     // Auto-dismiss after duration
     if (duration > 0) {
-      const timeoutId = setTimeout(() => {
+      setTimeout(() => {
         setToasts((prev) => prev.filter((toast) => toast.id !== id));
-        timeoutsRef.current.delete(id);
       }, duration);
-      timeoutsRef.current.set(id, timeoutId);
     }
   }, []);
 
   const removeToast = useCallback((id: string) => {
-    const timeoutId = timeoutsRef.current.get(id);
-    if (timeoutId != null) {
-      clearTimeout(timeoutId);
-      timeoutsRef.current.delete(id);
-    }
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      for (const timeoutId of timeoutsRef.current.values()) clearTimeout(timeoutId);
-      timeoutsRef.current.clear();
-    };
   }, []);
 
   return {

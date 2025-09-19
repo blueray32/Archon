@@ -52,8 +52,8 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
         
         // Create a new chat session
         try {
-          console.log(`[CHAT PANEL] Creating session with agentType: "rag"`);
-          const { session_id } = await agentChatService.createSession(undefined, 'rag');
+          console.log(`[CHAT PANEL] Creating session with agentType: "spanish_tutor"`);
+          const { session_id } = await agentChatService.createSession('spanish_tutor');
           console.log(`[CHAT PANEL] Session created with ID: ${session_id}`);
           setSessionId(session_id);
           sessionIdRef.current = session_id;
@@ -74,7 +74,13 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
             await agentChatService.streamMessages(
               session_id,
               (message: ChatMessage) => {
-                setMessages(prev => [...prev, message]);
+                setMessages(prev => {
+                  // Check if message already exists to prevent duplicates
+                  if (prev.some(msg => msg.id === message.id)) {
+                    return prev;
+                  }
+                  return [...prev, message];
+                });
                 setConnectionError(null); // Clear any previous errors on successful message
                 setConnectionStatus('online');
               },
@@ -190,14 +196,17 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
     if (!inputValue.trim() || !sessionId) return;
 
     try {
-      // Add context for RAG agent
+      // Add context for Spanish tutor agent
       const context = {
-        match_count: 5,
-        // Can add source_filter here if needed in the future
+        student_level: 'intermediate',
+        conversation_mode: 'casual',
       };
-      
+
       // Send message to agent via service
-      await agentChatService.sendMessage(sessionId, inputValue.trim(), context);
+      await agentChatService.sendMessage(sessionId, {
+        message: inputValue.trim(),
+        context
+      });
       setInputValue('');
       setConnectionError(null);
     } catch (error) {
@@ -208,7 +217,8 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
   /**
    * Format timestamp for display in messages
    */
-  const formatTime = (date: Date) => {
+  const formatTime = (timestamp: string | Date) => {
+    const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
     return date.toLocaleTimeString([], {
       hour: '2-digit',
       minute: '2-digit'
@@ -262,7 +272,7 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
                 <img src="/logo-neon.png" alt="Archon" className="w-6 h-6 z-10 relative" />
               </div>
               <h2 className="text-gray-800 dark:text-white font-medium z-10 relative">
-                Knowledge Base Assistant
+                Spanish Tutor - Profesora María
               </h2>
             </div>
           </div>
@@ -418,7 +428,7 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
                 placeholder={
                   connectionStatus === 'offline' ? "Chat is offline..." :
                   connectionStatus === 'connecting' ? "Connecting..." :
-                  "Search the knowledge base..."
+                  "¡Hola! Practice Spanish here..."
                 }
                 disabled={connectionStatus !== 'online'} 
                 className="w-full bg-transparent text-gray-800 dark:text-white placeholder:text-gray-500 dark:placeholder:text-zinc-600 focus:outline-none disabled:opacity-50" 

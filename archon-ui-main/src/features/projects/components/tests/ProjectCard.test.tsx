@@ -50,11 +50,9 @@ describe("ProjectCard", () => {
   });
 
   it("should call onSelect when clicked", () => {
-    const { container } = render(
-      <ProjectCard project={mockProject} isSelected={false} taskCounts={mockTaskCounts} {...mockHandlers} />,
-    );
+    render(<ProjectCard project={mockProject} isSelected={false} taskCounts={mockTaskCounts} {...mockHandlers} />);
 
-    const card = container.firstChild as HTMLElement;
+    const card = screen.getByRole("listitem");
     fireEvent.click(card);
 
     expect(mockHandlers.onSelect).toHaveBeenCalledWith(mockProject);
@@ -62,29 +60,23 @@ describe("ProjectCard", () => {
   });
 
   it("should apply selected styles when isSelected is true", () => {
-    const { container } = render(
-      <ProjectCard project={mockProject} isSelected={true} taskCounts={mockTaskCounts} {...mockHandlers} />,
-    );
+    render(<ProjectCard project={mockProject} isSelected={true} taskCounts={mockTaskCounts} {...mockHandlers} />);
 
-    const card = container.firstChild;
-    expect(card).toBeInTheDocument();
+    const card = screen.getByRole("listitem");
     // Check for selected-specific classes
-    expect((card as HTMLElement)?.className || "").toContain("scale-[1.02]");
-    expect((card as HTMLElement)?.className || "").toContain("border-purple");
+    expect(card?.className).toContain("scale-[1.02]");
+    expect(card?.className).toContain("border-purple");
   });
 
   it("should apply pinned styles when project is pinned", () => {
     const pinnedProject = { ...mockProject, pinned: true };
 
-    const { container } = render(
-      <ProjectCard project={pinnedProject} isSelected={false} taskCounts={mockTaskCounts} {...mockHandlers} />,
-    );
+    render(<ProjectCard project={pinnedProject} isSelected={false} taskCounts={mockTaskCounts} {...mockHandlers} />);
 
-    const card = container.firstChild;
-    expect(card).toBeInTheDocument();
+    const card = screen.getByRole("listitem");
     // Check for pinned-specific classes
-    expect((card as HTMLElement)?.className || "").toContain("from-purple");
-    expect((card as HTMLElement)?.className || "").toContain("border-purple-500");
+    expect(card?.className).toContain("from-purple");
+    expect(card?.className).toContain("border-purple-500");
   });
 
   it("should render aurora glow effect when selected", () => {

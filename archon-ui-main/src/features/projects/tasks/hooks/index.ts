@@ -15,6 +15,5 @@ export {
   useCreateTask,
   useDeleteTask,
   useProjectTasks,
-  useTaskCounts,
   useUpdateTask,
 } from "./useTaskQueries";

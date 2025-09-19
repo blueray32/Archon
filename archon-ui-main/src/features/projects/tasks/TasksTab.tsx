@@ -212,7 +212,6 @@ export const TasksTab = ({ projectId }: TasksTabProps) => {
           itemName={taskToDelete?.title || ""}
           onConfirm={confirmDeleteTask}
           onCancel={closeDeleteModal}
-          onOpenChange={setShowDeleteModal}
           type="task"
           size="compact"
         />

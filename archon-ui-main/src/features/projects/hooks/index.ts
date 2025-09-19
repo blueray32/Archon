@@ -15,5 +15,6 @@ export {
   useDeleteProject,
   useProjectFeatures,
   useProjects,
+  useTaskCounts,
   useUpdateProject,
 } from "./useProjectQueries";

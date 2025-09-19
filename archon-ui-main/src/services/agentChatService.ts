@@ -9,7 +9,7 @@ export interface ChatMessage {
   id: string;
   content: string;
   sender: 'user' | 'agent';
-  timestamp: Date;
+  timestamp: string | Date;
   agent_type?: string;
 }
 
@@ -200,12 +200,17 @@ class AgentChatService {
 
         const messages: ChatMessage[] = await response.json();
         
-        // Process new messages
-        for (const message of messages) {
-          lastMessageId = message.id;
-          const handler = this.messageHandlers.get(sessionId);
-          if (handler) {
-            handler(message);
+        // Process new messages (only if we have new ones)
+        if (messages.length > 0) {
+          for (const message of messages) {
+            // Only process if this is actually a new message
+            if (!lastMessageId || message.id !== lastMessageId) {
+              lastMessageId = message.id;
+              const handler = this.messageHandlers.get(sessionId);
+              if (handler) {
+                handler(message);
+              }
+            }
           }
         }
       } catch (error) {

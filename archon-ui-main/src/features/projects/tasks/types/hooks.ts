@@ -4,7 +4,7 @@
  * Type definitions for task-related hooks
  */
 
-import type { Task, TaskPriority } from "./task";
+import type { Task } from "./task";
 
 /**
  * Return type for useTaskActions hook
@@ -12,7 +12,6 @@ import type { Task, TaskPriority } from "./task";
 export interface UseTaskActionsReturn {
   // Actions
   changeAssignee: (taskId: string, newAssignee: string) => void;
-  changePriority: (taskId: string, newPriority: TaskPriority) => void;
   initiateDelete: (task: Task) => void;
   confirmDelete: () => void;
   cancelDelete: () => void;

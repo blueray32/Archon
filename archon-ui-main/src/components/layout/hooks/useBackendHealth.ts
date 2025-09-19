@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { callAPIWithETag } from "../../../features/shared/apiWithEtag";
-import { createRetryLogic, STALE_TIMES } from "../../../features/shared/queryPatterns";
+import { callAPIWithETag } from "../../../features/projects/shared/apiWithEtag";
+import { useSmartPolling } from "../../../features/ui/hooks";
 import type { HealthResponse } from "../types";
 
 /**
@@ -8,6 +8,8 @@ import type { HealthResponse } from "../types";
  * Uses ETag caching for bandwidth reduction (~70% savings per project docs)
  */
 export function useBackendHealth() {
+  const { refetchInterval } = useSmartPolling(30000);
+
   return useQuery<HealthResponse>({
     queryKey: ["backend", "health"],
     queryFn: ({ signal }) => {
@@ -26,17 +28,23 @@ export function useBackendHealth() {
         clearTimeout(timeoutId);
       });
     },
-    // Retry configuration for startup scenarios - respect 4xx but allow more attempts
-    retry: createRetryLogic(5),
+    // Retry configuration for startup scenarios
+    retry: (failureCount) => {
+      // Keep retrying during startup, up to 5 times
+      if (failureCount < 5) {
+        return true;
+      }
+      return false;
+    },
     retryDelay: (attemptIndex) => {
       // Exponential backoff: 1.5s, 2.25s, 3.375s, etc.
       return Math.min(1500 * 1.5 ** attemptIndex, 10000);
     },
-    // Refetch every 30 seconds when healthy
-    refetchInterval: STALE_TIMES.normal,
+    // Smart refetch (every 30s when active; pause when hidden)
+    refetchInterval,
     // Keep trying to connect on window focus
     refetchOnWindowFocus: true,
-    // Consider data fresh for 30 seconds
-    staleTime: STALE_TIMES.normal,
+    // Consider data fresh for 20 seconds
+    staleTime: 20000,
   });
 }

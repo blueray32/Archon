@@ -5,6 +5,7 @@ Implements the foundational vector similarity search that all other strategies b
 This is the core semantic search functionality.
 """
 
+import os
 from typing import Any
 
 from supabase import Client
@@ -13,8 +14,8 @@ from ...config.logfire_config import get_logger, safe_span
 
 logger = get_logger(__name__)
 
-# Fixed similarity threshold for vector results
-SIMILARITY_THRESHOLD = 0.15
+# Fixed similarity threshold for vector results (tuned for small sources)
+SIMILARITY_THRESHOLD = 0.10
 
 
 class BaseSearchStrategy:
@@ -63,15 +64,22 @@ class BaseSearchStrategy:
                 # Execute search
                 response = self.supabase_client.rpc(table_rpc, rpc_params).execute()
 
+                # Determine similarity threshold (env overrides default)
+                try:
+                    threshold = float(os.getenv("SEARCH_SIMILARITY_THRESHOLD", str(SIMILARITY_THRESHOLD)))
+                except Exception:
+                    threshold = SIMILARITY_THRESHOLD
+
                 # Filter by similarity threshold
                 filtered_results = []
                 if response.data:
                     for result in response.data:
                         similarity = float(result.get("similarity", 0.0))
-                        if similarity >= SIMILARITY_THRESHOLD:
+                        if similarity >= threshold:
                             filtered_results.append(result)
 
                 span.set_attribute("results_found", len(filtered_results))
+                span.set_attribute("similarity_threshold", threshold)
                 span.set_attribute(
                     "results_filtered",
                     len(response.data) - len(filtered_results) if response.data else 0,

@@ -9,7 +9,6 @@ export type { UseTaskActionsReturn, UseTaskEditorReturn } from "./hooks";
 // Core task types (vertical slice architecture)
 export type {
   Assignee,
-  CommonAssignee,
   CreateTaskRequest,
   DatabaseTaskStatus,
   Task,
@@ -19,6 +18,3 @@ export type {
   TaskSource,
   UpdateTaskRequest,
 } from "./task";
-
-// Export constants
-export { COMMON_ASSIGNEES } from "./task";

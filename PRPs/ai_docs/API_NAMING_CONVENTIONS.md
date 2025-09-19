@@ -1,249 +1,163 @@
 # API Naming Conventions
 
 ## Overview
+This document defines the naming conventions used throughout the Archon V2 codebase for consistency and clarity.
 
-This document describes the actual naming conventions used throughout Archon's codebase based on current implementation patterns. All examples reference real files where these patterns are implemented.
+## Task Status Values
+**Database values only - no UI mapping:**
+- `todo` - Task is in backlog/todo state
+- `doing` - Task is actively being worked on
+- `review` - Task is pending review
+- `done` - Task is completed
 
-## Backend API Endpoints
+## Service Method Naming
 
-### RESTful Route Patterns
-**Reference**: `python/src/server/api_routes/projects_api.py`
+### Project Service (`projectService.ts`)
 
-Standard REST patterns used:
-- `GET /api/{resource}` - List all resources
-- `POST /api/{resource}` - Create new resource
-- `GET /api/{resource}/{id}` - Get single resource
-- `PUT /api/{resource}/{id}` - Update resource
-- `DELETE /api/{resource}/{id}` - Delete resource
+#### Projects
+- `listProjects()` - Get all projects
+- `getProject(projectId)` - Get single project by ID
+- `createProject(projectData)` - Create new project
+- `updateProject(projectId, updates)` - Update project
+- `deleteProject(projectId)` - Delete project
 
-Nested resource patterns:
-- `GET /api/projects/{project_id}/tasks` - Tasks scoped to project
-- `GET /api/projects/{project_id}/docs` - Documents scoped to project
-- `POST /api/projects/{project_id}/versions` - Create version for project
+#### Tasks
+- `getTasksByProject(projectId)` - Get all tasks for a specific project
+- `getTask(taskId)` - Get single task by ID
+- `createTask(taskData)` - Create new task
+- `updateTask(taskId, updates)` - Update task with partial data
+- `updateTaskStatus(taskId, status)` - Update only task status
+- `updateTaskOrder(taskId, newOrder, newStatus?)` - Update task position/order
+- `deleteTask(taskId)` - Delete task (soft delete/archive)
+- `getTasksByStatus(status)` - Get all tasks with specific status
 
-### Actual Endpoint Examples
-From `python/src/server/api_routes/`:
+#### Documents
+- `getDocuments(projectId)` - Get all documents for project
+- `getDocument(projectId, docId)` - Get single document
+- `createDocument(projectId, documentData)` - Create document
+- `updateDocument(projectId, docId, updates)` - Update document
+- `deleteDocument(projectId, docId)` - Delete document
 
-**Projects** (`projects_api.py`):
-- `/api/projects` - Project CRUD
-- `/api/projects/{project_id}/features` - Get project features
-- `/api/projects/{project_id}/tasks` - Project-scoped tasks
-- `/api/projects/{project_id}/docs` - Project documents
-- `/api/projects/{project_id}/versions` - Version history
+#### Versions
+- `createVersion(projectId, field, content)` - Create version snapshot
+- `listVersions(projectId, fieldName?)` - List version history
+- `getVersion(projectId, fieldName, versionNumber)` - Get specific version
+- `restoreVersion(projectId, fieldName, versionNumber)` - Restore version
 
-**Knowledge** (`knowledge_api.py`):
-- `/api/knowledge/sources` - Knowledge sources
-- `/api/knowledge/crawl` - Start web crawl
-- `/api/knowledge/upload` - Upload document
-- `/api/knowledge/search` - RAG search
-- `/api/knowledge/code-search` - Code-specific search
+## API Endpoint Patterns
 
-**Progress** (`progress_api.py`):
-- `/api/progress/active` - Active operations
-- `/api/progress/{operation_id}` - Specific operation status
+### RESTful Endpoints
+```
+GET    /api/projects                      - List all projects
+POST   /api/projects                      - Create project
+GET    /api/projects/{project_id}         - Get project
+PUT    /api/projects/{project_id}         - Update project
+DELETE /api/projects/{project_id}         - Delete project
 
-**MCP** (`mcp_api.py`):
-- `/api/mcp/status` - MCP server status
-- `/api/mcp/execute` - Execute MCP tool
+GET    /api/projects/{project_id}/tasks   - Get project tasks
+POST   /api/tasks                         - Create task (project_id in body)
+GET    /api/tasks/{task_id}               - Get task
+PUT    /api/tasks/{task_id}               - Update task
+DELETE /api/tasks/{task_id}               - Delete task
 
-## Frontend Service Methods
-
-### Service Object Pattern
-**Reference**: `archon-ui-main/src/features/projects/services/projectService.ts`
-
-Services are exported as objects with async methods:
-```typescript
-export const serviceNameService = {
-  async methodName(): Promise<ReturnType> { ... }
-}
+GET    /api/projects/{project_id}/docs         - Get project documents
+POST   /api/projects/{project_id}/docs         - Create document
+GET    /api/projects/{project_id}/docs/{doc_id} - Get document
+PUT    /api/projects/{project_id}/docs/{doc_id} - Update document
+DELETE /api/projects/{project_id}/docs/{doc_id} - Delete document
 ```
 
-### Standard Service Method Names
-Actual patterns from service files:
-
-**List Operations**:
-- `listProjects()` - Get all projects
-- `getTasksByProject(projectId)` - Get filtered list
-- `getTasksByStatus(status)` - Get by specific criteria
-
-**Single Item Operations**:
-- `getProject(projectId)` - Get single item
-- `getTask(taskId)` - Direct ID access
-
-**Create Operations**:
-- `createProject(data)` - Returns created entity
-- `createTask(data)` - Includes server-generated fields
-
-**Update Operations**:
-- `updateProject(id, updates)` - Partial updates
-- `updateTaskStatus(id, status)` - Specific field update
-- `updateTaskOrder(id, order, status?)` - Complex updates
-
-**Delete Operations**:
-- `deleteProject(id)` - Returns void
-- `deleteTask(id)` - Soft delete pattern
-
-### Service File Locations
-- **Projects**: `archon-ui-main/src/features/projects/services/projectService.ts`
-- **Tasks**: `archon-ui-main/src/features/projects/tasks/services/taskService.ts`
-- **Knowledge**: `archon-ui-main/src/features/knowledge/services/knowledgeService.ts`
-- **Progress**: `archon-ui-main/src/features/progress/services/progressService.ts`
-
-## React Hook Naming
-
-### Query Hooks
-**Reference**: `archon-ui-main/src/features/projects/tasks/hooks/useTaskQueries.ts`
-
-Standard patterns:
-- `use[Resource]()` - List query (e.g., `useProjects`)
-- `use[Resource]Detail(id)` - Single item query
-- `use[Parent][Resource](parentId)` - Scoped query (e.g., `useProjectTasks`)
-
-### Mutation Hooks
-- `useCreate[Resource]()` - Creation mutation
-- `useUpdate[Resource]()` - Update mutation
-- `useDelete[Resource]()` - Deletion mutation
-
-### Utility Hooks
-**Reference**: `archon-ui-main/src/features/ui/hooks/`
-- `useSmartPolling()` - Visibility-aware polling
-- `useToast()` - Toast notifications
-- `useDebounce()` - Debounced values
-
-## Type Naming Conventions
-
-### Type Definition Patterns
-**Reference**: `archon-ui-main/src/features/projects/types/`
-
-**Entity Types**:
-- `Project` - Core entity type
-- `Task` - Business object
-- `Document` - Data model
-
-**Request/Response Types**:
-- `Create[Entity]Request` - Creation payload
-- `Update[Entity]Request` - Update payload
-- `[Entity]Response` - API response wrapper
-
-**Database Types**:
-- `DatabaseTaskStatus` - Exact database values
-**Location**: `archon-ui-main/src/features/projects/tasks/types/task.ts`
-Values: `"todo" | "doing" | "review" | "done"`
-
-### Type File Organization
-Following vertical slice architecture:
-- Core types in `{feature}/types/`
-- Sub-feature types in `{feature}/{subfeature}/types/`
-- Shared types in `shared/types/`
-
-## Query Key Factories
-
-**Reference**: Each feature's `hooks/use{Feature}Queries.ts` file
-
-Standard factory pattern:
-- `{resource}Keys.all` - Base key for invalidation
-- `{resource}Keys.lists()` - List queries
-- `{resource}Keys.detail(id)` - Single item queries
-- `{resource}Keys.byProject(projectId)` - Scoped queries
-
-Examples:
-- `projectKeys` - Projects domain
-- `taskKeys` - Tasks (dual nature: global and project-scoped)
-- `knowledgeKeys` - Knowledge base
-- `progressKeys` - Progress tracking
-- `documentKeys` - Document management
+### Progress/Polling Endpoints
+```
+GET /api/progress/{operation_id}          - Generic operation progress
+GET /api/knowledge/crawl-progress/{id}    - Crawling progress
+GET /api/agent-chat/sessions/{id}/messages - Chat messages
+```
 
 ## Component Naming
 
-### Page Components
-**Location**: `archon-ui-main/src/pages/`
-- `[Feature]Page.tsx` - Top-level pages
-- `[Feature]View.tsx` - Main view components
+### Hooks
+- `use[Feature]` - Custom hooks (e.g., `usePolling`, `useProjectMutation`)
+- Returns object with: `{ data, isLoading, error, refetch }`
 
-### Feature Components
-**Location**: `archon-ui-main/src/features/{feature}/components/`
-- `[Entity]Card.tsx` - Card displays
-- `[Entity]List.tsx` - List containers
-- `[Entity]Form.tsx` - Form components
-- `New[Entity]Modal.tsx` - Creation modals
-- `Edit[Entity]Modal.tsx` - Edit modals
+### Services
+- `[feature]Service` - Service modules (e.g., `projectService`, `crawlProgressService`)
+- Methods return Promises with typed responses
 
-### Shared Components
-**Location**: `archon-ui-main/src/features/ui/primitives/`
-- Radix UI-based primitives
-- Generic, reusable components
+### Components
+- `[Feature][Type]` - UI components (e.g., `TaskBoardView`, `EditTaskModal`)
+- Props interfaces: `[Component]Props`
 
 ## State Variable Naming
 
 ### Loading States
-**Examples from**: `archon-ui-main/src/features/projects/views/ProjectsView.tsx`
-- `isLoading` - Generic loading
-- `is[Action]ing` - Specific operations (e.g., `isSwitchingProject`)
-- `[action]ingIds` - Sets of items being processed
+- `isLoading[Feature]` - Boolean loading indicators
+- `isSwitchingProject` - Specific operation states
+- `movingTaskIds` - Set/Array of items being processed
 
 ### Error States
-- `error` - Query errors
-- `[operation]Error` - Specific operation errors
+- `[feature]Error` - Error message strings
+- `taskOperationError` - Specific operation errors
 
-### Selection States
-- `selected[Entity]` - Currently selected item
-- `active[Entity]Id` - Active item ID
+### Data States
+- `[feature]s` - Plural for collections (e.g., `tasks`, `projects`)
+- `selected[Feature]` - Currently selected item
+- `[feature]Data` - Raw data from API
 
-## Constants and Enums
+## Type Definitions
 
-### Status Values
-**Location**: `archon-ui-main/src/features/projects/tasks/types/task.ts`
-Database values used directly - no mapping layers:
-- Task statuses: `"todo"`, `"doing"`, `"review"`, `"done"`
-- Operation statuses: `"pending"`, `"processing"`, `"completed"`, `"failed"`
+### Database Types (from backend)
+```typescript
+type DatabaseTaskStatus = 'todo' | 'doing' | 'review' | 'done';
+type Assignee = 'User' | 'Archon' | 'AI IDE Agent';
+```
 
-### Time Constants
-**Location**: `archon-ui-main/src/features/shared/queryPatterns.ts`
-- `STALE_TIMES.instant` - 0ms
-- `STALE_TIMES.realtime` - 3 seconds
-- `STALE_TIMES.frequent` - 5 seconds
-- `STALE_TIMES.normal` - 30 seconds
-- `STALE_TIMES.rare` - 5 minutes
-- `STALE_TIMES.static` - Infinity
+### Request/Response Types
+```typescript
+Create[Feature]Request  // e.g., CreateTaskRequest
+Update[Feature]Request  // e.g., UpdateTaskRequest
+[Feature]Response       // e.g., TaskResponse
+```
 
-## File Naming Patterns
+## Function Naming Patterns
 
-### Service Layer
-- `{feature}Service.ts` - Service modules
-- Use lower camelCase with "Service" suffix (e.g., `projectService.ts`)
+### Event Handlers
+- `handle[Event]` - Generic handlers (e.g., `handleProjectSelect`)
+- `on[Event]` - Props callbacks (e.g., `onTaskMove`, `onRefresh`)
 
-### Hook Files
-- `use{Feature}Queries.ts` - Query hooks and keys
-- `use{Feature}.ts` - Feature-specific hooks
+### Operations
+- `load[Feature]` - Fetch data (e.g., `loadTasksForProject`)
+- `save[Feature]` - Persist changes (e.g., `saveTask`)
+- `delete[Feature]` - Remove items (e.g., `deleteTask`)
+- `refresh[Feature]` - Reload data (e.g., `refreshTasks`)
 
-### Type Files
-- `index.ts` - Barrel exports
-- `{entity}.ts` - Specific entity types
-
-### Test Files
-- `{filename}.test.ts` - Unit tests
-- Located in `tests/` subdirectories
+### Formatting/Transformation
+- `format[Feature]` - Format for display (e.g., `formatTask`)
+- `validate[Feature]` - Validate data (e.g., `validateUpdateTask`)
 
 ## Best Practices
 
-### Do Follow
-- Use exact database values (no translation layers)
-- Keep consistent patterns within features
-- Use query key factories for all cache operations
-- Follow vertical slice architecture
-- Reference shared constants
+### ✅ Do Use
+- `getTasksByProject(projectId)` - Clear scope with context
+- `status` - Single source of truth from database
+- Direct database values everywhere (no mapping)
+- Polling with `usePolling` hook for data fetching
+- Async/await with proper error handling
+- ETag headers for efficient polling
+- Loading indicators during operations
 
-### Don't Do
-- Don't create mapping layers for database values
-- Don't hardcode time values
-- Don't mix query keys between features
-- Don't use inconsistent naming within a feature
-- Don't embed business logic in components
+## Current Architecture Patterns
 
-## Common Patterns Reference
+### Polling & Data Fetching
+- HTTP polling with `usePolling` and `useCrawlProgressPolling` hooks
+- ETag-based caching for bandwidth efficiency
+- Loading state indicators (`isLoading`, `isSwitchingProject`)
+- Error toast notifications for user feedback
+- Manual refresh triggers via `refetch()`
+- Immediate UI updates followed by API calls
 
-For implementation examples, see:
-- Query patterns: Any `use{Feature}Queries.ts` file
-- Service patterns: Any `{feature}Service.ts` file
-- Type patterns: Any `{feature}/types/` directory
-- Component patterns: Any `{feature}/components/` directory
+### Service Architecture
+- Specialized services for different domains (`projectService`, `crawlProgressService`)
+- Direct database value usage (no UI/DB mapping)
+- Promise-based async operations
+- Typed request/response interfaces
