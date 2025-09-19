@@ -119,11 +119,12 @@ async def send_message(session_id: str, request: dict):
 
         # Send to agents service
         agents_port = os.getenv("ARCHON_AGENTS_PORT", "8052")
+        agents_host = os.getenv("ARCHON_AGENTS_HOST", "archon-agents")
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"http://archon-agents:{agents_port}/agents/run",
+                f"http://{agents_host}:{agents_port}/agents/run",
                 json=agents_request,
-                timeout=30.0
+                timeout=8.0,
             )
 
             if response.status_code == 200:
@@ -141,11 +142,36 @@ async def send_message(session_id: str, request: dict):
                     logger.info(f"Agent {agent_type} responded successfully")
                 else:
                     logger.error(f"Agent response failed: {result}")
+                    # Store a helpful fallback message so the UI shows feedback
+                    fallback_msg = {
+                        "id": str(uuid.uuid4()),
+                        "content": "Agent service responded without a result. Please try again later.",
+                        "sender": "agent",
+                        "timestamp": datetime.now().isoformat(),
+                        "agent_type": agent_type,
+                    }
+                    sessions[session_id]["messages"].append(fallback_msg)
             else:
                 logger.error(f"Agents service returned {response.status_code}")
+                fallback_msg = {
+                    "id": str(uuid.uuid4()),
+                    "content": "Agent service is unavailable (HTTP error). Please check the Agents service.",
+                    "sender": "agent",
+                    "timestamp": datetime.now().isoformat(),
+                    "agent_type": agent_type,
+                }
+                sessions[session_id]["messages"].append(fallback_msg)
 
     except Exception as e:
         logger.error(f"Failed to communicate with agents service: {e}")
-        # Continue anyway - the user message is still stored
+        # Append a fallback agent message so the UI shows immediate feedback
+        fallback_msg = {
+            "id": str(uuid.uuid4()),
+            "content": "Agent service is currently unreachable. If you're running locally, ensure the Agents service is running and reachable.",
+            "sender": "agent",
+            "timestamp": datetime.now().isoformat(),
+            "agent_type": sessions[session_id].get("agent_type", "unknown"),
+        }
+        sessions[session_id]["messages"].append(fallback_msg)
 
     return {"status": "sent"}
