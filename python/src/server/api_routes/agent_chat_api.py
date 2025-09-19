@@ -130,10 +130,17 @@ async def send_message(session_id: str, request: dict):
             if response.status_code == 200:
                 result = response.json()
                 if result.get("success") and result.get("result"):
-                    # Store agent response
+                    output = result["result"].get("output") if isinstance(result["result"], dict) else None
+                    if not output:
+                        # Fallback: stringify result if structure unexpected
+                        try:
+                            import json
+                            output = json.dumps(result["result"], ensure_ascii=False)
+                        except Exception:
+                            output = str(result.get("result"))
                     agent_msg = {
                         "id": str(uuid.uuid4()),
-                        "content": result["result"]["output"],
+                        "content": output,
                         "sender": "agent",
                         "timestamp": datetime.now().isoformat(),
                         "agent_type": agent_type,
@@ -142,10 +149,11 @@ async def send_message(session_id: str, request: dict):
                     logger.info(f"Agent {agent_type} responded successfully")
                 else:
                     logger.error(f"Agent response failed: {result}")
-                    # Store a helpful fallback message so the UI shows feedback
+                    # If the agent returned an error message, surface it to user
+                    error_text = result.get("error") or "Agent service responded without a result. Please try again later."
                     fallback_msg = {
                         "id": str(uuid.uuid4()),
-                        "content": "Agent service responded without a result. Please try again later.",
+                        "content": f"Agent error: {error_text}",
                         "sender": "agent",
                         "timestamp": datetime.now().isoformat(),
                         "agent_type": agent_type,
