@@ -251,6 +251,8 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
             domain: 'pydantic-ai',
             knowledge_source: 'llmstxt',
             dataset_hint: 'Pydantic Documentation - Llms-Full.Txt',
+            // Hint RAG to focus on Pydantic sources
+            source_filter: 'pydantic|ai.pydantic.dev|llms-full',
           };
         }
         return {} as Record<string, any>;
