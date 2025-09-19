@@ -215,9 +215,35 @@ async def run_agent(request: AgentRequest):
         # Run the agent
         result = await agent.run(request.prompt, deps)
 
+        # Normalize result into a consistent shape `{ output: string, raw: Any }`
+        def to_output(res: Any) -> str:
+            try:
+                if isinstance(res, str):
+                    return res
+                if isinstance(res, dict):
+                    # common keys in our agents
+                    for key in ("output", "answer", "text", "message"):
+                        if key in res and isinstance(res[key], str):
+                            return res[key]
+                    # last resort - pretty print
+                    import json
+                    return json.dumps(res, ensure_ascii=False)[:4000]
+                # Pydantic models or other objects
+                if hasattr(res, "model_dump"):
+                    dumped = res.model_dump()
+                    return to_output(dumped)
+                return str(res)
+            except Exception:
+                return str(res)
+
+        normalized = {
+            "output": to_output(result),
+            "raw": result,
+        }
+
         return AgentResponse(
             success=True,
-            result=result,
+            result=normalized,
             metadata={"agent_type": request.agent_type, "model": agent.model},
         )
 
