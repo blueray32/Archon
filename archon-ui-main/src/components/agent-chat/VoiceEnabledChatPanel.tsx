@@ -4,6 +4,7 @@ import * as Popover from '@radix-ui/react-popover';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { ArchonLoadingSpinner, EdgeLitEffect } from '../animations/Animations';
 import { agentChatService, ChatMessage } from '../../services/agentChatService';
+import { knowledgeBaseService } from '../../services/knowledgeBaseService';
 import { AgentSwitcher } from '../../agents/AgentSwitcher';
 import { useAgentState } from '../../agents/AgentContext';
 import { getAgentTypeFor } from '../../agents/registry';
@@ -88,6 +89,7 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
   const commitTimerRef = useRef<number | null>(null);
   // Track the last spoken message to avoid duplicates
   const lastSpokenIdRef = useRef<string | null>(null);
+  const ensuredPydanticKBRef = useRef<boolean>(false);
 
   // Check for Web Speech API support
   useEffect(() => {
@@ -540,6 +542,25 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
         console.log(`[CHAT PANEL] Session created with ID: ${session_id}`);
         setSessionId(session_id);
         sessionIdRef.current = session_id;
+
+        // Ensure Pydantic docs are available when using Pydantic AI (best-effort)
+        if (selectedAgentId === 'pydantic-ai' && !ensuredPydanticKBRef.current) {
+          ensuredPydanticKBRef.current = true;
+          try {
+            const items = await knowledgeBaseService.getKnowledgeItems({ search: 'Pydantic Documentation - Llms-Full.Txt', per_page: 5 });
+            const found = items.items?.some(i => i.title?.toLowerCase().includes('pydantic') && i.title.toLowerCase().includes('llms-full'));
+            if (!found) {
+              await knowledgeBaseService.crawlUrl({
+                url: 'https://ai.pydantic.dev/llms-full.txt',
+                knowledge_type: 'technical',
+                tags: ['pydantic', 'llmstxt'],
+                max_depth: 0,
+              });
+            }
+          } catch (e) {
+            console.warn('Pydantic KB ensure failed (non-fatal):', e);
+          }
+        }
 
         try {
           const history = await agentChatService.getChatHistory(session_id);

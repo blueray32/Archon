@@ -15,9 +15,9 @@ export const AGENTS: Agent[] = [
 // Map UI agent ids to backend agent_type identifiers
 const AGENT_TYPE_MAP: Record<string, string> = {
   'profesora-maria': 'spanish_tutor',
-  'pydantic-ai': 'reviewer',
-  'reviewer': 'reviewer',
-  'researcher': 'researcher',
+  'pydantic-ai': 'rag',
+  'reviewer': 'rag',
+  'researcher': 'rag',
 };
 
 export function getAgentTypeFor(agentId: string | undefined | null): string {

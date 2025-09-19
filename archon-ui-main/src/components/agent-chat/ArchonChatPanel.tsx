@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Send, User, WifiOff, RefreshCw, BookOpen, Search } from 'lucide-react';
 import { ArchonLoadingSpinner, EdgeLitEffect } from '../animations/Animations';
 import { agentChatService, ChatMessage } from '../../services/agentChatService';
+import { knowledgeBaseService } from '../../services/knowledgeBaseService';
 import { AgentSwitcher } from '../../agents/AgentSwitcher';
 import { useAgentState } from '../../agents/AgentContext';
 import { getAgentTypeFor } from '../../agents/registry';
@@ -44,6 +45,7 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
   const dragHandleRef = useRef<HTMLDivElement>(null);
   const chatPanelRef = useRef<HTMLDivElement>(null);
   const sessionIdRef = useRef<string | null>(null);
+  const ensuredPydanticKBRef = useRef<boolean>(false);
   /**
    * Initialize chat session and connection
    */
@@ -62,6 +64,25 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
           console.log(`[CHAT PANEL] Session created with ID: ${session_id}`);
           setSessionId(session_id);
           sessionIdRef.current = session_id;
+
+          // Ensure Pydantic docs are available when using Pydantic AI (best-effort)
+          if (selectedAgentId === 'pydantic-ai' && !ensuredPydanticKBRef.current) {
+            ensuredPydanticKBRef.current = true;
+            try {
+              const items = await knowledgeBaseService.getKnowledgeItems({ search: 'Pydantic Documentation - Llms-Full.Txt', per_page: 5 });
+              const found = items.items?.some(i => i.title?.toLowerCase().includes('pydantic') && i.title.toLowerCase().includes('llms-full'));
+              if (!found) {
+                await knowledgeBaseService.crawlUrl({
+                  url: 'https://ai.pydantic.dev/llms-full.txt',
+                  knowledge_type: 'technical',
+                  tags: ['pydantic', 'llmstxt'],
+                  max_depth: 0,
+                });
+              }
+            } catch (e) {
+              console.warn('Pydantic KB ensure failed (non-fatal):', e);
+            }
+          }
           
           // Load initial chat history
           try {
