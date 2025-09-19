@@ -214,3 +214,18 @@ async def send_message(session_id: str, request: dict):
         sessions[session_id]["messages"].append(fallback_msg)
 
     return {"status": "sent"}
+@router.get("/status")
+async def agent_chat_status():
+    """Lightweight status check for the Agents service used by the UI."""
+    try:
+        import httpx
+        import os
+        agents_port = os.getenv("ARCHON_AGENTS_PORT", "8052")
+        agents_host = os.getenv("ARCHON_AGENTS_HOST", "archon-agents")
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(f"http://{agents_host}:{agents_port}/health", timeout=5.0)
+            ok = resp.status_code == 200
+            return {"online": ok, "status": resp.status_code, "agents_host": agents_host, "agents_port": agents_port}
+    except Exception as e:
+        logger.error(f"Agents status check failed: {e}")
+        return {"online": False, "error": str(e)}
