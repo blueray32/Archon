@@ -122,7 +122,7 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
         }
         setConnectionStatus('offline');
       }
-    }, []);
+    }, [selectedAgentId]);
   
   // Initialize on mount and when explicitly requested
   useEffect(() => {
@@ -130,6 +130,22 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
       initializeChat();
     }
   }, [isInitialized, initializeChat]);
+
+  // Re-initialize session when selected agent changes
+  const prevAgentIdRef = React.useRef<string | null>(null);
+  useEffect(() => {
+    if (prevAgentIdRef.current && prevAgentIdRef.current !== selectedAgentId) {
+      if (sessionIdRef.current) {
+        agentChatService.stopStreaming(sessionIdRef.current);
+      }
+      setMessages([]);
+      setSessionId(null);
+      setIsInitialized(false);
+      setConnectionStatus('connecting');
+      initializeChat();
+    }
+    prevAgentIdRef.current = selectedAgentId;
+  }, [selectedAgentId, initializeChat]);
   
   // Cleanup effect - only on unmount
   useEffect(() => {

@@ -589,7 +589,7 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
       setConnectionError('Chat initialization failed. Please refresh the page.');
       setConnectionStatus('offline');
     }
-  }, [isVoiceEnabled, speakText]);
+  }, [isVoiceEnabled, speakText, selectedAgentId]);
 
   // Speak when new agent messages arrive, using current isVoiceEnabled
   useEffect(() => {
@@ -667,6 +667,22 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
       initializeChat();
     }
   }, [initializeChat, isInitialized]);
+
+  // Re-initialize when agent changes
+  const prevAgentIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (prevAgentIdRef.current && prevAgentIdRef.current !== selectedAgentId) {
+      if (sessionIdRef.current) {
+        agentChatService.stopStreaming(sessionIdRef.current);
+      }
+      setMessages([]);
+      setSessionId(null);
+      setIsInitialized(false);
+      setConnectionStatus('connecting');
+      initializeChat();
+    }
+    prevAgentIdRef.current = selectedAgentId;
+  }, [selectedAgentId, initializeChat]);
 
   const formatTime = (date: Date | string) => {
     const d = typeof date === 'string' ? new Date(date) : date;
