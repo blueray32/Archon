@@ -808,6 +808,63 @@ async def perform_rag_query(request: RagQueryRequest):
         raise HTTPException(status_code=500, detail={"error": f"RAG query failed: {str(e)}"})
 
 
+@router.post("/keyword/query")
+async def keyword_query(request: RagQueryRequest):
+    """Perform a keyword-only search using PostgreSQL tsvector ranking.
+
+    This endpoint ignores vector similarity and returns matches ranked by ts_rank_cd.
+    """
+    # Validate query
+    if not request.query:
+        raise HTTPException(status_code=422, detail="Query is required")
+    if not request.query.strip():
+        raise HTTPException(status_code=422, detail="Query cannot be empty")
+
+    try:
+        supabase = get_supabase_client()
+
+        # Prepare filter params
+        filter_metadata = {}
+        source_filter = None
+        if request.source and request.source.strip():
+            source_filter = request.source.strip()
+
+        # Execute RPC for keyword-only search
+        rpc_params = {
+            "query_text": request.query,
+            "match_count": request.match_count,
+            "filter": filter_metadata,
+            "source_filter": source_filter,
+        }
+        response = supabase.rpc("keyword_search_archon_crawled_pages", rpc_params).execute()
+
+        results = []
+        if response.data:
+            for row in response.data:
+                results.append({
+                    "id": row.get("id"),
+                    "url": row.get("url"),
+                    "chunk_number": row.get("chunk_number"),
+                    "content": row.get("content"),
+                    "metadata": row.get("metadata", {}),
+                    "source_id": row.get("source_id"),
+                    "similarity": row.get("similarity", 0.0),
+                    "match_type": row.get("match_type", "keyword"),
+                })
+
+        return {
+            "success": True,
+            "results": results,
+            "query": request.query,
+            "source": request.source,
+            "match_count": request.match_count,
+            "total_found": len(results),
+            "execution_path": "keyword_only",
+        }
+    except Exception as e:
+        safe_logfire_error(f"Keyword query failed | error={str(e)} | query={request.query[:50]}")
+        raise HTTPException(status_code=500, detail={"error": f"Keyword query failed: {str(e)}"})
+
 @router.post("/rag/code-examples")
 async def search_code_examples(request: RagQueryRequest):
     """Search for code examples relevant to the query using dedicated code examples service."""

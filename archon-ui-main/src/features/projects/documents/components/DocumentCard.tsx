@@ -66,14 +66,22 @@ export const DocumentCard = memo(({ document, isActive, onSelect, onDelete }: Do
   const [showDelete, setShowDelete] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
 
+  // Defensive normalization for potentially missing fields from backend
+  const docId: string | null = typeof document?.id === "string" && document.id.length > 0 ? document.id : null;
+
   const handleCopyId = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
-      navigator.clipboard.writeText(document.id);
+      if (!docId) {
+        // Prefer visible error during beta, but don’t crash UI
+        console.warn("DocumentCard: Missing document.id, copy aborted", { document });
+        return;
+      }
+      navigator.clipboard.writeText(docId);
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 2000);
     },
-    [document.id],
+    [docId, document],
   );
 
   const handleDelete = useCallback(
@@ -132,8 +140,8 @@ export const DocumentCard = memo(({ document, isActive, onSelect, onDelete }: Do
           isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
         } transition-opacity duration-200`}
       >
-        <span className="text-xs text-gray-400 dark:text-gray-500 truncate max-w-[120px]" title={document.id}>
-          {document.id.slice(0, 8)}...
+        <span className="text-xs text-gray-400 dark:text-gray-500 truncate max-w-[120px]" title={docId || ""}>
+          {docId ? docId.slice(0, 8) : "unknown"}...
         </span>
         <Button
           variant="ghost"

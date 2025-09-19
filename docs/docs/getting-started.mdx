@@ -115,8 +115,11 @@ Create a new [Supabase project](https://supabase.com/dashboard), then follow the
 ### 4. Start Archon
 
 ```bash
-# Build and start all services
+# Build and start core services (Server, MCP, Frontend, Docs)
 docker compose up --build -d
+
+# Include the optional Agents service
+docker compose --profile agents up --build -d
 
 # View logs (optional)
 docker compose logs -f
@@ -157,13 +160,14 @@ Your Archon system is now running with **14 MCP tools** available. Your AI agent
 
 ## 🛠️ What's Included
 
-When you run `docker compose up -d`, you get:
+When you run `docker compose up -d`, you get core services by default:
 
 ### Microservices Architecture
 - **Frontend** (Port 3737): React dashboard for managing knowledge and tasks
 - **API Service** (Port 8080): FastAPI server with Socket.IO for real-time features
 - **MCP Service** (Port 8051): Model Context Protocol server for AI clients
 - **Agents Service** (Port 8052): AI processing service for document analysis
+  - Note: start with `--profile agents`
 - **Documentation** (Port 3838): Complete Docusaurus documentation site
 
 ### Key Features  

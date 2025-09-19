@@ -36,6 +36,7 @@ services:
       - ./python/tests:/app/tests # Mount tests for UI test execution
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    restart: unless-stopped
     command:
       [
         "python",
@@ -94,6 +95,7 @@ services:
       
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    restart: unless-stopped
     healthcheck:
       test:
         [
@@ -143,6 +145,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    restart: unless-stopped
 
   # Frontend
   archon-frontend:
@@ -171,7 +174,9 @@ services:
     depends_on:
       archon-server:
         condition: service_healthy
+    restart: unless-stopped
 
 networks:
   app-network:
+    name: archon_app-network
     driver: bridge

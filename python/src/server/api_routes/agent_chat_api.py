@@ -58,14 +58,32 @@ async def get_session(session_id: str):
 
 
 @router.get("/sessions/{session_id}/messages")
-async def get_messages(session_id: str):
+async def get_messages(session_id: str, after: str = None):
     """Get messages for a session (for polling)."""
     if session_id not in sessions:
         raise HTTPException(status_code=404, detail="Session not found")
-    return sessions[session_id].get("messages", [])
+
+    messages = sessions[session_id].get("messages", [])
+
+    # If 'after' parameter is provided, only return messages after that ID
+    if after:
+        after_index = -1
+        for i, msg in enumerate(messages):
+            if msg["id"] == after:
+                after_index = i
+                break
+
+        if after_index >= 0:
+            # Return messages after the specified ID
+            return messages[after_index + 1:]
+        else:
+            # If the 'after' ID is not found, return all messages
+            return messages
+
+    return messages
 
 
-@router.post("/sessions/{session_id}/messages")
+@router.post("/sessions/{session_id}/send")
 async def send_message(session_id: str, request: dict):
     """REST endpoint for sending messages."""
     if session_id not in sessions:
@@ -80,6 +98,54 @@ async def send_message(session_id: str, request: dict):
     }
     sessions[session_id]["messages"].append(user_msg)
 
-    # Note: Agent responses would be processed here if agents service was enabled
-    # For now, just return success
+    # Try to send message to agents service
+    try:
+        import httpx
+        import os
+
+        # Get the agent type from session
+        session = sessions[session_id]
+        agent_type = session.get("agent_type", "spanish_tutor")
+
+        # Prepare request for agents service
+        agents_request = {
+            "agent_type": agent_type,
+            "prompt": request.get("message", ""),
+            "context": request.get("context", {
+                "student_level": "intermediate",
+                "conversation_mode": "casual"
+            })
+        }
+
+        # Send to agents service
+        agents_port = os.getenv("ARCHON_AGENTS_PORT", "8052")
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"http://archon-agents:{agents_port}/agents/run",
+                json=agents_request,
+                timeout=30.0
+            )
+
+            if response.status_code == 200:
+                result = response.json()
+                if result.get("success") and result.get("result"):
+                    # Store agent response
+                    agent_msg = {
+                        "id": str(uuid.uuid4()),
+                        "content": result["result"]["output"],
+                        "sender": "agent",
+                        "timestamp": datetime.now().isoformat(),
+                        "agent_type": agent_type,
+                    }
+                    sessions[session_id]["messages"].append(agent_msg)
+                    logger.info(f"Agent {agent_type} responded successfully")
+                else:
+                    logger.error(f"Agent response failed: {result}")
+            else:
+                logger.error(f"Agents service returned {response.status_code}")
+
+    except Exception as e:
+        logger.error(f"Failed to communicate with agents service: {e}")
+        # Continue anyway - the user message is still stored
+
     return {"status": "sent"}

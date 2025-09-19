@@ -26,6 +26,7 @@ from pydantic import BaseModel
 # Import our PydanticAI agents
 from .document_agent import DocumentAgent
 from .rag_agent import RagAgent
+from .spanish_tutor_agent import SpanishTutorAgent
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -55,6 +56,7 @@ class AgentResponse(BaseModel):
 AVAILABLE_AGENTS = {
     "document": DocumentAgent,
     "rag": RagAgent,
+    "spanish_tutor": SpanishTutorAgent,
 }
 
 # Global credentials storage
@@ -124,14 +126,18 @@ async def lifespan(app: FastAPI):
     app.state.agents = {}
     for name, agent_class in AVAILABLE_AGENTS.items():
         try:
+            logger.info(f"Attempting to initialize {name} agent...")
             # Pass model configuration from credentials
             model_key = f"{name.upper()}_AGENT_MODEL"
             model = AGENT_CREDENTIALS.get(model_key, "openai:gpt-4o-mini")
+            logger.info(f"Using model: {model} for {name} agent")
 
             app.state.agents[name] = agent_class(model=model)
-            logger.info(f"Initialized {name} agent with model: {model}")
+            logger.info(f"Successfully initialized {name} agent with model: {model}")
         except Exception as e:
+            import traceback
             logger.error(f"Failed to initialize {name} agent: {e}")
+            logger.error(f"Stack trace: {traceback.format_exc()}")
 
     yield
 
@@ -173,12 +179,36 @@ async def run_agent(request: AgentRequest):
 
         agent = app.state.agents[request.agent_type]
 
-        # Prepare dependencies for the agent
-        deps = {
-            "context": request.context or {},
-            "options": request.options or {},
-            "mcp_endpoint": os.getenv("MCP_SERVICE_URL", "http://archon-mcp:8051"),
-        }
+        # Prepare dependencies based on agent type
+        if request.agent_type == "rag":
+            from .rag_agent import RagDependencies
+
+            deps = RagDependencies(
+                source_filter=request.context.get("source_filter") if request.context else None,
+                match_count=request.context.get("match_count", 5) if request.context else 5,
+                project_id=request.context.get("project_id") if request.context else None,
+            )
+        elif request.agent_type == "document":
+            from .document_agent import DocumentDependencies
+
+            deps = DocumentDependencies(
+                project_id=request.context.get("project_id") if request.context else None,
+                user_id=request.context.get("user_id") if request.context else None,
+            )
+        elif request.agent_type == "spanish_tutor":
+            from .spanish_tutor_agent import SpanishTutorDependencies
+
+            deps = SpanishTutorDependencies(
+                student_level=request.context.get("student_level", "beginner") if request.context else "beginner",
+                conversation_mode=request.context.get("conversation_mode", "casual") if request.context else "casual",
+                focus_area=request.context.get("focus_area") if request.context else None,
+                previous_context=request.context.get("previous_context") if request.context else None,
+            )
+        else:
+            # Default dependencies
+            from .base_agent import ArchonDependencies
+
+            deps = ArchonDependencies()
 
         # Run the agent
         result = await agent.run(request.prompt, deps)
@@ -242,6 +272,15 @@ async def stream_agent(agent_type: str, request: AgentRequest):
                 deps = DocumentDependencies(
                     project_id=request.context.get("project_id") if request.context else None,
                     user_id=request.context.get("user_id") if request.context else None,
+                )
+            elif agent_type == "spanish_tutor":
+                from .spanish_tutor_agent import SpanishTutorDependencies
+
+                deps = SpanishTutorDependencies(
+                    student_level=request.context.get("student_level", "beginner") if request.context else "beginner",
+                    conversation_mode=request.context.get("conversation_mode", "casual") if request.context else "casual",
+                    focus_area=request.context.get("focus_area") if request.context else None,
+                    previous_context=request.context.get("previous_context") if request.context else None,
                 )
             else:
                 # Default dependencies

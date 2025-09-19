@@ -82,6 +82,12 @@ This new vision for Archon replaces the old one (the agenteer). Archon used to b
    docker compose up --build -d
    ```
 
+   To include the optional Agents service, start with the agents profile:
+
+   ```bash
+   docker compose --profile agents up --build -d
+   ```
+
    This starts all core microservices in Docker:
    - **Server**: Core API and business logic (Port: 8181)
    - **MCP Server**: Protocol interface for AI clients (Port: 8051)
@@ -156,6 +162,50 @@ sudo yum install make
 | `make clean`      | Remove containers and volumes (with confirmation)       |
 
 </details>
+
+## ✍️ Memory Guidelines
+
+To keep shared memory crisp for agents and humans:
+
+- Max 50 lines per memory file
+- Max 500 tokens (approx; uses tiktoken if available)
+- Keep actionable, information-dense bullets; avoid redundancy
+
+Run the linter locally:
+
+```bash
+make memory-lint                  # defaults to memory/**/*.md and agents/memory/**/*.md
+make memory-lint PATHS="docs/memory/**/*.md"   # custom paths
+```
+
+The linter prints JSON to stdout and human-readable violations to stderr, exiting non‑zero if limits are exceeded.
+
+## 🔌 Optional MCP: Firecrawl
+
+Use Firecrawl as an optional MCP server (do not autoload). A starter config is provided at `configs/mcp/firecrawl.json`.
+
+- Set env locally: `export FIRECRAWL_API_KEY=...` (and adjust URL if needed)
+- Point your IDE/agent to `configs/mcp/firecrawl.json` for per-task runs only
+- Keep default MCP set minimal; include Firecrawl only when a task requires crawling
+
+## 🧩 Context Bundles
+
+Track reads and key findings for a task run in an append‑only JSONL bundle under `agents/context-bundles/<timestamp>-<slug>/bundle.jsonl`.
+
+- Create a bundle and set it current:
+  - `make bundle-new PURPOSE="Kickoff context"`
+- Append a file's contents:
+  - `make bundle-read PATH=AGENTS.md`
+- Append findings bullets:
+  - `make bundle-findings BULLETS='["Risk A","Risk B"]'`
+- Load and summarize the current (or chosen) bundle:
+  - `make bundle-load`
+  - `make bundle-load BUNDLE=agents/context-bundles/<dir>`
+
+Notes:
+- The writer maintains `agents/context-bundles/.current` to target the active bundle.
+- All operations fail fast with explicit errors (missing paths, invalid bullets JSON).
+- Commit bundle artifacts when they capture important decisions/findings for review.
 
 ## 🔄 Database Reset (Start Fresh if Needed)
 
@@ -473,6 +523,22 @@ docker system prune -f
 
 # Restart Docker Desktop (if applicable)
 ```
+
+#### Missing Docker network / orphaned networks
+
+If Compose reports a missing network or shows a long hash like `77481b5...`:
+
+- About the name: this repo pins the network to `archon_app-network` for stability.
+- Quick fix:
+  - `docker compose down`
+  - `docker network prune -f`
+  - `docker compose up --build -d`
+- Verify:
+  - `docker network ls | grep archon_app-network`
+- Still stuck? Remove stopped containers referencing old networks and retry:
+  - `docker container prune -f`
+
+Note: Compose auto-creates `archon_app-network`; you shouldn’t need to run `docker network create` manually.
 
 #### Hot Reload Not Working
 
