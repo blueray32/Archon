@@ -11,6 +11,7 @@ import { VoiceEnabledChatPanel } from "../agent-chat/VoiceEnabledChatPanel";
 import { BackendStartupError } from "../BackendStartupError";
 import { useBackendHealth } from "./hooks/useBackendHealth";
 import { Navigation } from "./Navigation";
+import { useAgentState } from "../../agents/AgentContext";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -62,6 +63,7 @@ function BackendStatus({ isHealthLoading, isBackendError, healthData }: BackendS
  * Uses CSS Grid for layout instead of fixed positioning
  */
 export function MainLayout({ children, className }: MainLayoutProps) {
+  const { selectedAgent } = useAgentState();
   const navigate = useNavigate();
   const location = useLocation();
   const { showToast } = useToast();
@@ -157,7 +159,7 @@ export function MainLayout({ children, className }: MainLayoutProps) {
             type="button"
             onClick={() => setIsChatOpen(true)}
             className="w-14 h-14 rounded-full flex items-center justify-center backdrop-blur-md bg-gradient-to-b from-blue-100/80 to-blue-50/60 dark:from-blue-500/20 dark:to-blue-600/20 shadow-[0_0_15px_rgba(59,130,246,0.4)] dark:shadow-[0_0_15px_rgba(59,130,246,0.6)] hover:shadow-[0_0_20px_rgba(59,130,246,0.6)] transition-all duration-300 overflow-hidden border border-blue-300 dark:border-blue-500/50 hover:border-blue-400 dark:hover:border-blue-400"
-            aria-label="Open Spanish Tutor"
+            aria-label={`Open ${selectedAgent?.label || 'Agent'} Chat`}
           >
             <img
               src="/logo-neon.png"
@@ -167,8 +169,8 @@ export function MainLayout({ children, className }: MainLayoutProps) {
           </button>
           {/* Tooltip */}
           <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-gray-800 dark:bg-gray-900 text-white text-sm rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
-            <div className="font-medium">Spanish Tutor</div>
-            <div className="text-xs text-gray-300">Practice Spanish with AI</div>
+            <div className="font-medium">{selectedAgent?.label || 'Agent Chat'}</div>
+            <div className="text-xs text-gray-300">{selectedAgent?.description || 'Chat with your selected agent'}</div>
             <div className="absolute bottom-0 right-6 transform translate-y-1/2 rotate-45 w-2 h-2 bg-gray-800 dark:bg-gray-900"></div>
           </div>
         </div>

@@ -18,7 +18,7 @@ interface ArchonChatPanelProps {
  * loading states, and input functionality connected to real AI agents.
  */
 export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
-  const { selectedAgentId } = useAgentState();
+  const { selectedAgentId, selectedAgent } = useAgentState();
   // State for messages, session, and other chat functionality
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -228,6 +228,10 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
       minute: '2-digit'
     });
   };
+  const placeholderForAgent = () => {
+    const label = selectedAgent?.label || 'Agent';
+    return `Message ${label}...`;
+  };
   /**
    * Handle manual reconnection
    */
@@ -428,9 +432,9 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
                 value={inputValue} 
                 onChange={e => setInputValue(e.target.value)} 
                 placeholder={
-                  connectionStatus === 'offline' ? "Chat is offline..." :
-                  connectionStatus === 'connecting' ? "Connecting..." :
-                  "¡Hola! Practice Spanish here..."
+                  connectionStatus === 'offline' ? 'Chat is offline...' :
+                  connectionStatus === 'connecting' ? 'Connecting...' :
+                  placeholderForAgent()
                 }
                 disabled={connectionStatus !== 'online'} 
                 className="w-full bg-transparent text-gray-800 dark:text-white placeholder:text-gray-500 dark:placeholder:text-zinc-600 focus:outline-none disabled:opacity-50" 

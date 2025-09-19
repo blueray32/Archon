@@ -21,7 +21,7 @@ interface VoiceEnabledChatPanelProps {
  * Adds speech-to-text input and text-to-speech output to the Spanish tutor chat
  */
 export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props => {
-  const { selectedAgentId } = useAgentState();
+  const { selectedAgentId, selectedAgent } = useAgentState();
   // Existing chat state
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -928,12 +928,12 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
               type="text"
               value={inputValue}
               onChange={e => setInputValue(e.target.value)}
-              placeholder={
-                connectionStatus === 'offline' ? "Chat is offline..." :
-                connectionStatus === 'connecting' ? "Connecting..." :
-                isVoiceEnabled ? "Habla o escribe a Profesora María..." :
-                "¡Hola! Practice Spanish here..."
-              }
+                placeholder={
+                  connectionStatus === 'offline' ? 'Chat is offline...' :
+                  connectionStatus === 'connecting' ? 'Connecting...' :
+                  isVoiceEnabled ? `Speak or type to ${selectedAgent?.label || 'Agent'}...` :
+                  `Message ${selectedAgent?.label || 'Agent'}...`
+                }
               disabled={connectionStatus !== 'online'}
               className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
               onKeyDown={e => {
