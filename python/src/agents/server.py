@@ -134,8 +134,16 @@ async def lifespan(app: FastAPI):
             model = AGENT_CREDENTIALS.get(model_key, "openai:gpt-4o-mini")
             logger.info(f"Using model: {model} for {name} agent")
 
-            # agent_class may be a class or a factory returning an instance
-            agent_instance = agent_class(model=model) if isinstance(agent_class, type) else agent_class
+            # agent_class may be a class, a factory function, or an instance
+            if isinstance(agent_class, type):
+                agent_instance = agent_class(model=model)
+            elif callable(agent_class):
+                try:
+                    agent_instance = agent_class(model=model)
+                except TypeError:
+                    agent_instance = agent_class()
+            else:
+                agent_instance = agent_class
             app.state.agents[name] = agent_instance
             logger.info(f"Successfully initialized {name} agent with model: {model}")
         except Exception as e:

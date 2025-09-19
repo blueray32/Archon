@@ -131,6 +131,20 @@ services:
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - ARCHON_AGENTS_PORT=${ARCHON_AGENTS_PORT:-8052}
       - ARCHON_SERVER_PORT=${ARCHON_SERVER_PORT:-8181}
+      # --- Dynamous Pydantic AI agent override (uncomment and set) ---
+      - PYDANTIC_AI_AGENT_CLASS=${PYDANTIC_AI_AGENT_CLASS:-}
+      - DYNAMOUS_AGENT_FACTORY=${DYNAMOUS_AGENT_FACTORY:-}
+      # Vendor agent LLM/Embeddings configuration (optional; used by vendor code)
+      - LLM_PROVIDER=${LLM_PROVIDER:-}
+      - LLM_BASE_URL=${LLM_BASE_URL:-}
+      - LLM_API_KEY=${LLM_API_KEY:-}
+      - LLM_CHOICE=${LLM_CHOICE:-}
+      - EMBEDDING_PROVIDER=${EMBEDDING_PROVIDER:-}
+      - EMBEDDING_BASE_URL=${EMBEDDING_BASE_URL:-}
+      - EMBEDDING_API_KEY=${EMBEDDING_API_KEY:-}
+      - EMBEDDING_MODEL_CHOICE=${EMBEDDING_MODEL_CHOICE:-}
+      - BRAVE_API_KEY=${BRAVE_API_KEY:-}
+      - SEARXNG_BASE_URL=${SEARXNG_BASE_URL:-}
     networks:
       - app-network
     healthcheck:

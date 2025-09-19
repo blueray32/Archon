@@ -1,6 +1,6 @@
 import { AlertCircle, WifiOff } from "lucide-react";
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useToast } from "../../features/ui/hooks/useToast";
 import { cn } from "../../lib/utils";
@@ -68,6 +68,7 @@ export function MainLayout({ children, className }: MainLayoutProps) {
   const location = useLocation();
   const { showToast } = useToast();
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [agentsOnline, setAgentsOnline] = useState<null | boolean>(null);
 
   // Backend health monitoring with TanStack Query
   const {
@@ -131,6 +132,30 @@ export function MainLayout({ children, className }: MainLayoutProps) {
     }
   }, [isBackendError, backendError, showToast]);
 
+  // Lightweight Agents service health polling for a simple header pill
+  const pollAgentsStatus = useCallback(async () => {
+    try {
+      const res = await fetch('/api/agent-chat/status', { method: 'GET' });
+      if (!res.ok) {
+        setAgentsOnline(false);
+        return;
+      }
+      const data = await res.json();
+      setAgentsOnline(Boolean(data?.online));
+    } catch {
+      setAgentsOnline(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    let timer: number | null = null;
+    pollAgentsStatus();
+    timer = window.setInterval(pollAgentsStatus, 20000);
+    return () => {
+      if (timer) window.clearInterval(timer);
+    };
+  }, [pollAgentsStatus]);
+
   return (
     <div className={cn("relative min-h-screen bg-white dark:bg-black overflow-hidden", className)}>
       {/* TEMPORARY: Show backend startup error using old component */}
@@ -143,6 +168,22 @@ export function MainLayout({ children, className }: MainLayoutProps) {
       <div className="fixed left-6 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-4">
         <Navigation />
         <BackendStatus isHealthLoading={isHealthLoading} isBackendError={isBackendError} healthData={healthData} />
+        {agentsOnline === null ? (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 text-sm">
+            <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse" />
+            <span>Agents Checking…</span>
+          </div>
+        ) : agentsOnline ? (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 text-sm">
+            <div className="w-2 h-2 bg-green-500 rounded-full" />
+            <span>Agents Online</span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 text-sm">
+            <div className="w-2 h-2 bg-red-500 rounded-full" />
+            <span>Agents Offline</span>
+          </div>
+        )}
       </div>
 
       {/* Main Content Area - matches old layout exactly */}
