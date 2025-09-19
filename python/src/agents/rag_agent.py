@@ -35,6 +35,8 @@ class RagDependencies(ArchonDependencies):
     source_prioritization: bool = True  # Enable source quality prioritization
     result_clustering: bool = True  # Enable result deduplication and clustering
     progress_callback: Any | None = None  # Callback for progress updates
+    # Enable PRP-style context build and guidance
+    prp_mode: bool = False
 
 
 class SearchResult(BaseModel):
@@ -157,6 +159,21 @@ class RagAgent(BaseAgent[RagDependencies, str]):
 - Max Results: {ctx.deps.match_count}
 - Timestamp: {datetime.now().isoformat()}
 """
+
+        # Optional PRP guidance for specialized agent modes (e.g., Pydantic AI)
+        @agent.system_prompt
+        async def add_prp_guidance(ctx: RunContext[RagDependencies]) -> str:
+            if not getattr(ctx.deps, "prp_mode", False):
+                return ""
+            return (
+                """
+PRP Mode Enabled:
+- Build a concise, replayable context: prefer prime sources over broad reads
+- Use RAG to fetch only what’s necessary; keep answers short and structured
+- Avoid heavy I/O inline; if needed, describe steps succinctly
+- Cite sources when possible and include brief, actionable follow‑ups
+"""
+            )
 
         # Register tools for RAG operations
         @agent.tool

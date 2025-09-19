@@ -189,6 +189,7 @@ async def run_agent(request: AgentRequest):
                 source_filter=request.context.get("source_filter") if request.context else None,
                 match_count=request.context.get("match_count", 5) if request.context else 5,
                 project_id=request.context.get("project_id") if request.context else None,
+                prp_mode=(request.agent_type == "pydantic_ai"),
             )
         elif request.agent_type == "document":
             from .document_agent import DocumentDependencies
@@ -293,6 +294,7 @@ async def stream_agent(agent_type: str, request: AgentRequest):
                     source_filter=request.context.get("source_filter") if request.context else None,
                     match_count=request.context.get("match_count", 5) if request.context else 5,
                     project_id=request.context.get("project_id") if request.context else None,
+                    prp_mode=(agent_type == "pydantic_ai"),
                 )
             elif agent_type == "document":
                 from .document_agent import DocumentDependencies
