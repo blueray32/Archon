@@ -107,80 +107,94 @@ async def send_message(session_id: str, request: dict):
         session = sessions[session_id]
         agent_type = session.get("agent_type", "spanish_tutor")
 
-        # Prepare request for agents service
-        agents_request = {
-            "agent_type": agent_type,
+        # Prepare common request body
+        base_request = {
             "prompt": request.get("message", ""),
-            "context": request.get("context", {
-                "student_level": "intermediate",
-                "conversation_mode": "casual"
-            })
+            "context": request.get(
+                "context",
+                {"student_level": "intermediate", "conversation_mode": "casual"},
+            ),
         }
 
-        # Send to agents service
+        # If pydantic_ai isn't available on the agents service, fall back to rag
+        types_to_try = [agent_type]
+        if agent_type == "pydantic_ai":
+            types_to_try.append("rag")
+
         agents_port = os.getenv("ARCHON_AGENTS_PORT", "8052")
         agents_host = os.getenv("ARCHON_AGENTS_HOST", "archon-agents")
         async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"http://{agents_host}:{agents_port}/agents/run",
-                json=agents_request,
-                timeout=8.0,
-            )
-
-            # If the agents service doesn't know this agent_type, fall back gracefully
-            if response.status_code == 400:
+            success = False
+            final_error_text = None
+            for idx, t in enumerate(types_to_try):
                 try:
-                    body_text = response.text
-                except Exception:
-                    body_text = ""
-                if "Unknown agent type" in body_text and agent_type == "pydantic_ai":
-                    # Retry once with a compatible fallback type
-                    fallback_request = dict(agents_request)
-                    fallback_request["agent_type"] = "rag"
-                    logger.info("Falling back to 'rag' agent_type for pydantic_ai request")
+                    agents_request = dict(base_request)
+                    agents_request["agent_type"] = t
                     response = await client.post(
                         f"http://{agents_host}:{agents_port}/agents/run",
-                        json=fallback_request,
+                        json=agents_request,
                         timeout=8.0,
                     )
 
-            if response.status_code == 200:
-                result = response.json()
-                if result.get("success") and result.get("result"):
-                    output = result["result"].get("output") if isinstance(result["result"], dict) else None
-                    if not output:
-                        # Fallback: stringify result if structure unexpected
+                    # Handle 400 Unknown agent type responses
+                    if response.status_code == 400:
+                        body_text = ""
                         try:
-                            import json
-                            output = json.dumps(result["result"], ensure_ascii=False)
+                            body_text = response.text
                         except Exception:
-                            output = str(result.get("result"))
-                    agent_msg = {
-                        "id": str(uuid.uuid4()),
-                        "content": output,
-                        "sender": "agent",
-                        "timestamp": datetime.now().isoformat(),
-                        "agent_type": agent_type,
-                    }
-                    sessions[session_id]["messages"].append(agent_msg)
-                    logger.info(f"Agent {agent_type} responded successfully")
-                else:
-                    logger.error(f"Agent response failed: {result}")
-                    # If the agent returned an error message, surface it to user
-                    error_text = result.get("error") or "Agent service responded without a result. Please try again later."
-                    fallback_msg = {
-                        "id": str(uuid.uuid4()),
-                        "content": f"Agent error: {error_text}",
-                        "sender": "agent",
-                        "timestamp": datetime.now().isoformat(),
-                        "agent_type": agent_type,
-                    }
-                    sessions[session_id]["messages"].append(fallback_msg)
-            else:
-                logger.error(f"Agents service returned {response.status_code}")
+                            pass
+                        if "Unknown agent type" in body_text and t == "pydantic_ai":
+                            logger.info("Agents service unknown 'pydantic_ai'; trying fallback next")
+                            continue  # try next type
+
+                    if response.status_code == 200:
+                        result = response.json()
+                        # Some services return 200 with success=false; detect and retry if unknown
+                        if not result.get("success"):
+                            err_text = str(result.get("error") or "")
+                            if "Unknown agent type" in err_text and t == "pydantic_ai":
+                                logger.info("Agents returned 200 with Unknown agent type error; trying fallback next")
+                                continue  # try next type
+                            final_error_text = err_text or f"Unknown error (type={t})"
+                            continue
+
+                        # Success path
+                        output = result.get("result")
+                        if isinstance(output, dict):
+                            content = output.get("output")
+                        else:
+                            content = None
+                        if not content:
+                            try:
+                                import json
+                                content = json.dumps(output, ensure_ascii=False)
+                            except Exception:
+                                content = str(output)
+
+                        agent_msg = {
+                            "id": str(uuid.uuid4()),
+                            "content": content,
+                            "sender": "agent",
+                            "timestamp": datetime.now().isoformat(),
+                            "agent_type": t,
+                        }
+                        sessions[session_id]["messages"].append(agent_msg)
+                        logger.info(f"Agent {t} responded successfully")
+                        success = True
+                        break
+                    else:
+                        final_error_text = f"HTTP {response.status_code}"
+                        # Try next type if available
+                        continue
+                except Exception as e:
+                    final_error_text = str(e)
+                    continue
+
+            if not success:
+                # Provide a helpful fallback message
                 fallback_msg = {
                     "id": str(uuid.uuid4()),
-                    "content": "Agent service is unavailable (HTTP error). Please check the Agents service.",
+                    "content": f"Agent error: {final_error_text or 'Service unavailable'}",
                     "sender": "agent",
                     "timestamp": datetime.now().isoformat(),
                     "agent_type": agent_type,
