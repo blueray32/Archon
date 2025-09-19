@@ -6,6 +6,7 @@ import { ArchonLoadingSpinner, EdgeLitEffect } from '../animations/Animations';
 import { agentChatService, ChatMessage } from '../../services/agentChatService';
 import { AgentSwitcher } from '../../agents/AgentSwitcher';
 import { useAgentState } from '../../agents/AgentContext';
+import { getAgentTypeFor } from '../../agents/registry';
 
 /**
  * Props for the VoiceEnabledChatPanel component
@@ -533,8 +534,9 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
       await new Promise(resolve => requestAnimationFrame(resolve));
 
       try {
-        console.log(`[CHAT PANEL] Creating session with agentType: "spanish_tutor"`);
-        const { session_id } = await agentChatService.createSession('spanish_tutor');
+        const agentType = getAgentTypeFor(selectedAgentId);
+        console.log(`[CHAT PANEL] Creating session with agentType: "${agentType}" for agentId: ${selectedAgentId}`);
+        const { session_id } = await agentChatService.createSession(agentType);
         console.log(`[CHAT PANEL] Session created with ID: ${session_id}`);
         setSessionId(session_id);
         sessionIdRef.current = session_id;

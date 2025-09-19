@@ -12,3 +12,14 @@ export const AGENTS: Agent[] = [
   { id: "researcher", label: "Researcher", description: "R&D context gatherer" },
 ];
 
+// Map UI agent ids to backend agent_type identifiers
+const AGENT_TYPE_MAP: Record<string, string> = {
+  'profesora-maria': 'spanish_tutor',
+  'reviewer': 'reviewer',
+  'researcher': 'researcher',
+};
+
+export function getAgentTypeFor(agentId: string | undefined | null): string {
+  if (!agentId) return AGENT_TYPE_MAP['profesora-maria'];
+  return AGENT_TYPE_MAP[agentId] ?? AGENT_TYPE_MAP['profesora-maria'];
+}
