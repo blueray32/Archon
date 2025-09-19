@@ -44,6 +44,22 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
   // Speech recognition language control
   type RecognitionMode = 'auto' | 'es-MX' | 'es-ES' | 'en-US';
   const [recognitionMode, setRecognitionMode] = useState<RecognitionMode>('auto');
+  // Continuous dictation (beta) and silence timeout
+  const [continuousDictation, setContinuousDictation] = useState<boolean>(() => {
+    const saved = localStorage.getItem('archonASRContinuous');
+    return saved === 'true';
+  });
+  const [silenceTimeoutMs, setSilenceTimeoutMs] = useState<number>(() => {
+    const saved = localStorage.getItem('archonASRSilenceMs');
+    const val = saved ? parseInt(saved, 10) : 900;
+    return Number.isFinite(val) ? Math.min(3000, Math.max(300, val)) : 900;
+  });
+  useEffect(() => {
+    localStorage.setItem('archonASRContinuous', String(continuousDictation));
+  }, [continuousDictation]);
+  useEffect(() => {
+    localStorage.setItem('archonASRSilenceMs', String(silenceTimeoutMs));
+  }, [silenceTimeoutMs]);
   // Confidence threshold for auto fallback (0..1)
   const [confidenceThreshold, setConfidenceThreshold] = useState<number>(() => {
     const saved = localStorage.getItem('archonASRConfidenceThreshold');
@@ -65,6 +81,7 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
   const triedFallbackRef = useRef<boolean>(false);
   const fallbackPendingRef = useRef<string | null>(null);
   const recognizedAccumRef = useRef<string>('');
+  const commitTimerRef = useRef<number | null>(null);
   // Track the last spoken message to avoid duplicates
   const lastSpokenIdRef = useRef<string | null>(null);
 
@@ -80,7 +97,7 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
 
       // Initialize speech recognition
       const recognition = new SpeechRecognition();
-      recognition.continuous = false;
+      recognition.continuous = continuousDictation;
       recognition.interimResults = true; // Enable interim results for better UX
       recognition.lang = (() => {
         // Decide initial language: if browser prefers Spanish, start with es-MX; else en-US
@@ -97,6 +114,22 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
 
       const LOW_CONFIDENCE_THRESHOLD = confidenceThreshold;
       const altLangFor = (lang: string) => (lang && lang.toLowerCase().startsWith('en') ? 'es-MX' : 'en-US');
+      const scheduleCommit = () => {
+        if (!continuousDictation) return;
+        if (commitTimerRef.current) window.clearTimeout(commitTimerRef.current);
+        commitTimerRef.current = window.setTimeout(() => {
+          const finalText = recognizedAccumRef.current.trim();
+          if (finalText) {
+            const usedLang = recognitionRef.current?.lang || getRecognitionLang();
+            recentVoiceSendsRef.current.unshift({ content: finalText, lang: usedLang, ts: Date.now() });
+            recentVoiceSendsRef.current = recentVoiceSendsRef.current.slice(0, 6);
+            console.log('ASR silence commit:', { finalText, usedLang });
+            handleSendMessage(finalText);
+            recognizedAccumRef.current = '';
+            setInputValue('');
+          }
+        }, silenceTimeoutMs) as unknown as number;
+      };
 
       recognition.onresult = (event) => {
         console.log('Speech recognition result event:', event);
@@ -156,6 +189,10 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
           console.log('ASR composed input:', composed);
           setInputValue(composed);
         }
+        // In continuous mode, schedule a commit after silence
+        if (continuousDictation) {
+          scheduleCommit();
+        }
       };
 
       recognition.onerror = (event) => {
@@ -198,19 +235,31 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
             triedFallbackRef.current = false;
           }
         } else {
-          // No fallback pending: send accumulated transcript once, if any
-          const finalText = recognizedAccumRef.current.trim();
-          if (finalText) {
-            const usedLang = recognitionRef.current?.lang || getRecognitionLang();
-            recentVoiceSendsRef.current.unshift({ content: finalText, lang: usedLang, ts: Date.now() });
-            recentVoiceSendsRef.current = recentVoiceSendsRef.current.slice(0, 6);
-            console.log('Final voice input (accumulated):', finalText);
-            handleVoiceInput(finalText);
+          if (!continuousDictation) {
+            // Single-shot mode: send accumulated transcript once, if any
+            const finalText = recognizedAccumRef.current.trim();
+            if (finalText) {
+              const usedLang = recognitionRef.current?.lang || getRecognitionLang();
+              recentVoiceSendsRef.current.unshift({ content: finalText, lang: usedLang, ts: Date.now() });
+              recentVoiceSendsRef.current = recentVoiceSendsRef.current.slice(0, 6);
+              console.log('Final voice input (accumulated):', finalText);
+              handleSendMessage(finalText);
+            }
+            // Reset for next session
+            recognizedAccumRef.current = '';
+            triedFallbackRef.current = false;
+            fallbackPendingRef.current = null;
+          } else if (isVoiceEnabled) {
+            // Continuous mode: auto-restart to keep listening
+            try {
+              recognition.lang = getRecognitionLang();
+              recognition.continuous = true;
+              console.log('Continuous mode: restarting recognition');
+              recognition.start();
+            } catch (e) {
+              console.warn('Continuous restart failed:', e);
+            }
           }
-          // Reset for next session
-          recognizedAccumRef.current = '';
-          triedFallbackRef.current = false;
-          fallbackPendingRef.current = null;
         }
       };
 
@@ -424,9 +473,14 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
       // Ensure language is set per current mode and reset fallback tracking
       const lang = getRecognitionLang();
       recognitionRef.current.lang = lang;
+      recognitionRef.current.continuous = continuousDictation;
       triedFallbackRef.current = false;
       fallbackPendingRef.current = null;
       recognizedAccumRef.current = '';
+      if (commitTimerRef.current) {
+        window.clearTimeout(commitTimerRef.current);
+        commitTimerRef.current = null;
+      }
       console.log('Starting speech recognition with lang:', lang);
       setVoiceError(null);
       recognitionRef.current.start();
@@ -444,12 +498,27 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
         setVoiceError('Failed to start voice recognition. Please try again.');
       }
     }
-  }, [voiceSupported, isVoiceEnabled, getRecognitionLang, confidenceThreshold]);
+  }, [voiceSupported, isVoiceEnabled, getRecognitionLang, confidenceThreshold, continuousDictation, silenceTimeoutMs]);
 
   // Stop voice recognition
   const stopListening = useCallback(() => {
     if (recognitionRef.current && isListening) {
       recognitionRef.current.stop();
+      // Commit any pending text immediately
+      const finalText = recognizedAccumRef.current.trim();
+      if (finalText) {
+        const usedLang = recognitionRef.current?.lang || getRecognitionLang();
+        recentVoiceSendsRef.current.unshift({ content: finalText, lang: usedLang, ts: Date.now() });
+        recentVoiceSendsRef.current = recentVoiceSendsRef.current.slice(0, 6);
+        console.log('Manual stop: committing voice input', finalText);
+        handleSendMessage(finalText);
+        recognizedAccumRef.current = '';
+        setInputValue('');
+      }
+      if (commitTimerRef.current) {
+        window.clearTimeout(commitTimerRef.current);
+        commitTimerRef.current = null;
+      }
     }
   }, [isListening]);
 
@@ -686,19 +755,46 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
                           ))}
                       </select>
                     </div>
-                    <div>
-                      <div className="text-xs font-medium text-gray-700 dark:text-gray-200 mb-1">Speech input</div>
-                      <select
-                        value={recognitionMode}
-                        onChange={(e) => setRecognitionMode(e.target.value as RecognitionMode)}
-                        className="w-full text-xs px-2 py-1 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-zinc-800 text-gray-800 dark:text-gray-100"
-                      >
-                        <option value="auto">Auto (ES if preferred)</option>
-                        <option value="es-MX">Español (México)</option>
-                        <option value="es-ES">Español (España)</option>
-                        <option value="en-US">English (US)</option>
-                      </select>
+                <div>
+                  <div className="text-xs font-medium text-gray-700 dark:text-gray-200 mb-1">Speech input</div>
+                  <select
+                    value={recognitionMode}
+                    onChange={(e) => setRecognitionMode(e.target.value as RecognitionMode)}
+                    className="w-full text-xs px-2 py-1 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-zinc-800 text-gray-800 dark:text-gray-100"
+                  >
+                    <option value="auto">Auto (ES if preferred)</option>
+                    <option value="es-MX">Español (México)</option>
+                    <option value="es-ES">Español (España)</option>
+                    <option value="en-US">English (US)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-200">
+                    <input
+                      type="checkbox"
+                      checked={continuousDictation}
+                      onChange={(e) => setContinuousDictation(e.target.checked)}
+                    />
+                    Continuous dictation (beta)
+                  </label>
+                </div>
+                {continuousDictation && (
+                  <div>
+                    <div className="flex items-center justify-between text-xs font-medium text-gray-700 dark:text-gray-200 mb-1">
+                      <span>Silence timeout</span>
+                      <span className="opacity-70">{silenceTimeoutMs} ms</span>
                     </div>
+                    <input
+                      type="range"
+                      min={300}
+                      max={3000}
+                      step={50}
+                      value={silenceTimeoutMs}
+                      onChange={(e) => setSilenceTimeoutMs(parseInt(e.target.value, 10))}
+                      className="w-full"
+                    />
+                  </div>
+                )}
                     <div>
                       <div className="flex items-center justify-between text-xs font-medium text-gray-700 dark:text-gray-200 mb-1">
                         <span>ASR confidence</span>
