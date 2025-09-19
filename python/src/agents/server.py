@@ -26,7 +26,7 @@ from pydantic import BaseModel
 # Import our PydanticAI agents
 from .document_agent import DocumentAgent
 from .rag_agent import RagAgent
-from .pydantic_ai_agent import PydanticAIAgent
+from .pydantic_ai_loader import get_pydantic_ai_agent_class
 from .spanish_tutor_agent import SpanishTutorAgent
 
 # Configure logging
@@ -58,7 +58,7 @@ AVAILABLE_AGENTS = {
     "document": DocumentAgent,
     "rag": RagAgent,
     "spanish_tutor": SpanishTutorAgent,
-    "pydantic_ai": PydanticAIAgent,
+    "pydantic_ai": get_pydantic_ai_agent_class(),
 }
 
 # Global credentials storage
@@ -134,7 +134,9 @@ async def lifespan(app: FastAPI):
             model = AGENT_CREDENTIALS.get(model_key, "openai:gpt-4o-mini")
             logger.info(f"Using model: {model} for {name} agent")
 
-            app.state.agents[name] = agent_class(model=model)
+            # agent_class may be a class or a factory returning an instance
+            agent_instance = agent_class(model=model) if isinstance(agent_class, type) else agent_class
+            app.state.agents[name] = agent_instance
             logger.info(f"Successfully initialized {name} agent with model: {model}")
         except Exception as e:
             import traceback

@@ -122,7 +122,8 @@ async def send_message(session_id: str, request: dict):
             types_to_try.append("rag")
 
         agents_port = os.getenv("ARCHON_AGENTS_PORT", "8052")
-        agents_host = os.getenv("ARCHON_AGENTS_HOST", "archon-agents")
+        agents_host_env = os.getenv("ARCHON_AGENTS_HOST")
+        host_candidates = [h for h in [agents_host_env, "archon-agents", "localhost", "127.0.0.1"] if h]
         async with httpx.AsyncClient() as client:
             success = False
             final_error_text = None
@@ -130,11 +131,22 @@ async def send_message(session_id: str, request: dict):
                 try:
                     agents_request = dict(base_request)
                     agents_request["agent_type"] = t
-                    response = await client.post(
-                        f"http://{agents_host}:{agents_port}/agents/run",
-                        json=agents_request,
-                        timeout=8.0,
-                    )
+                    response = None
+                    # Try multiple hosts for resilience
+                    for host in host_candidates:
+                        try:
+                            response = await client.post(
+                                f"http://{host}:{agents_port}/agents/run",
+                                json=agents_request,
+                                timeout=8.0,
+                            )
+                            break
+                        except Exception as e:
+                            final_error_text = str(e)
+                            response = None
+                            continue
+                    if response is None:
+                        continue
 
                     # Handle 400 Unknown agent type responses
                     if response.status_code == 400:
@@ -221,11 +233,20 @@ async def agent_chat_status():
         import httpx
         import os
         agents_port = os.getenv("ARCHON_AGENTS_PORT", "8052")
-        agents_host = os.getenv("ARCHON_AGENTS_HOST", "archon-agents")
+        agents_host_env = os.getenv("ARCHON_AGENTS_HOST")
+        host_candidates = [h for h in [agents_host_env, "archon-agents", "localhost", "127.0.0.1"] if h]
         async with httpx.AsyncClient() as client:
-            resp = await client.get(f"http://{agents_host}:{agents_port}/health", timeout=5.0)
-            ok = resp.status_code == 200
-            return {"online": ok, "status": resp.status_code, "agents_host": agents_host, "agents_port": agents_port}
+            last_error = None
+            for host in host_candidates:
+                try:
+                    resp = await client.get(f"http://{host}:{agents_port}/health", timeout=3.0)
+                    if resp.status_code == 200:
+                        return {"online": True, "status": 200, "agents_host": host, "agents_port": agents_port}
+                    last_error = f"HTTP {resp.status_code}"
+                except Exception as e:
+                    last_error = str(e)
+                    continue
+            return {"online": False, "error": last_error, "agents_hosts_tried": host_candidates, "agents_port": agents_port}
     except Exception as e:
         logger.error(f"Agents status check failed: {e}")
         return {"online": False, "error": str(e)}
