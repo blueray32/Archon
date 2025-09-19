@@ -127,6 +127,23 @@ async def send_message(session_id: str, request: dict):
                 timeout=8.0,
             )
 
+            # If the agents service doesn't know this agent_type, fall back gracefully
+            if response.status_code == 400:
+                try:
+                    body_text = response.text
+                except Exception:
+                    body_text = ""
+                if "Unknown agent type" in body_text and agent_type == "pydantic_ai":
+                    # Retry once with a compatible fallback type
+                    fallback_request = dict(agents_request)
+                    fallback_request["agent_type"] = "rag"
+                    logger.info("Falling back to 'rag' agent_type for pydantic_ai request")
+                    response = await client.post(
+                        f"http://{agents_host}:{agents_port}/agents/run",
+                        json=fallback_request,
+                        timeout=8.0,
+                    )
+
             if response.status_code == 200:
                 result = response.json()
                 if result.get("success") and result.get("result"):
