@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { Send, User, WifiOff, RefreshCw, BookOpen, Search, Mic, Volume2, VolumeX, MicOff, SlidersHorizontal, X, Filter as FilterIcon } from 'lucide-react';
+import { Send, User, WifiOff, RefreshCw, BookOpen, Search, Mic, Volume2, VolumeX, MicOff, SlidersHorizontal, X, Filter as FilterIcon, X as XIcon } from 'lucide-react';
 import * as Popover from '@radix-ui/react-popover';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { ArchonLoadingSpinner, EdgeLitEffect } from '../animations/Animations';
@@ -24,7 +24,7 @@ interface VoiceEnabledChatPanelProps {
  * Adds speech-to-text input and text-to-speech output to the Spanish tutor chat
  */
 export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props => {
-  const { selectedAgentId, selectedAgent, selectedSourceFilter, kbOnly } = useAgentState();
+  const { selectedAgentId, selectedAgent, selectedSourceFilter, kbOnly, setSelectedSourceFilter } = useAgentState();
   // Existing chat state
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -1006,10 +1006,17 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
               }}
             />
             {selectedSourceFilter && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full border border-blue-300 text-blue-700 bg-blue-50 dark:border-blue-800 dark:text-blue-300 dark:bg-blue-900/30" title={`Filter: ${selectedSourceFilter}`}>
-                <FilterIcon className="w-3 h-3 inline mr-1" />
+              <button
+                type="button"
+                onClick={() => setSelectedSourceFilter('')}
+                className="text-[10px] px-1.5 py-0.5 rounded-full border border-blue-300 text-blue-700 bg-blue-50 dark:border-blue-800 dark:text-blue-300 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 flex items-center gap-1"
+                title={`Clear filter: ${selectedSourceFilter}`}
+                aria-label="Clear source filter"
+              >
+                <FilterIcon className="w-3 h-3" />
                 Filter
-              </span>
+                <XIcon className="w-3 h-3" />
+              </button>
             )}
           </div>
 

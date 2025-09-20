@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Send, User, WifiOff, RefreshCw, BookOpen, Search, Filter as FilterIcon } from 'lucide-react';
+import { Send, User, WifiOff, RefreshCw, BookOpen, Search, Filter as FilterIcon, X as XIcon } from 'lucide-react';
 import { ArchonLoadingSpinner, EdgeLitEffect } from '../animations/Animations';
 import { agentChatService, ChatMessage } from '../../services/agentChatService';
 import { knowledgeBaseService } from '../../services/knowledgeBaseService';
@@ -21,7 +21,7 @@ interface ArchonChatPanelProps {
  * loading states, and input functionality connected to real AI agents.
  */
 export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
-  const { selectedAgentId, selectedAgent, selectedSourceFilter, kbOnly } = useAgentState();
+  const { selectedAgentId, selectedAgent, selectedSourceFilter, kbOnly, setSelectedSourceFilter } = useAgentState();
   // State for messages, session, and other chat functionality
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -503,10 +503,17 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
                 }} 
               />
               {selectedSourceFilter && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full border border-blue-300 text-blue-700 bg-blue-50 dark:border-blue-800 dark:text-blue-300 dark:bg-blue-900/30" title={`Filter: ${selectedSourceFilter}`}>
-                  <FilterIcon className="w-3 h-3 inline mr-1" />
+                <button
+                  type="button"
+                  onClick={() => setSelectedSourceFilter('')}
+                  className="text-[10px] px-1.5 py-0.5 rounded-full border border-blue-300 text-blue-700 bg-blue-50 dark:border-blue-800 dark:text-blue-300 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 flex items-center gap-1"
+                  title={`Clear filter: ${selectedSourceFilter}`}
+                  aria-label="Clear source filter"
+                >
+                  <FilterIcon className="w-3 h-3" />
                   Filter
-                </span>
+                  <XIcon className="w-3 h-3" />
+                </button>
               )}
             </div>
             {/* Send button */}
