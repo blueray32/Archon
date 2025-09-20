@@ -131,20 +131,25 @@ services:
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - ARCHON_AGENTS_PORT=${ARCHON_AGENTS_PORT:-8052}
       - ARCHON_SERVER_PORT=${ARCHON_SERVER_PORT:-8181}
-      # --- Dynamous Pydantic AI agent override (uncomment and set) ---
-      - PYDANTIC_AI_AGENT_CLASS=${PYDANTIC_AI_AGENT_CLASS:-}
-      - DYNAMOUS_AGENT_FACTORY=${DYNAMOUS_AGENT_FACTORY:-}
-      # Vendor agent LLM/Embeddings configuration (optional; used by vendor code)
-      - LLM_PROVIDER=${LLM_PROVIDER:-}
-      - LLM_BASE_URL=${LLM_BASE_URL:-}
-      - LLM_API_KEY=${LLM_API_KEY:-}
-      - LLM_CHOICE=${LLM_CHOICE:-}
-      - EMBEDDING_PROVIDER=${EMBEDDING_PROVIDER:-}
-      - EMBEDDING_BASE_URL=${EMBEDDING_BASE_URL:-}
-      - EMBEDDING_API_KEY=${EMBEDDING_API_KEY:-}
-      - EMBEDDING_MODEL_CHOICE=${EMBEDDING_MODEL_CHOICE:-}
+      - DOCKER_CONTAINER=true
+      # Dynamous Pydantic AI agent override (enabled by default; set to blank to disable)
+      - PYDANTIC_AI_AGENT_CLASS=${PYDANTIC_AI_AGENT_CLASS:-python.vendor.dynamous_agent.archon_adapter:DynamousPydanticAIAgentAdapter}
+      - DYNAMOUS_AGENT_FACTORY=${DYNAMOUS_AGENT_FACTORY:-python.vendor.4_Pydantic_AI_Agent.agent:create_agent}
+      # Vendor agent LLM/Embeddings configuration (used by vendor code)
+      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
+      - LLM_BASE_URL=${LLM_BASE_URL:-https://api.openai.com/v1}
+      - LLM_API_KEY=${LLM_API_KEY:-${OPENAI_API_KEY:-}}
+      - LLM_CHOICE=${LLM_CHOICE:-gpt-4o-mini}
+      - EMBEDDING_PROVIDER=${EMBEDDING_PROVIDER:-openai}
+      - EMBEDDING_BASE_URL=${EMBEDDING_BASE_URL:-https://api.openai.com/v1}
+      - EMBEDDING_API_KEY=${EMBEDDING_API_KEY:-${OPENAI_API_KEY:-}}
+      - EMBEDDING_MODEL_CHOICE=${EMBEDDING_MODEL_CHOICE:-text-embedding-3-small}
       - BRAVE_API_KEY=${BRAVE_API_KEY:-}
       - SEARXNG_BASE_URL=${SEARXNG_BASE_URL:-}
+    volumes:
+      - ./python/src:/app/src
+      - ./python/vendor:/app/python/vendor
+      - ./python/tests:/app/tests
     networks:
       - app-network
     healthcheck:
