@@ -8,6 +8,7 @@ import { knowledgeBaseService } from '../../services/knowledgeBaseService';
 import { AgentSwitcher } from '../../agents/AgentSwitcher';
 import { useAgentState } from '../../agents/AgentContext';
 import { getAgentTypeFor } from '../../agents/registry';
+import { SourceFilterControl } from './SourceFilterControl';
 
 /**
  * Props for the VoiceEnabledChatPanel component
@@ -23,7 +24,7 @@ interface VoiceEnabledChatPanelProps {
  * Adds speech-to-text input and text-to-speech output to the Spanish tutor chat
  */
 export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props => {
-  const { selectedAgentId, selectedAgent } = useAgentState();
+  const { selectedAgentId, selectedAgent, selectedSourceFilter } = useAgentState();
   // Existing chat state
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -673,8 +674,12 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
             knowledge_source: 'llmstxt',
             dataset_hint: 'Pydantic Documentation - Llms-Full.Txt',
             // Hint RAG to focus on Pydantic sources and your imported KB
-            source_filter: 'pydantic|ai.pydantic.dev|llms-full|ai-agent-mastery',
+            source_filter: 'pydantic|ai.pydantic.dev|llms-full|ai-agent-mastery' +
+              (selectedSourceFilter ? `|${selectedSourceFilter}` : ''),
           };
+        }
+        if (selectedSourceFilter) {
+          base.source_filter = selectedSourceFilter;
         }
         return base;
       })();
@@ -740,6 +745,7 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
         <div className="flex items-center gap-3">
           <img src="/logo-neon.png" alt="Archon" className="w-6 h-6" />
           <AgentSwitcher label="Agent" />
+          <SourceFilterControl />
           {isVoiceEnabled && (
             <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-1 rounded-full">
               Voice

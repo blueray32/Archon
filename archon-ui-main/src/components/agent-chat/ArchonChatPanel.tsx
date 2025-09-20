@@ -6,6 +6,7 @@ import { knowledgeBaseService } from '../../services/knowledgeBaseService';
 import { AgentSwitcher } from '../../agents/AgentSwitcher';
 import { useAgentState } from '../../agents/AgentContext';
 import { getAgentTypeFor } from '../../agents/registry';
+import { SourceFilterControl } from './SourceFilterControl';
 
 /**
  * Props for the ArchonChatPanel component
@@ -20,7 +21,7 @@ interface ArchonChatPanelProps {
  * loading states, and input functionality connected to real AI agents.
  */
 export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
-  const { selectedAgentId, selectedAgent } = useAgentState();
+  const { selectedAgentId, selectedAgent, selectedSourceFilter } = useAgentState();
   // State for messages, session, and other chat functionality
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -252,10 +253,13 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
             knowledge_source: 'llmstxt',
             dataset_hint: 'Pydantic Documentation - Llms-Full.Txt',
             // Hint RAG to focus on Pydantic sources and your imported KB
-            source_filter: 'pydantic|ai.pydantic.dev|llms-full|ai-agent-mastery',
+            source_filter: 'pydantic|ai.pydantic.dev|llms-full|ai-agent-mastery' +
+              (selectedSourceFilter ? `|${selectedSourceFilter}` : ''),
           };
         }
-        return {} as Record<string, any>;
+        const base: Record<string, any> = {};
+        if (selectedSourceFilter) base.source_filter = selectedSourceFilter;
+        return base;
       })();
 
       // Send message to agent via service
@@ -333,6 +337,7 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
                 <img src="/logo-neon.png" alt="Archon" className="w-6 h-6 z-10 relative" />
               </div>
               <AgentSwitcher label="Agent" />
+              <SourceFilterControl />
             </div>
           </div>
           

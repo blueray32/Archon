@@ -6,12 +6,15 @@ type AgentState = {
   selectedAgentId: string;
   setSelectedAgentId: (id: string) => void;
   selectedAgent: Agent;
+  selectedSourceFilter: string;
+  setSelectedSourceFilter: (s: string) => void;
 };
 
 const AgentCtx = createContext<AgentState | null>(null);
 
 const DEFAULT_ID = AGENTS[0]?.id ?? "profesora-maria";
 const KEY = "archon.selectedAgentId";
+const SOURCE_KEY = "archon.sourceFilter";
 
 export const AgentProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [selectedAgentId, setSelectedAgentId] = useState<string>(() => {
@@ -22,11 +25,25 @@ export const AgentProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   });
 
+  const [selectedSourceFilter, setSelectedSourceFilter] = useState<string>(() => {
+    try {
+      return localStorage.getItem(SOURCE_KEY) ?? "";
+    } catch {
+      return "";
+    }
+  });
+
   useEffect(() => {
     try {
       localStorage.setItem(KEY, selectedAgentId);
     } catch {}
   }, [selectedAgentId]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(SOURCE_KEY, selectedSourceFilter);
+    } catch {}
+  }, [selectedSourceFilter]);
 
   const selectedAgent = useMemo(
     () => AGENTS.find(a => a.id === selectedAgentId) ?? AGENTS[0] ?? { id: DEFAULT_ID, label: "Default" },
@@ -39,8 +56,10 @@ export const AgentProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       selectedAgentId,
       setSelectedAgentId,
       selectedAgent,
+      selectedSourceFilter,
+      setSelectedSourceFilter,
     }),
-    [selectedAgentId, selectedAgent]
+    [selectedAgentId, selectedAgent, selectedSourceFilter]
   );
 
   return <AgentCtx.Provider value={value}>{children}</AgentCtx.Provider>;
@@ -51,4 +70,3 @@ export const useAgentState = (): AgentState => {
   if (!ctx) throw new Error("useAgentState must be used within AgentProvider");
   return ctx;
 };
-
