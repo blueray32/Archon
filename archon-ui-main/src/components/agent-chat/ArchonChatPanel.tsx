@@ -21,7 +21,7 @@ interface ArchonChatPanelProps {
  * loading states, and input functionality connected to real AI agents.
  */
 export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
-  const { selectedAgentId, selectedAgent, selectedSourceFilter, kbOnly, setSelectedSourceFilter } = useAgentState();
+  const { selectedAgentId, selectedAgent, selectedSourceFilter, kbOnly, setSelectedSourceFilter, setKbOnly } = useAgentState();
   // State for messages, session, and other chat functionality
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -502,6 +502,18 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
                   if (e.key === 'Enter') handleSendMessage();
                 }} 
               />
+              {kbOnly && (
+                <button
+                  type="button"
+                  onClick={() => setKbOnly(false)}
+                  className="text-[10px] px-1.5 py-0.5 rounded-full border border-green-300 text-green-700 bg-green-50 dark:border-green-800 dark:text-green-300 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 flex items-center gap-1"
+                  title="Disable KB-only"
+                  aria-label="Disable KB-only"
+                >
+                  <BookOpen className="w-3 h-3" />
+                  KB
+                </button>
+              )}
               {selectedSourceFilter && (
                 <button
                   type="button"
