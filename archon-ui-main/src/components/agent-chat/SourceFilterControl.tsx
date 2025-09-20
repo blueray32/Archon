@@ -15,6 +15,8 @@ export const SourceFilterControl: React.FC<{ className?: string }> = ({ classNam
   const [includeTags, setIncludeTags] = React.useState(true);
   const [includeSourceIds, setIncludeSourceIds] = React.useState(true);
   const [includeTitles, setIncludeTitles] = React.useState(true);
+  const [knownSources, setKnownSources] = React.useState<string[]>([]);
+  const [loadingSources, setLoadingSources] = React.useState(false);
 
   React.useEffect(() => {
     setValue(selectedSourceFilter);
@@ -89,6 +91,28 @@ export const SourceFilterControl: React.FC<{ className?: string }> = ({ classNam
     }
   }, [includeSourceIds, includeTitles, includeTags, open, fetchPage]);
 
+  // Fetch known sources from backend canonical endpoint
+  const fetchKnownSources = React.useCallback(async () => {
+    setLoadingSources(true);
+    try {
+      const res = await fetch('/api/rag/sources');
+      if (!res.ok) throw new Error('failed');
+      const data = await res.json();
+      const list: string[] = Array.isArray(data?.sources)
+        ? data.sources.map((s: any) => (typeof s === 'string' ? s : s?.source_id)).filter(Boolean)
+        : Array.isArray(data) ? data : [];
+      setKnownSources(list.slice(0, 100));
+    } catch {
+      setKnownSources([]);
+    } finally {
+      setLoadingSources(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (open) fetchKnownSources();
+  }, [open, fetchKnownSources]);
+
   const toggleToken = (token: string) => {
     const tokens = value ? value.split('|').filter(Boolean) : [];
     const has = tokens.includes(token);
@@ -129,6 +153,30 @@ export const SourceFilterControl: React.FC<{ className?: string }> = ({ classNam
             </div>
 
             <div>
+              <div className="text-xs font-medium text-gray-700 dark:text-gray-200 mb-1">Known Sources</div>
+              {loadingSources ? (
+                <div className="text-xs text-gray-500">Loading…</div>
+              ) : knownSources.length === 0 ? (
+                <div className="text-xs text-gray-500">No known sources</div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2 max-h-36 overflow-auto pr-1 mb-2">
+                  {knownSources.map((s) => {
+                    const active = (value || '').split('|').filter(Boolean).includes(s);
+                    return (
+                      <label key={`ks-${s}`} className={`flex items-center gap-2 text-xs ${active ? 'text-blue-700 dark:text-blue-400' : ''}`}>
+                        <input
+                          type="checkbox"
+                          checked={active}
+                          onChange={() => toggleToken(s)}
+                          className="accent-blue-600"
+                        />
+                        <span className="truncate" title={s}>{s}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+
               <div className="flex items-center gap-3 text-xs text-gray-700 dark:text-gray-300 mb-1">
                 <label className="flex items-center gap-1">
                   <input type="checkbox" checked={includeSourceIds} onChange={(e) => setIncludeSourceIds(e.target.checked)} className="accent-blue-600" />
