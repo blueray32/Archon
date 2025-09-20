@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Send, User, WifiOff, RefreshCw, BookOpen, Search } from 'lucide-react';
+import { Send, User, WifiOff, RefreshCw, BookOpen, Search, Filter as FilterIcon } from 'lucide-react';
 import { ArchonLoadingSpinner, EdgeLitEffect } from '../animations/Animations';
 import { agentChatService, ChatMessage } from '../../services/agentChatService';
 import { knowledgeBaseService } from '../../services/knowledgeBaseService';
@@ -484,7 +484,7 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
           
           <div className="flex items-center gap-2">
             {/* Text input field */}
-            <div className="flex-1 backdrop-blur-md bg-gradient-to-b from-white/80 to-white/60 dark:from-white/10 dark:to-black/30 border border-gray-200 dark:border-zinc-800/80 rounded-md px-3 py-2 focus-within:border-blue-500 focus-within:shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all duration-200">
+            <div className="flex-1 backdrop-blur-md bg-gradient-to-b from-white/80 to-white/60 dark:from-white/10 dark:to-black/30 border border-gray-200 dark:border-zinc-800/80 rounded-md px-3 py-2 focus-within:border-blue-500 focus-within:shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all duration-200 flex items-center gap-2">
               <input 
                 type="text" 
                 value={inputValue} 
@@ -500,6 +500,12 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
                   if (e.key === 'Enter') handleSendMessage();
                 }} 
               />
+              {selectedSourceFilter && (
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full border border-blue-300 text-blue-700 bg-blue-50 dark:border-blue-800 dark:text-blue-300 dark:bg-blue-900/30" title={`Filter: ${selectedSourceFilter}`}>
+                  <FilterIcon className="w-3 h-3 inline mr-1" />
+                  Filter
+                </span>
+              )}
             </div>
             {/* Send button */}
             <button 

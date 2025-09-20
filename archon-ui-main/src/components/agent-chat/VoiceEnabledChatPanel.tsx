@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { Send, User, WifiOff, RefreshCw, BookOpen, Search, Mic, Volume2, VolumeX, MicOff, SlidersHorizontal, X } from 'lucide-react';
+import { Send, User, WifiOff, RefreshCw, BookOpen, Search, Mic, Volume2, VolumeX, MicOff, SlidersHorizontal, X, Filter as FilterIcon } from 'lucide-react';
 import * as Popover from '@radix-ui/react-popover';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { ArchonLoadingSpinner, EdgeLitEffect } from '../animations/Animations';
@@ -986,7 +986,7 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
           )}
 
           {/* Text input */}
-          <div className="flex-1 relative">
+          <div className="flex-1 relative flex items-center gap-2">
             <input
               type="text"
               value={inputValue}
@@ -1003,6 +1003,12 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
                 if (e.key === 'Enter') handleSendMessage();
               }}
             />
+            {selectedSourceFilter && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full border border-blue-300 text-blue-700 bg-blue-50 dark:border-blue-800 dark:text-blue-300 dark:bg-blue-900/30" title={`Filter: ${selectedSourceFilter}`}>
+                <FilterIcon className="w-3 h-3 inline mr-1" />
+                Filter
+              </span>
+            )}
           </div>
 
           {/* Send button */}

@@ -159,22 +159,46 @@ export const SourceFilterControl: React.FC<{ className?: string }> = ({ classNam
               ) : knownSources.length === 0 ? (
                 <div className="text-xs text-gray-500">No known sources</div>
               ) : (
-                <div className="grid grid-cols-2 gap-2 max-h-36 overflow-auto pr-1 mb-2">
-                  {knownSources.map((s) => {
-                    const active = (value || '').split('|').filter(Boolean).includes(s);
-                    return (
-                      <label key={`ks-${s}`} className={`flex items-center gap-2 text-xs ${active ? 'text-blue-700 dark:text-blue-400' : ''}`}>
-                        <input
-                          type="checkbox"
-                          checked={active}
-                          onChange={() => toggleToken(s)}
-                          className="accent-blue-600"
-                        />
-                        <span className="truncate" title={s}>{s}</span>
-                      </label>
-                    );
-                  })}
-                </div>
+                <>
+                  <div className="flex items-center justify-end gap-2 mb-1">
+                    <button
+                      className="text-[10px] px-1.5 py-0.5 rounded border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-zinc-800"
+                      onClick={() => {
+                        const current = (value || '').split('|').filter(Boolean);
+                        const all = new Set([...current, ...knownSources]);
+                        setValue(Array.from(all).join('|'));
+                      }}
+                    >
+                      Select all
+                    </button>
+                    <button
+                      className="text-[10px] px-1.5 py-0.5 rounded border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-zinc-800"
+                      onClick={() => {
+                        const current = (value || '').split('|').filter(Boolean);
+                        const filtered = current.filter((t) => !knownSources.includes(t));
+                        setValue(filtered.join('|'));
+                      }}
+                    >
+                      Deselect all
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 max-h-36 overflow-auto pr-1 mb-2">
+                    {knownSources.map((s) => {
+                      const active = (value || '').split('|').filter(Boolean).includes(s);
+                      return (
+                        <label key={`ks-${s}`} className={`flex items-center gap-2 text-xs ${active ? 'text-blue-700 dark:text-blue-400' : ''}`}>
+                          <input
+                            type="checkbox"
+                            checked={active}
+                            onChange={() => toggleToken(s)}
+                            className="accent-blue-600"
+                          />
+                          <span className="truncate" title={s}>{s}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </>
               )}
 
               <div className="flex items-center gap-3 text-xs text-gray-700 dark:text-gray-300 mb-1">
