@@ -8,6 +8,8 @@ type AgentState = {
   selectedAgent: Agent;
   selectedSourceFilter: string;
   setSelectedSourceFilter: (s: string) => void;
+  kbOnly: boolean;
+  setKbOnly: (v: boolean) => void;
 };
 
 const AgentCtx = createContext<AgentState | null>(null);
@@ -15,6 +17,7 @@ const AgentCtx = createContext<AgentState | null>(null);
 const DEFAULT_ID = AGENTS[0]?.id ?? "profesora-maria";
 const KEY = "archon.selectedAgentId";
 const SOURCE_KEY = "archon.sourceFilter";
+const KB_ONLY_KEY = "archon.kbOnly";
 
 export const AgentProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [selectedAgentId, setSelectedAgentId] = useState<string>(() => {
@@ -33,6 +36,14 @@ export const AgentProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   });
 
+  const [kbOnly, setKbOnly] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(KB_ONLY_KEY) === "true";
+    } catch {
+      return false;
+    }
+  });
+
   useEffect(() => {
     try {
       localStorage.setItem(KEY, selectedAgentId);
@@ -44,6 +55,12 @@ export const AgentProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       localStorage.setItem(SOURCE_KEY, selectedSourceFilter);
     } catch {}
   }, [selectedSourceFilter]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(KB_ONLY_KEY, String(kbOnly));
+    } catch {}
+  }, [kbOnly]);
 
   const selectedAgent = useMemo(
     () => AGENTS.find(a => a.id === selectedAgentId) ?? AGENTS[0] ?? { id: DEFAULT_ID, label: "Default" },
@@ -58,8 +75,10 @@ export const AgentProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       selectedAgent,
       selectedSourceFilter,
       setSelectedSourceFilter,
+      kbOnly,
+      setKbOnly,
     }),
-    [selectedAgentId, selectedAgent, selectedSourceFilter]
+    [selectedAgentId, selectedAgent, selectedSourceFilter, kbOnly]
   );
 
   return <AgentCtx.Provider value={value}>{children}</AgentCtx.Provider>;

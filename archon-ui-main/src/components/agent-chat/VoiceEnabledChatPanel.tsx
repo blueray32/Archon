@@ -24,7 +24,7 @@ interface VoiceEnabledChatPanelProps {
  * Adds speech-to-text input and text-to-speech output to the Spanish tutor chat
  */
 export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props => {
-  const { selectedAgentId, selectedAgent, selectedSourceFilter } = useAgentState();
+  const { selectedAgentId, selectedAgent, selectedSourceFilter, kbOnly } = useAgentState();
   // Existing chat state
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -676,11 +676,13 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
             // Hint RAG to focus on Pydantic sources and your imported KB
             source_filter: 'pydantic|ai.pydantic.dev|llms-full|ai-agent-mastery' +
               (selectedSourceFilter ? `|${selectedSourceFilter}` : ''),
+            kb_only: kbOnly,
           };
         }
         if (selectedSourceFilter) {
           base.source_filter = selectedSourceFilter;
         }
+        if (kbOnly) base.kb_only = true;
         return base;
       })();
 

@@ -37,6 +37,8 @@ class RagDependencies(ArchonDependencies):
     progress_callback: Any | None = None  # Callback for progress updates
     # Enable PRP-style context build and guidance
     prp_mode: bool = False
+    # If true, strictly prefer Knowledge Base content and avoid external sources
+    kb_only: bool = False
 
 
 class SearchResult(BaseModel):
@@ -152,12 +154,14 @@ class RagAgent(BaseAgent[RagDependencies, str]):
                 if ctx.deps.source_filter
                 else "No source filter"
             )
+            kb_mode = "ON" if getattr(ctx.deps, "kb_only", False) else "OFF"
             return f"""
 **Current Search Context:**
 - Project ID: {ctx.deps.project_id or "Global search"}
 - {source_info}
 - Max Results: {ctx.deps.match_count}
 - Timestamp: {datetime.now().isoformat()}
+- KB-only: {kb_mode}
 """
 
         # Optional PRP guidance for specialized agent modes (e.g., Pydantic AI)
@@ -172,6 +176,8 @@ PRP Mode Enabled:
 - Use RAG to fetch only what’s necessary; keep answers short and structured
 - Avoid heavy I/O inline; if needed, describe steps succinctly
 - Cite sources when possible and include brief, actionable follow‑ups
+If KB-only is ON:
+- Only use Knowledge Base sources. Do not use web or non-indexed content.
 """
             )
 

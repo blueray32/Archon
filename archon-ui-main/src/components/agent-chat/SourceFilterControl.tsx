@@ -4,7 +4,7 @@ import { Filter } from 'lucide-react';
 import { useAgentState } from '../../agents/AgentContext';
 
 export const SourceFilterControl: React.FC<{ className?: string }> = ({ className }) => {
-  const { selectedSourceFilter, setSelectedSourceFilter } = useAgentState();
+  const { selectedSourceFilter, setSelectedSourceFilter, kbOnly, setKbOnly } = useAgentState();
   const [value, setValue] = React.useState<string>(selectedSourceFilter);
   const [open, setOpen] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
@@ -152,6 +152,13 @@ export const SourceFilterControl: React.FC<{ className?: string }> = ({ classNam
               />
             </div>
 
+            <div className="flex items-center gap-2 text-xs">
+              <label className="flex items-center gap-2">
+                <input type="checkbox" className="accent-blue-600" checked={kbOnly} onChange={(e) => setKbOnly(e.target.checked)} />
+                KB only (disable non‑KB sources)
+              </label>
+            </div>
+
             <div>
               <div className="text-xs font-medium text-gray-700 dark:text-gray-200 mb-1">Known Sources</div>
               {loadingSources ? (
@@ -257,6 +264,7 @@ export const SourceFilterControl: React.FC<{ className?: string }> = ({ classNam
                 onClick={() => {
                   setValue('');
                   setSelectedSourceFilter('');
+                  setKbOnly(false);
                 }}
               >
                 Clear

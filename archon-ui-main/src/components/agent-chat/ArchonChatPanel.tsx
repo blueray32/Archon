@@ -21,7 +21,7 @@ interface ArchonChatPanelProps {
  * loading states, and input functionality connected to real AI agents.
  */
 export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
-  const { selectedAgentId, selectedAgent, selectedSourceFilter } = useAgentState();
+  const { selectedAgentId, selectedAgent, selectedSourceFilter, kbOnly } = useAgentState();
   // State for messages, session, and other chat functionality
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -255,10 +255,12 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
             // Hint RAG to focus on Pydantic sources and your imported KB
             source_filter: 'pydantic|ai.pydantic.dev|llms-full|ai-agent-mastery' +
               (selectedSourceFilter ? `|${selectedSourceFilter}` : ''),
+            kb_only: kbOnly,
           };
         }
         const base: Record<string, any> = {};
         if (selectedSourceFilter) base.source_filter = selectedSourceFilter;
+        if (kbOnly) base.kb_only = true;
         return base;
       })();
 
