@@ -9,54 +9,85 @@ export const SourceFilterControl: React.FC<{ className?: string }> = ({ classNam
   const [open, setOpen] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const [suggestions, setSuggestions] = React.useState<string[]>([]);
+  const [page, setPage] = React.useState(1);
+  const [hasMore, setHasMore] = React.useState(false);
+  const tokensSetRef = React.useRef<Set<string>>(new Set());
+  const [includeTags, setIncludeTags] = React.useState(true);
+  const [includeSourceIds, setIncludeSourceIds] = React.useState(true);
+  const [includeTitles, setIncludeTitles] = React.useState(true);
 
   React.useEffect(() => {
     setValue(selectedSourceFilter);
   }, [selectedSourceFilter]);
 
   // Fetch KB items and derive suggestion tokens (tags, source_ids, normalized titles)
-  const fetchSuggestions = React.useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch('/api/knowledge-items?per_page=100');
-      if (!res.ok) throw new Error('failed');
-      const data = await res.json();
-      const items: any[] = data?.items || [];
-      const set = new Set<string>();
-      for (const it of items) {
-        const sid = (it?.source_id || '').toString().trim();
-        if (sid) set.add(sid);
-        const title = (it?.title || '').toString().trim().toLowerCase();
-        if (title) {
-          // normalize simple tokens from title
-          const t = title.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-          if (t) set.add(t);
+  const fetchPage = React.useCallback(
+    async (nextPage: number) => {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/knowledge-items?per_page=100&page=${nextPage}`);
+        if (!res.ok) throw new Error('failed');
+        const data = await res.json();
+        const items: any[] = data?.items || [];
+        // Update hasMore based on page size
+        setHasMore(items.length === 100);
+        const set = tokensSetRef.current;
+        for (const it of items) {
+          if (includeSourceIds) {
+            const sid = (it?.source_id || '').toString().trim();
+            if (sid) set.add(sid);
+          }
+          if (includeTitles) {
+            const title = (it?.title || '').toString().trim().toLowerCase();
+            if (title) {
+              const t = title.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+              if (t) set.add(t);
+            }
+          }
+          if (includeTags) {
+            const tags: string[] = Array.isArray(it?.metadata?.tags) ? it.metadata.tags : [];
+            for (const tag of tags) {
+              const tt = (tag || '').toString().trim();
+              if (tt) set.add(tt);
+            }
+          }
         }
-        const tags: string[] = Array.isArray(it?.metadata?.tags) ? it.metadata.tags : [];
-        for (const tag of tags) {
-          const tt = (tag || '').toString().trim();
-          if (tt) set.add(tt);
-        }
+        const list = Array.from(set);
+        list.sort((a, b) => {
+          const av = selectedSourceFilter?.includes(a) ? -1 : 0;
+          const bv = selectedSourceFilter?.includes(b) ? -1 : 0;
+          return av - bv || a.localeCompare(b);
+        });
+        setSuggestions(list.slice(0, 60));
+        setPage(nextPage);
+      } catch {
+        setHasMore(false);
+      } finally {
+        setLoading(false);
       }
-      // Prefer common tokens up to 20
-      const list = Array.from(set);
-      // Sort to surface currently selected tokens first
-      list.sort((a, b) => {
-        const av = selectedSourceFilter?.includes(a) ? -1 : 0;
-        const bv = selectedSourceFilter?.includes(b) ? -1 : 0;
-        return av - bv || a.localeCompare(b);
-      });
-      setSuggestions(list.slice(0, 20));
-    } catch {
-      setSuggestions([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedSourceFilter]);
+    },
+    [includeSourceIds, includeTitles, includeTags, selectedSourceFilter]
+  );
 
   React.useEffect(() => {
-    if (open) fetchSuggestions();
-  }, [open, fetchSuggestions]);
+    if (open) {
+      // reset
+      tokensSetRef.current = new Set();
+      setSuggestions([]);
+      setPage(1);
+      fetchPage(1);
+    }
+  }, [open, fetchPage]);
+
+  // Recompute suggestions when toggles change (refetch page 1)
+  React.useEffect(() => {
+    if (open) {
+      tokensSetRef.current = new Set();
+      setSuggestions([]);
+      setPage(1);
+      fetchPage(1);
+    }
+  }, [includeSourceIds, includeTitles, includeTags, open, fetchPage]);
 
   const toggleToken = (token: string) => {
     const tokens = value ? value.split('|').filter(Boolean) : [];
@@ -98,6 +129,20 @@ export const SourceFilterControl: React.FC<{ className?: string }> = ({ classNam
             </div>
 
             <div>
+              <div className="flex items-center gap-3 text-xs text-gray-700 dark:text-gray-300 mb-1">
+                <label className="flex items-center gap-1">
+                  <input type="checkbox" checked={includeSourceIds} onChange={(e) => setIncludeSourceIds(e.target.checked)} className="accent-blue-600" />
+                  source_id
+                </label>
+                <label className="flex items-center gap-1">
+                  <input type="checkbox" checked={includeTitles} onChange={(e) => setIncludeTitles(e.target.checked)} className="accent-blue-600" />
+                  titles
+                </label>
+                <label className="flex items-center gap-1">
+                  <input type="checkbox" checked={includeTags} onChange={(e) => setIncludeTags(e.target.checked)} className="accent-blue-600" />
+                  tags
+                </label>
+              </div>
               <div className="text-xs font-medium text-gray-700 dark:text-gray-200 mb-1">Suggestions</div>
               {loading ? (
                 <div className="text-xs text-gray-500">Loading…</div>
@@ -119,6 +164,17 @@ export const SourceFilterControl: React.FC<{ className?: string }> = ({ classNam
                       </label>
                     );
                   })}
+                </div>
+              )}
+              {hasMore && (
+                <div className="flex items-center justify-center pt-2">
+                  <button
+                    className="text-xs px-2 py-1 rounded border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-zinc-800"
+                    disabled={loading}
+                    onClick={() => fetchPage(page + 1)}
+                  >
+                    {loading ? 'Loading…' : 'Load more'}
+                  </button>
                 </div>
               )}
             </div>
