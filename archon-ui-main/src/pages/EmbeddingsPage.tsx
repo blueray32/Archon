@@ -56,6 +56,15 @@ export function EmbeddingsPage() {
         });
         const msg = parts.length ? `Backfill ${form.dry_run ? 'dry-run' : 'completed'} (${res?.duration_seconds ?? 0}s) — ${parts.join(' | ')}` : 'Backfill completed';
         showToast(msg, 'success');
+        // Save last run with timestamp and request
+        try {
+          const payload = {
+            timestamp: Date.now(),
+            request: form,
+            response: res,
+          };
+          localStorage.setItem('embeddings_backfill_last_run', JSON.stringify(payload));
+        } catch {}
       } catch {
         showToast('Backfill completed', 'success');
       }
@@ -67,6 +76,14 @@ export function EmbeddingsPage() {
   });
 
   const totalMissing = useMemo(() => data?.summary?.missing ?? 0, [data]);
+  const [lastRun, setLastRun] = useState<{ timestamp: number; request: EmbeddingsBackfillRequest; response: any } | null>(null);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('embeddings_backfill_last_run');
+      if (raw) setLastRun(JSON.parse(raw));
+    } catch {}
+  }, []);
 
   return (
     <MainLayout>
@@ -121,6 +138,58 @@ export function EmbeddingsPage() {
             )}
           </div>
         </div>
+
+        {/* Last Run Banner */}
+        {lastRun && (
+          <div className="rounded-xl border border-emerald-200 dark:border-emerald-800/50 p-4 bg-emerald-50/70 dark:bg-emerald-900/20 backdrop-blur mb-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-sm text-emerald-700 dark:text-emerald-300">Last Backfill</div>
+                <div className="text-xs text-emerald-600 dark:text-emerald-400">
+                  {new Date(lastRun.timestamp).toLocaleString()} — scope: {Array.isArray(lastRun.request.tables) ? lastRun.request.tables.join(',') : (lastRun.request.tables || 'all')}, batch={lastRun.request.batch_size ?? 100}, limit={lastRun.request.limit ?? 500}, dry_run={String(lastRun.request.dry_run ?? true)}
+                </div>
+                <div className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">
+                  {(() => {
+                    try {
+                      const sum = lastRun.response?.summary || {} as Record<string, any>;
+                      const parts: string[] = [];
+                      Object.keys(sum).forEach((k) => {
+                        const s = sum[k];
+                        if (s && typeof s === 'object') parts.push(`${k}: +${s.updated ?? 0} / ${s.failed_count ?? 0} err`);
+                      });
+                      return parts.join(' | ') || 'No changes';
+                    } catch { return 'Summary unavailable'; }
+                  })()}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-500"
+                  onClick={() => {
+                    const req = lastRun.request;
+                    if (!req.dry_run) {
+                      const scope = Array.isArray(req.tables) ? req.tables.join(',') : (req.tables || 'all');
+                      const ok = window.confirm(`Re-run live backfill for: ${scope}?`);
+                      if (!ok) return;
+                    }
+                    mutation.mutate(req);
+                  }}
+                >
+                  Re-run
+                </button>
+                <button
+                  className="px-3 py-1.5 rounded-lg border border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100/50 dark:hover:bg-emerald-800/30"
+                  onClick={() => {
+                    try { localStorage.removeItem('embeddings_backfill_last_run'); } catch {}
+                    setLastRun(null);
+                  }}
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Backfill Form */}
         <div className="rounded-xl border border-zinc-200 dark:border-zinc-800/50 p-4 bg-white/60 dark:bg-zinc-900/40 backdrop-blur">
