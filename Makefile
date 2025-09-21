@@ -22,6 +22,12 @@ help:
 	@echo "  make clean      - Remove containers and volumes"
 	@echo "  make install    - Install dependencies"
 	@echo "  make check      - Check environment setup"
+	@echo "\nContext Bundle Utilities"
+	@echo "  make bundle-new PURPOSE=\"...\"       - Create a new context bundle and set it current"
+	@echo "  make bundle-read PATH=path/to/file     - Append a file's contents to current bundle"
+	@echo "  make bundle-findings BULLETS='["Risk A","Risk B"]' - Append findings bullets"
+	@echo "  make bundle-load [BUNDLE=dir]          - Print consolidated bundle summary (default current)"
+	@echo "  make memory-lint [PATHS=...]           - Check memory files (≤50 lines / ≤500 tokens)"
 
 # Install dependencies
 install:
@@ -107,3 +113,30 @@ clean:
 	fi
 
 .DEFAULT_GOAL := help
+
+# ===================== Context Bundle Targets =====================
+
+.PHONY: bundle-new bundle-read bundle-findings bundle-load
+
+bundle-new:
+	@if [ -z "$(PURPOSE)" ]; then echo "ERROR: PURPOSE is required. Example: make bundle-new PURPOSE=\"Kickoff context\""; exit 1; fi
+	@mkdir -p agents/context-bundles
+	@python3 scripts/context_bundle_writer.py new --purpose "$(PURPOSE)"
+
+bundle-read:
+	@if [ -z "$(PATH)" ]; then echo "ERROR: PATH is required. Example: make bundle-read PATH=README.md"; exit 1; fi
+	@python3 scripts/context_bundle_writer.py read --path "$(PATH)"
+
+bundle-findings:
+	@if [ -z "$(BULLETS)" ]; then echo "ERROR: BULLETS is required. Example: make bundle-findings BULLETS='[\"Risk A\",\"Risk B\"]'"; exit 1; fi
+	@python3 scripts/context_bundle_writer.py findings --bullets '$(BULLETS)'
+
+bundle-load:
+	@python3 scripts/load_bundle.py $(if $(BUNDLE),--bundle "$(BUNDLE)")
+
+# ===================== Memory Lint =====================
+
+.PHONY: memory-lint
+memory-lint:
+	@echo "Linting memory files (≤50 lines / ≤500 tokens)..."
+	@python3 scripts/lint_memory.py $(if $(PATHS),$(foreach P,$(PATHS),--paths "$(P)"),)

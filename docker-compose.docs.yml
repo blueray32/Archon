@@ -12,3 +12,9 @@ services:
       - "${ARCHON_DOCS_PORT:-3838}:80"
     networks:
       - app-network
+    restart: unless-stopped
+ 
+networks:
+  app-network:
+    name: archon_app-network
+    driver: bridge

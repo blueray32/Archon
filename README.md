@@ -39,6 +39,8 @@ This new vision for Archon replaces the old one (the agenteer). Archon used to b
 - **[Introduction Video](https://youtu.be/8pRc_s2VQIo)** - Getting started guide and vision for Archon
 - **[Archon Kanban Board](https://github.com/users/coleam00/projects/1)** - Where maintainers are managing issues/features
 - **[Dynamous AI Mastery](https://dynamous.ai)** - The birthplace of Archon - come join a vibrant community of other early AI adopters all helping each other transform their careers and businesses!
+- **[Database Migrations Guide](migration/README.md)** - How to apply schema fixes and tune hybrid search weighting
+- **[Changelog](CHANGELOG.md)** - Notable changes, fixes, and migrations
 
 ## Quick Start
 
@@ -54,13 +56,11 @@ This new vision for Archon replaces the old one (the agenteer). Archon used to b
 
 1. **Clone Repository**:
    ```bash
-   git clone -b stable https://github.com/coleam00/archon.git
+   git clone https://github.com/coleam00/archon.git
    ```
    ```bash
    cd archon
    ```
-   
-   **Note:** The `stable` branch is recommended for using Archon. If you want to contribute or try the latest features, use the `main` branch with `git clone https://github.com/coleam00/archon.git`
 2. **Environment Configuration**:
 
    ```bash
@@ -84,6 +84,12 @@ This new vision for Archon replaces the old one (the agenteer). Archon used to b
    docker compose up --build -d
    ```
 
+   To include the optional Agents service, start with the agents profile:
+
+   ```bash
+   docker compose --profile agents up --build -d
+   ```
+
    This starts all core microservices in Docker:
    - **Server**: Core API and business logic (Port: 8181)
    - **MCP Server**: Protocol interface for AI clients (Port: 8051)
@@ -103,6 +109,42 @@ Once everything is running:
 2. **Test Document Upload**: Knowledge Base → Upload a PDF
 3. **Test Projects**: Projects → Create a new project and add tasks
 4. **Integrate with your AI coding assistant**: MCP Dashboard → Copy connection config for your AI coding assistant 
+
+### Maintenance APIs (Embedding + MCP)
+
+- Embedding health: `GET /api/embeddings/health`
+  - Returns counts for crawled pages and code examples: total, missing, with_embedding.
+- Embedding backfill: `POST /api/embeddings/backfill`
+  - Body: `{ "tables": "all" | ["pages","code_examples"], "batch_size": 100, "limit": 1000, "dry_run": true, "source_id": "optional" }`
+  - Generates embeddings in batches; only updates on success; logs failures; supports dry-run.
+- MCP session init: `POST /api/mcp/session/init` → `{ session_id, mcp_url }`
+- MCP session info: `GET /api/mcp/session/info`
+  - Initializes a session then calls `session_info`; useful for debugging clients reporting missing session IDs.
+
+### Optional Background Monitors
+
+- Embeddings health logger (enabled by default): logs total/missing embeddings periodically.
+  - Env: `EMBEDDINGS_HEALTH_LOG_INTERVAL_MIN` (default: 60)
+- Embeddings backfill scheduler (disabled by default): conservative automated backfill loop.
+  - Envs:
+    - `EMBEDDINGS_AUTOBACKFILL_ENABLED` (default: false)
+    - `EMBEDDINGS_AUTOBACKFILL_INTERVAL_MIN` (default: 1440)
+    - `EMBEDDINGS_AUTOBACKFILL_LIMIT` (default: 200)
+    - `EMBEDDINGS_AUTOBACKFILL_BATCH_SIZE` (default: 50)
+    - `EMBEDDINGS_AUTOBACKFILL_TABLES` (default: "pages,code_examples")
+    - `EMBEDDINGS_AUTOBACKFILL_SOURCE_ID` (default: empty)
+    - `EMBEDDINGS_AUTOBACKFILL_DRY_RUN` (default: true)
+
+### Retrieval Evaluation Script
+
+Run a lightweight evaluation of top‑k results across queries:
+
+```bash
+python scripts/rag_eval.py --api http://localhost:8181 --k 10 \
+  --query "test" \
+  --query "embedding model" \
+  --query "pydantic test model"
+```
 
 ## Installing Make
 
@@ -158,6 +200,50 @@ sudo yum install make
 | `make clean`      | Remove containers and volumes (with confirmation)       |
 
 </details>
+
+## ✍️ Memory Guidelines
+
+To keep shared memory crisp for agents and humans:
+
+- Max 50 lines per memory file
+- Max 500 tokens (approx; uses tiktoken if available)
+- Keep actionable, information-dense bullets; avoid redundancy
+
+Run the linter locally:
+
+```bash
+make memory-lint                  # defaults to memory/**/*.md and agents/memory/**/*.md
+make memory-lint PATHS="docs/memory/**/*.md"   # custom paths
+```
+
+The linter prints JSON to stdout and human-readable violations to stderr, exiting non‑zero if limits are exceeded.
+
+## 🔌 Optional MCP: Firecrawl
+
+Use Firecrawl as an optional MCP server (do not autoload). A starter config is provided at `configs/mcp/firecrawl.json`.
+
+- Set env locally: `export FIRECRAWL_API_KEY=...` (and adjust URL if needed)
+- Point your IDE/agent to `configs/mcp/firecrawl.json` for per-task runs only
+- Keep default MCP set minimal; include Firecrawl only when a task requires crawling
+
+## 🧩 Context Bundles
+
+Track reads and key findings for a task run in an append‑only JSONL bundle under `agents/context-bundles/<timestamp>-<slug>/bundle.jsonl`.
+
+- Create a bundle and set it current:
+  - `make bundle-new PURPOSE="Kickoff context"`
+- Append a file's contents:
+  - `make bundle-read PATH=AGENTS.md`
+- Append findings bullets:
+  - `make bundle-findings BULLETS='["Risk A","Risk B"]'`
+- Load and summarize the current (or chosen) bundle:
+  - `make bundle-load`
+  - `make bundle-load BUNDLE=agents/context-bundles/<dir>`
+
+Notes:
+- The writer maintains `agents/context-bundles/.current` to target the active bundle.
+- All operations fail fast with explicit errors (missing paths, invalid bullets JSON).
+- Commit bundle artifacts when they capture important decisions/findings for review.
 
 ## 🔄 Database Reset (Start Fresh if Needed)
 
@@ -475,6 +561,22 @@ docker system prune -f
 
 # Restart Docker Desktop (if applicable)
 ```
+
+#### Missing Docker network / orphaned networks
+
+If Compose reports a missing network or shows a long hash like `77481b5...`:
+
+- About the name: this repo pins the network to `archon_app-network` for stability.
+- Quick fix:
+  - `docker compose down`
+  - `docker network prune -f`
+  - `docker compose up --build -d`
+- Verify:
+  - `docker network ls | grep archon_app-network`
+- Still stuck? Remove stopped containers referencing old networks and retry:
+  - `docker container prune -f`
+
+Note: Compose auto-creates `archon_app-network`; you shouldn’t need to run `docker network create` manually.
 
 #### Hot Reload Not Working
 

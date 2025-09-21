@@ -4,7 +4,7 @@ import { Toggle } from '../ui/Toggle';
 import { Card } from '../ui/Card';
 import { useTheme } from '../../contexts/ThemeContext';
 import { credentialsService } from '../../services/credentialsService';
-import { useToast } from '../../features/ui/hooks/useToast';
+import { useToast } from '../../contexts/ToastContext';
 import { serverHealthService } from '../../services/serverHealthService';
 
 export const FeaturesSection = () => {
@@ -36,11 +36,12 @@ export const FeaturesSection = () => {
       setLoading(true);
       
       // Load both Logfire and Projects settings, plus check projects schema
-      const [logfireResponse, projectsResponse, projectsHealthResponse, disconnectScreenRes] = await Promise.all([
+      const [logfireResponse, projectsResponse, projectsHealthResponse, disconnectScreenRes, agentsResponse] = await Promise.all([
         credentialsService.getCredential('LOGFIRE_ENABLED').catch(() => ({ value: undefined })),
         credentialsService.getCredential('PROJECTS_ENABLED').catch(() => ({ value: undefined })),
         fetch(`${credentialsService['baseUrl']}/api/projects/health`).catch(() => null),
-        credentialsService.getCredential('DISCONNECT_SCREEN_ENABLED').catch(() => ({ value: 'true' }))
+        credentialsService.getCredential('DISCONNECT_SCREEN_ENABLED').catch(() => ({ value: 'true' })),
+        credentialsService.getCredential('AGENTS_ENABLED').catch(() => ({ value: 'true' }))
       ]);
       
       // Set Logfire setting
@@ -52,7 +53,10 @@ export const FeaturesSection = () => {
       
       // Set Disconnect Screen setting
       setDisconnectScreenEnabled(disconnectScreenRes.value === 'true');
-      
+
+      // Set Agents setting
+      setAgentsEnabled(agentsResponse.value === 'true');
+
       // Check projects schema health
       console.log('🔍 Projects health response:', {
         response: projectsHealthResponse,
@@ -97,6 +101,7 @@ export const FeaturesSection = () => {
       setLogfireEnabled(false);
       setProjectsEnabled(true);
       setDisconnectScreenEnabled(true);
+      setAgentsEnabled(true);
       setProjectsSchemaValid(false);
       setProjectsSchemaError('Failed to load settings');
     } finally {
@@ -174,7 +179,7 @@ export const FeaturesSection = () => {
 
   const handleDisconnectScreenToggle = async (checked: boolean) => {
     if (loading) return;
-    
+
     try {
       setLoading(true);
       setDisconnectScreenEnabled(checked);
@@ -182,13 +187,41 @@ export const FeaturesSection = () => {
       await serverHealthService.updateSettings(checked);
 
       showToast(
-        checked ? 'Disconnect Screen Enabled' : 'Disconnect Screen Disabled', 
+        checked ? 'Disconnect Screen Enabled' : 'Disconnect Screen Disabled',
         checked ? 'success' : 'warning'
       );
     } catch (error) {
       console.error('Failed to update disconnect screen setting:', error);
       setDisconnectScreenEnabled(!checked);
       showToast('Failed to update disconnect screen setting', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAgentsToggle = async (checked: boolean) => {
+    if (loading) return;
+
+    try {
+      setLoading(true);
+      setAgentsEnabled(checked);
+
+      await credentialsService.createCredential({
+        key: 'AGENTS_ENABLED',
+        value: checked.toString(),
+        is_encrypted: false,
+        category: 'features',
+        description: 'Enable or disable AI agents functionality'
+      });
+
+      showToast(
+        checked ? 'Agents Enabled Successfully!' : 'Agents Now Disabled',
+        checked ? 'success' : 'warning'
+      );
+    } catch (error) {
+      console.error('Failed to update agents setting:', error);
+      setAgentsEnabled(!checked);
+      showToast('Failed to update Agents setting', 'error');
     } finally {
       setLoading(false);
     }
@@ -255,8 +288,7 @@ export const FeaturesSection = () => {
           </div>
           */}
 
-          {/* COMMENTED OUT FOR FUTURE RELEASE - Agents Toggle */}
-          {/*
+          {/* Agents Toggle */}
           <div className="flex items-center gap-4 p-4 rounded-xl bg-gradient-to-br from-green-500/10 to-green-600/5 backdrop-blur-sm border border-green-500/20 shadow-lg">
             <div className="flex-1 min-w-0">
               <p className="font-medium text-gray-800 dark:text-white">
@@ -267,10 +299,15 @@ export const FeaturesSection = () => {
               </p>
             </div>
             <div className="flex-shrink-0">
-              <Toggle checked={agentsEnabled} onCheckedChange={setAgentsEnabled} accentColor="green" icon={<Bot className="w-5 h-5" />} />
+              <Toggle
+                checked={agentsEnabled}
+                onCheckedChange={handleAgentsToggle}
+                accentColor="green"
+                icon={<Bot className="w-5 h-5" />}
+                disabled={loading}
+              />
             </div>
           </div>
-          */}
 
           {/* Pydantic Logfire Toggle */}
           <div className="flex items-center gap-4 p-4 rounded-xl bg-gradient-to-br from-orange-500/10 to-orange-600/5 backdrop-blur-sm border border-orange-500/20 shadow-lg">

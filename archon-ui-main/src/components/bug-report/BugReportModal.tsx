@@ -5,13 +5,12 @@ import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { Card } from "../ui/Card";
 import { Select } from "../ui/Select";
-import { useToast } from "../../features/ui/hooks/useToast";
+import { useToast } from "../../contexts/ToastContext";
 import {
   bugReportService,
   BugContext,
   BugReportData,
 } from "../../services/bugReportService";
-import { copyToClipboard } from "../../features/shared/utils/clipboard";
 
 interface BugReportModalProps {
   isOpen: boolean;
@@ -100,21 +99,13 @@ export const BugReportModal: React.FC<BugReportModalProps> = ({
         // Fallback: copy to clipboard
         const formattedReport =
           bugReportService.formatReportForClipboard(bugReportData);
-        const clipboardResult = await copyToClipboard(formattedReport);
+        await navigator.clipboard.writeText(formattedReport);
 
-        if (clipboardResult.success) {
-          showToast(
-            "Failed to create GitHub issue, but bug report was copied to clipboard. Please paste it in a new GitHub issue.",
-            "warning",
-            10000,
-          );
-        } else {
-          showToast(
-            "Failed to create GitHub issue and could not copy to clipboard. Please report manually.",
-            "error",
-            10000,
-          );
-        }
+        showToast(
+          "Failed to create GitHub issue, but bug report was copied to clipboard. Please paste it in a new GitHub issue.",
+          "warning",
+          10000,
+        );
       }
     } catch (error) {
       console.error("Bug report submission failed:", error);
@@ -127,15 +118,15 @@ export const BugReportModal: React.FC<BugReportModalProps> = ({
     }
   };
 
-  const handleCopyToClipboard = async () => {
+  const copyToClipboard = async () => {
     const bugReportData: BugReportData = { ...report, context };
     const formattedReport =
       bugReportService.formatReportForClipboard(bugReportData);
 
-    const result = await copyToClipboard(formattedReport);
-    if (result.success) {
+    try {
+      await navigator.clipboard.writeText(formattedReport);
       showToast("Bug report copied to clipboard", "success");
-    } else {
+    } catch {
       showToast("Failed to copy to clipboard", "error");
     }
   };
@@ -381,7 +372,7 @@ export const BugReportModal: React.FC<BugReportModalProps> = ({
                   <Button
                     type="button"
                     variant="ghost"
-                    onClick={handleCopyToClipboard}
+                    onClick={copyToClipboard}
                     className="sm:order-1"
                   >
                     <Copy className="w-4 h-4 mr-2" />

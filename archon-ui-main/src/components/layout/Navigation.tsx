@@ -1,5 +1,6 @@
-import { BookOpen, Settings } from "lucide-react";
+import { BookOpen, Settings, Database, BarChart2 } from "lucide-react";
 import type React from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 // TEMPORARY: Use old SettingsContext until settings are migrated
 import { useSettings } from "../../contexts/SettingsContext";
@@ -25,6 +26,35 @@ interface NavigationProps {
 export function Navigation({ className }: NavigationProps) {
   const location = useLocation();
   const { projectsEnabled } = useSettings();
+  const [missingEmbeddings, setMissingEmbeddings] = useState<number>(0);
+
+  // Fetch embeddings health periodically to surface missing count as a badge
+  useEffect(() => {
+    let active = true;
+    let timer: number | undefined;
+
+    const fetchHealth = async () => {
+      try {
+        const res = await fetch("/api/embeddings/health", { signal: AbortSignal.timeout(2500) });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!active) return;
+        const missing = Number(data?.summary?.missing ?? 0);
+        setMissingEmbeddings(Number.isFinite(missing) ? missing : 0);
+      } catch {
+        // ignore
+      }
+    };
+
+    fetchHealth();
+    // Refresh every 60s
+    timer = window.setInterval(fetchHealth, 60000);
+
+    return () => {
+      active = false;
+      if (timer) window.clearInterval(timer);
+    };
+  }, []);
 
   // Navigation items configuration
   const navigationItems: NavigationItem[] = [
@@ -52,6 +82,18 @@ export function Navigation({ className }: NavigationProps) {
         </svg>
       ),
       label: "MCP Server",
+      enabled: true,
+    },
+    {
+      path: "/embeddings",
+      icon: <Database className="h-5 w-5" />,
+      label: "Embeddings",
+      enabled: true,
+    },
+    {
+      path: "/eval",
+      icon: <BarChart2 className="h-5 w-5" />,
+      label: "Eval",
       enabled: true,
     },
     {
@@ -156,7 +198,17 @@ export function Navigation({ className }: NavigationProps) {
                     }
                   }}
                 >
-                  {item.icon}
+                  <div className="relative">
+                    {item.icon}
+                    {item.path === "/embeddings" && missingEmbeddings > 0 && (
+                      <span
+                        title={`${missingEmbeddings} missing embeddings (auto-refreshes every 60s)`}
+                        className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] leading-[18px] text-white bg-emerald-600 dark:bg-emerald-500 text-center"
+                      >
+                        {missingEmbeddings > 99 ? "99+" : missingEmbeddings}
+                      </span>
+                    )}
+                  </div>
                   {/* Active state decorations with neon line */}
                   {isActive && (
                     <>

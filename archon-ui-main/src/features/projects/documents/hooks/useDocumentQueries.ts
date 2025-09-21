@@ -1,16 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { DISABLED_QUERY_KEY, STALE_TIMES } from "../../../shared/queryPatterns";
 import { projectService } from "../../services";
 import type { ProjectDocument } from "../types";
 
-// Query keys factory for documents
-export const documentKeys = {
-  all: ["documents"] as const,
-  byProject: (projectId: string) => ["projects", projectId, "documents"] as const,
-  detail: (projectId: string, docId: string) => ["projects", projectId, "documents", "detail", docId] as const,
-  versions: (projectId: string) => ["projects", projectId, "versions"] as const,
-  version: (projectId: string, fieldName: string, version: number) =>
-    ["projects", projectId, "versions", fieldName, version] as const,
+// Query keys
+const documentKeys = {
+  all: (projectId: string) => ["projects", projectId, "documents"] as const,
 };
 
 /**
@@ -19,13 +13,35 @@ export const documentKeys = {
  */
 export function useProjectDocuments(projectId: string | undefined) {
   return useQuery({
-    queryKey: projectId ? documentKeys.byProject(projectId) : DISABLED_QUERY_KEY,
+    queryKey: projectId ? documentKeys.all(projectId) : ["documents-undefined"],
     queryFn: async () => {
       if (!projectId) return [];
       const project = await projectService.getProject(projectId);
-      return (project.docs || []) as ProjectDocument[];
+      const raw = (project.docs || []) as unknown[];
+      // Filter invalid documents to avoid UI crashes; log details for debugging
+      const valid: ProjectDocument[] = [];
+      const dropped: { index: number; reason: string }[] = [];
+      raw.forEach((doc, idx) => {
+        if (doc === null || doc === undefined || typeof doc !== "object") {
+          dropped.push({ index: idx, reason: "non-object document" });
+          return;
+        }
+        const maybeId = (doc as Record<string, unknown>).id;
+        if (typeof maybeId !== "string" || maybeId.length === 0) {
+          dropped.push({ index: idx, reason: "missing or non-string id" });
+          return;
+        }
+        valid.push(doc as ProjectDocument);
+      });
+      if (dropped.length > 0) {
+        // Detailed logging to aid debugging in beta without crashing the UI
+        console.error(`Dropped ${dropped.length} invalid document(s) from project ${projectId}`, {
+          dropped,
+          total: raw.length,
+        });
+      }
+      return valid;
     },
     enabled: !!projectId,
-    staleTime: STALE_TIMES.normal,
   });
 }

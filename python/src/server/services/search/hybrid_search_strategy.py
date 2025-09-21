@@ -101,7 +101,10 @@ class HybridSearchStrategy:
                 return results
 
             except Exception as e:
-                logger.error(f"Hybrid document search failed: {e}")
+                logger.error(
+                    "Hybrid document search failed",
+                    exc_info=True,
+                )
                 span.set_attribute("error", str(e))
                 return []
 
@@ -189,6 +192,9 @@ class HybridSearchStrategy:
                 return results
 
             except Exception as e:
-                logger.error(f"Hybrid code example search failed: {e}")
+                logger.error(
+                    "Hybrid code example search failed",
+                    exc_info=True,
+                )
                 span.set_attribute("error", str(e))
                 return []

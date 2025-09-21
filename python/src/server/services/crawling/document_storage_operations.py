@@ -77,16 +77,7 @@ class DocumentStorageOperations:
         for doc_index, doc in enumerate(crawl_results):
             # Check for cancellation during document processing
             if cancellation_check:
-                try:
-                    cancellation_check()
-                except asyncio.CancelledError:
-                    if progress_callback:
-                        await progress_callback(
-                            "cancelled",
-                            99,
-                            f"Document processing cancelled at document {doc_index + 1}/{len(crawl_results)}"
-                        )
-                    raise
+                cancellation_check()
 
             doc_url = (doc.get('url') or '').strip()
             markdown_content = (doc.get('markdown') or '').strip()
@@ -113,16 +104,7 @@ class DocumentStorageOperations:
             for i, chunk in enumerate(chunks):
                 # Check for cancellation during chunk processing
                 if cancellation_check and i % 10 == 0:  # Check every 10 chunks
-                    try:
-                        cancellation_check()
-                    except asyncio.CancelledError:
-                        if progress_callback:
-                            await progress_callback(
-                                "cancelled",
-                                99,
-                                f"Chunk processing cancelled at chunk {i + 1}/{len(chunks)} of document {doc_index + 1}"
-                            )
-                        raise
+                    cancellation_check()
 
                 all_urls.append(doc_url)
                 all_chunk_numbers.append(i)
@@ -316,9 +298,9 @@ class DocumentStorageOperations:
                     safe_logfire_error(
                         f"Both source creation attempts failed for '{source_id}': {str(fallback_error)}"
                     )
-                    raise RuntimeError(
-                        f"Unable to create source record for '{source_id}'. This will cause foreign key violations."
-                    ) from fallback_error
+                    raise Exception(
+                        f"Unable to create source record for '{source_id}'. This will cause foreign key violations. Error: {str(fallback_error)}"
+                    )
 
         # Verify ALL source records exist before proceeding with document storage
         if unique_source_ids:
@@ -350,6 +332,8 @@ class DocumentStorageOperations:
         url_to_full_document: dict[str, str],
         source_id: str,
         progress_callback: Callable | None = None,
+        start_progress: int = 85,
+        end_progress: int = 95,
         cancellation_check: Callable[[], None] | None = None,
     ) -> int:
         """
@@ -360,13 +344,15 @@ class DocumentStorageOperations:
             url_to_full_document: Mapping of URLs to full document content
             source_id: The unique source_id for all documents
             progress_callback: Optional callback for progress updates
+            start_progress: Starting progress percentage
+            end_progress: Ending progress percentage
             cancellation_check: Optional function to check for cancellation
 
         Returns:
             Number of code examples stored
         """
         result = await self.code_extraction_service.extract_and_store_code_examples(
-            crawl_results, url_to_full_document, source_id, progress_callback, cancellation_check
+            crawl_results, url_to_full_document, source_id, progress_callback, start_progress, end_progress, cancellation_check
         )
 
         return result

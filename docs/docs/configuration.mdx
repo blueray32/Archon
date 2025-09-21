@@ -13,12 +13,12 @@ import Admonition from '@theme/Admonition';
 ## Docker Microservices Architecture
 
 <Admonition type="info" title="Container Communication">
-Archon uses a microservices architecture with three separate services. All services run in Docker containers and communicate via the `app-network` bridge network using service names, not localhost. Real-time features use Socket.IO for reliable real-time communication.
+Archon uses a microservices architecture with three separate services. All services run in Docker containers and communicate via the `archon_app-network` bridge network using service names, not localhost. Real-time features use Socket.IO for reliable real-time communication.
 </Admonition>
 
 ```mermaid
 graph TB
-    subgraph "Docker Network: app-network"
+    subgraph "Docker Network: archon_app-network"
         subgraph "Archon-Server"
             API[FastAPI<br/>:8080]
             SIO[Socket.IO<br/>:8080]
@@ -194,6 +194,9 @@ Then restart the backend to recreate tables.
 ```bash
 # Start all services
 docker compose up -d
+ 
+# Include optional Agents service
+docker compose --profile agents up -d
 
 # Check status
 docker compose ps

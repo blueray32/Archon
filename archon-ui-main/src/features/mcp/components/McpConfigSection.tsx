@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useToast } from "../../ui/hooks";
 import { Button, cn, glassmorphism, Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/primitives";
 import type { McpServerConfig, McpServerStatus, SupportedIDE } from "../types";
-import { copyToClipboard } from "../../shared/utils/clipboard";
 
 interface McpConfigSectionProps {
   config?: McpServerConfig;
@@ -186,16 +185,10 @@ export const McpConfigSection: React.FC<McpConfigSectionProps> = ({ config, stat
     );
   }
 
-  const handleCopyConfig = async () => {
+  const handleCopyConfig = () => {
     const configText = ideConfigurations[selectedIDE].configGenerator(config);
-    const result = await copyToClipboard(configText);
-    
-    if (result.success) {
-      showToast("Configuration copied to clipboard", "success");
-    } else {
-      console.error("Failed to copy config:", result.error);
-      showToast("Failed to copy configuration", "error");
-    }
+    navigator.clipboard.writeText(configText);
+    showToast("Configuration copied to clipboard", "success");
   };
 
   const handleCursorOneClick = () => {
@@ -209,16 +202,10 @@ export const McpConfigSection: React.FC<McpConfigSectionProps> = ({ config, stat
     showToast("Opening Cursor with Archon MCP configuration...", "info");
   };
 
-  const handleClaudeCodeCommand = async () => {
+  const handleClaudeCodeCommand = () => {
     const command = `claude mcp add --transport http archon http://${config.host}:${config.port}/mcp`;
-    const result = await copyToClipboard(command);
-    
-    if (result.success) {
-      showToast("Command copied to clipboard", "success");
-    } else {
-      console.error("Failed to copy command:", result.error);
-      showToast("Failed to copy command", "error");
-    }
+    navigator.clipboard.writeText(command);
+    showToast("Command copied to clipboard", "success");
   };
 
   const selectedConfig = ideConfigurations[selectedIDE];

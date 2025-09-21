@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { FileCode, Copy, Check } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
-import { useToast } from '../../features/ui/hooks/useToast';
-import { copyToClipboard } from '../../features/shared/utils/clipboard';
+import { useToast } from '../../contexts/ToastContext';
 
 type RuleType = 'claude' | 'universal';
 
@@ -473,9 +472,8 @@ archon:manage_task(
   };
 
   const handleCopyToClipboard = async () => {
-    const result = await copyToClipboard(currentRules);
-    
-    if (result.success) {
+    try {
+      await navigator.clipboard.writeText(currentRules);
       setCopied(true);
       showToast(`${selectedRuleType === 'claude' ? 'Claude Code' : 'Universal'} rules copied to clipboard!`, 'success');
       
@@ -483,8 +481,8 @@ archon:manage_task(
       setTimeout(() => {
         setCopied(false);
       }, 2000);
-    } else {
-      console.error('Failed to copy text:', result.error);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
       showToast('Failed to copy to clipboard', 'error');
     }
   };

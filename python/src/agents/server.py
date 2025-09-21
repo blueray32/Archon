@@ -26,6 +26,8 @@ from pydantic import BaseModel
 # Import our PydanticAI agents
 from .document_agent import DocumentAgent
 from .rag_agent import RagAgent
+from .pydantic_ai_loader import get_pydantic_ai_agent_class
+from .spanish_tutor_agent import SpanishTutorAgent
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -55,6 +57,8 @@ class AgentResponse(BaseModel):
 AVAILABLE_AGENTS = {
     "document": DocumentAgent,
     "rag": RagAgent,
+    "spanish_tutor": SpanishTutorAgent,
+    "pydantic_ai": get_pydantic_ai_agent_class(),
 }
 
 # Global credentials storage
@@ -124,14 +128,28 @@ async def lifespan(app: FastAPI):
     app.state.agents = {}
     for name, agent_class in AVAILABLE_AGENTS.items():
         try:
+            logger.info(f"Attempting to initialize {name} agent...")
             # Pass model configuration from credentials
             model_key = f"{name.upper()}_AGENT_MODEL"
             model = AGENT_CREDENTIALS.get(model_key, "openai:gpt-4o-mini")
+            logger.info(f"Using model: {model} for {name} agent")
 
-            app.state.agents[name] = agent_class(model=model)
-            logger.info(f"Initialized {name} agent with model: {model}")
+            # agent_class may be a class, a factory function, or an instance
+            if isinstance(agent_class, type):
+                agent_instance = agent_class(model=model)
+            elif callable(agent_class):
+                try:
+                    agent_instance = agent_class(model=model)
+                except TypeError:
+                    agent_instance = agent_class()
+            else:
+                agent_instance = agent_class
+            app.state.agents[name] = agent_instance
+            logger.info(f"Successfully initialized {name} agent with model: {model}")
         except Exception as e:
+            import traceback
             logger.error(f"Failed to initialize {name} agent: {e}")
+            logger.error(f"Stack trace: {traceback.format_exc()}")
 
     yield
 
@@ -173,19 +191,70 @@ async def run_agent(request: AgentRequest):
 
         agent = app.state.agents[request.agent_type]
 
-        # Prepare dependencies for the agent
-        deps = {
-            "context": request.context or {},
-            "options": request.options or {},
-            "mcp_endpoint": os.getenv("MCP_SERVICE_URL", "http://archon-mcp:8051"),
-        }
+        # Prepare dependencies based on agent type
+        if request.agent_type in ("rag", "pydantic_ai"):
+            from .rag_agent import RagDependencies
+
+            deps = RagDependencies(
+                source_filter=request.context.get("source_filter") if request.context else None,
+                match_count=request.context.get("match_count", 5) if request.context else 5,
+                project_id=request.context.get("project_id") if request.context else None,
+                prp_mode=(request.agent_type == "pydantic_ai"),
+            )
+        elif request.agent_type == "document":
+            from .document_agent import DocumentDependencies
+
+            deps = DocumentDependencies(
+                project_id=request.context.get("project_id") if request.context else None,
+                user_id=request.context.get("user_id") if request.context else None,
+            )
+        elif request.agent_type == "spanish_tutor":
+            from .spanish_tutor_agent import SpanishTutorDependencies
+
+            deps = SpanishTutorDependencies(
+                student_level=request.context.get("student_level", "beginner") if request.context else "beginner",
+                conversation_mode=request.context.get("conversation_mode", "casual") if request.context else "casual",
+                focus_area=request.context.get("focus_area") if request.context else None,
+                previous_context=request.context.get("previous_context") if request.context else None,
+            )
+        else:
+            # Default dependencies
+            from .base_agent import ArchonDependencies
+
+            deps = ArchonDependencies()
 
         # Run the agent
         result = await agent.run(request.prompt, deps)
 
+        # Normalize result into a consistent shape `{ output: string, raw: Any }`
+        def to_output(res: Any) -> str:
+            try:
+                if isinstance(res, str):
+                    return res
+                if isinstance(res, dict):
+                    # common keys in our agents
+                    for key in ("output", "answer", "text", "message"):
+                        if key in res and isinstance(res[key], str):
+                            return res[key]
+                    # last resort - pretty print
+                    import json
+                    return json.dumps(res, ensure_ascii=False)[:4000]
+                # Pydantic models or other objects
+                if hasattr(res, "model_dump"):
+                    dumped = res.model_dump()
+                    return to_output(dumped)
+                return str(res)
+            except Exception:
+                return str(res)
+
+        normalized = {
+            "output": to_output(result),
+            "raw": result,
+        }
+
         return AgentResponse(
             success=True,
-            result=result,
+            result=normalized,
             metadata={"agent_type": request.agent_type, "model": agent.model},
         )
 
@@ -228,13 +297,14 @@ async def stream_agent(agent_type: str, request: AgentRequest):
         try:
             # Prepare dependencies based on agent type
             # Import dependency classes
-            if agent_type == "rag":
+            if agent_type in ("rag", "pydantic_ai"):
                 from .rag_agent import RagDependencies
 
                 deps = RagDependencies(
                     source_filter=request.context.get("source_filter") if request.context else None,
                     match_count=request.context.get("match_count", 5) if request.context else 5,
                     project_id=request.context.get("project_id") if request.context else None,
+                    prp_mode=(agent_type == "pydantic_ai"),
                 )
             elif agent_type == "document":
                 from .document_agent import DocumentDependencies
@@ -242,6 +312,15 @@ async def stream_agent(agent_type: str, request: AgentRequest):
                 deps = DocumentDependencies(
                     project_id=request.context.get("project_id") if request.context else None,
                     user_id=request.context.get("user_id") if request.context else None,
+                )
+            elif agent_type == "spanish_tutor":
+                from .spanish_tutor_agent import SpanishTutorDependencies
+
+                deps = SpanishTutorDependencies(
+                    student_level=request.context.get("student_level", "beginner") if request.context else "beginner",
+                    conversation_mode=request.context.get("conversation_mode", "casual") if request.context else "casual",
+                    focus_area=request.context.get("focus_area") if request.context else None,
+                    previous_context=request.context.get("previous_context") if request.context else None,
                 )
             else:
                 # Default dependencies

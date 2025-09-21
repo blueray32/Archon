@@ -1,16 +1,17 @@
 import { AlertCircle, WifiOff } from "lucide-react";
 import type React from "react";
-import { useEffect } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useToast } from "../../features/ui/hooks/useToast";
 import { cn } from "../../lib/utils";
 import { credentialsService } from "../../services/credentialsService";
 import { isLmConfigured } from "../../utils/onboarding";
-
+import { VoiceEnabledChatPanel } from "../agent-chat/VoiceEnabledChatPanel";
 // TEMPORARY: Import from old components until they're migrated to features
 import { BackendStartupError } from "../BackendStartupError";
 import { useBackendHealth } from "./hooks/useBackendHealth";
 import { Navigation } from "./Navigation";
+import { useAgentState } from "../../agents/AgentContext";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -62,9 +63,12 @@ function BackendStatus({ isHealthLoading, isBackendError, healthData }: BackendS
  * Uses CSS Grid for layout instead of fixed positioning
  */
 export function MainLayout({ children, className }: MainLayoutProps) {
+  const { selectedAgent } = useAgentState();
   const navigate = useNavigate();
   const location = useLocation();
   const { showToast } = useToast();
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [agentsOnline, setAgentsOnline] = useState<null | boolean>(null);
 
   // Backend health monitoring with TanStack Query
   const {
@@ -128,6 +132,30 @@ export function MainLayout({ children, className }: MainLayoutProps) {
     }
   }, [isBackendError, backendError, showToast]);
 
+  // Lightweight Agents service health polling for a simple header pill
+  const pollAgentsStatus = useCallback(async () => {
+    try {
+      const res = await fetch('/api/agent-chat/status', { method: 'GET' });
+      if (!res.ok) {
+        setAgentsOnline(false);
+        return;
+      }
+      const data = await res.json();
+      setAgentsOnline(Boolean(data?.online));
+    } catch {
+      setAgentsOnline(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    let timer: number | null = null;
+    pollAgentsStatus();
+    timer = window.setInterval(pollAgentsStatus, 20000);
+    return () => {
+      if (timer) window.clearInterval(timer);
+    };
+  }, [pollAgentsStatus]);
+
   return (
     <div className={cn("relative min-h-screen bg-white dark:bg-black overflow-hidden", className)}>
       {/* TEMPORARY: Show backend startup error using old component */}
@@ -140,6 +168,22 @@ export function MainLayout({ children, className }: MainLayoutProps) {
       <div className="fixed left-6 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-4">
         <Navigation />
         <BackendStatus isHealthLoading={isHealthLoading} isBackendError={isBackendError} healthData={healthData} />
+        {agentsOnline === null ? (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 text-sm">
+            <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse" />
+            <span>Agents Checking…</span>
+          </div>
+        ) : agentsOnline ? (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 text-sm">
+            <div className="w-2 h-2 bg-green-500 rounded-full" />
+            <span>Agents Online</span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 text-sm">
+            <div className="w-2 h-2 bg-red-500 rounded-full" />
+            <span>Agents Offline</span>
+          </div>
+        )}
       </div>
 
       {/* Main Content Area - matches old layout exactly */}
@@ -149,23 +193,36 @@ export function MainLayout({ children, className }: MainLayoutProps) {
         </div>
       </div>
 
-      {/* TEMPORARY: Floating Chat Button (disabled) - from old layout */}
-      <div className="fixed bottom-6 right-6 z-50 group">
-        <button
-          type="button"
-          disabled
-          className="w-14 h-14 rounded-full flex items-center justify-center backdrop-blur-md bg-gradient-to-b from-gray-100/80 to-gray-50/60 dark:from-gray-700/30 dark:to-gray-800/30 shadow-[0_0_10px_rgba(156,163,175,0.3)] dark:shadow-[0_0_10px_rgba(156,163,175,0.3)] cursor-not-allowed opacity-60 overflow-hidden border border-gray-300 dark:border-gray-600"
-          aria-label="Knowledge Assistant - Coming Soon"
-        >
-          <img src="/logo-neon.png" alt="Archon" className="w-7 h-7 grayscale opacity-50" />
-        </button>
-        {/* Tooltip */}
-        <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-gray-800 dark:bg-gray-900 text-white text-sm rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
-          <div className="font-medium">Coming Soon</div>
-          <div className="text-xs text-gray-300">Knowledge Assistant is under development</div>
-          <div className="absolute bottom-0 right-6 transform translate-y-1/2 rotate-45 w-2 h-2 bg-gray-800 dark:bg-gray-900"></div>
+      {/* Floating Chat Button (hidden when chat open) */}
+      {!isChatOpen && (
+        <div className="fixed bottom-6 right-6 z-50 group">
+          <button
+            type="button"
+            onClick={() => setIsChatOpen(true)}
+            className="w-14 h-14 rounded-full flex items-center justify-center backdrop-blur-md bg-gradient-to-b from-blue-100/80 to-blue-50/60 dark:from-blue-500/20 dark:to-blue-600/20 shadow-[0_0_15px_rgba(59,130,246,0.4)] dark:shadow-[0_0_15px_rgba(59,130,246,0.6)] hover:shadow-[0_0_20px_rgba(59,130,246,0.6)] transition-all duration-300 overflow-hidden border border-blue-300 dark:border-blue-500/50 hover:border-blue-400 dark:hover:border-blue-400"
+            aria-label={`Open ${selectedAgent?.label || 'Agent'} Chat`}
+          >
+            <img
+              src="/logo-neon.png"
+              alt="Archon"
+              className="w-7 h-7"
+            />
+          </button>
+          {/* Tooltip */}
+          <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-gray-800 dark:bg-gray-900 text-white text-sm rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
+            <div className="font-medium">{selectedAgent?.label || 'Agent Chat'}</div>
+            <div className="text-xs text-gray-300">{selectedAgent?.description || 'Chat with your selected agent'}</div>
+            <div className="absolute bottom-0 right-6 transform translate-y-1/2 rotate-45 w-2 h-2 bg-gray-800 dark:bg-gray-900"></div>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Chat Panel */}
+      {isChatOpen && (
+        <div className="fixed inset-y-0 right-0 z-50 max-w-[500px] w-full">
+          <VoiceEnabledChatPanel onClose={() => setIsChatOpen(false)} />
+        </div>
+      )}
     </div>
   );
 }

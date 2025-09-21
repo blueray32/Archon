@@ -26,13 +26,19 @@ vi.mock("../../../ui/hooks/useToast", () => ({
   }),
 }));
 
-// Mock smart polling
-vi.mock("../../../ui/hooks", () => ({
-  useSmartPolling: () => ({
-    refetchInterval: 5000,
-    isPaused: false,
-  }),
-}));
+// Mock UI hooks module, preserving actual exports and overriding only what we need
+vi.mock("../../../ui/hooks", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../../ui/hooks")>();
+  return {
+    ...actual,
+    useSmartPolling: () => ({
+      refetchInterval: 5000,
+      isActive: true,
+      isVisible: true,
+      hasFocus: true,
+    }),
+  };
+});
 
 // Test wrapper with QueryClient
 const createWrapper = () => {
@@ -57,7 +63,9 @@ describe("useProjectQueries", () => {
       expect(projectKeys.all).toEqual(["projects"]);
       expect(projectKeys.lists()).toEqual(["projects", "list"]);
       expect(projectKeys.detail("123")).toEqual(["projects", "detail", "123"]);
-      expect(projectKeys.features("123")).toEqual(["projects", "123", "features"]);
+      expect(projectKeys.tasks("123")).toEqual(["projects", "detail", "123", "tasks"]);
+      expect(projectKeys.features("123")).toEqual(["projects", "detail", "123", "features"]);
+      expect(projectKeys.documents("123")).toEqual(["projects", "detail", "123", "documents"]);
     });
   });
 
@@ -107,9 +115,7 @@ describe("useProjectQueries", () => {
 
       const { projectService } = await import("../../services");
       vi.mocked(projectService.createProject).mockResolvedValue({
-        project_id: "new-project-id",
         project: newProject,
-        status: "success",
         message: "Created",
       });
 

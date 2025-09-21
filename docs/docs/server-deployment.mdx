@@ -224,8 +224,12 @@ services:
 
 networks:
   app-network:
+    name: archon_app-network
     driver: bridge
 ```
+
+> Note: The Agents service is optional and starts only when the `agents` profile is specified.
+> Use `docker compose --profile agents up -d` to include it.
 
 </TabItem>
 <TabItem value="dockerfiles" label="🐳 Dockerfiles">

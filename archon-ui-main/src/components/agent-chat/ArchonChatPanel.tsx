@@ -1,7 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Send, User, WifiOff, RefreshCw, BookOpen, Search } from 'lucide-react';
+import { Send, User, WifiOff, RefreshCw, BookOpen, Search, Filter as FilterIcon, X as XIcon } from 'lucide-react';
 import { ArchonLoadingSpinner, EdgeLitEffect } from '../animations/Animations';
 import { agentChatService, ChatMessage } from '../../services/agentChatService';
+import { knowledgeBaseService } from '../../services/knowledgeBaseService';
+import { AgentSwitcher } from '../../agents/AgentSwitcher';
+import { useAgentState } from '../../agents/AgentContext';
+import { getAgentTypeFor } from '../../agents/registry';
+import { SourceFilterControl } from './SourceFilterControl';
 
 /**
  * Props for the ArchonChatPanel component
@@ -16,6 +21,7 @@ interface ArchonChatPanelProps {
  * loading states, and input functionality connected to real AI agents.
  */
 export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
+  const { selectedAgentId, selectedAgent, selectedSourceFilter, kbOnly, setSelectedSourceFilter, setKbOnly } = useAgentState();
   // State for messages, session, and other chat functionality
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -40,23 +46,44 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
   const dragHandleRef = useRef<HTMLDivElement>(null);
   const chatPanelRef = useRef<HTMLDivElement>(null);
   const sessionIdRef = useRef<string | null>(null);
+  const ensuredPydanticKBRef = useRef<boolean>(false);
   /**
    * Initialize chat session and connection
    */
   const initializeChat = React.useCallback(async () => {
+    try {
+      setConnectionStatus('connecting');
+      
+      // Yield to next frame to avoid initialization race conditions
+      await new Promise(resolve => requestAnimationFrame(resolve));
+      
+      // Create a new chat session
       try {
-        setConnectionStatus('connecting');
-        
-        // Yield to next frame to avoid initialization race conditions
-        await new Promise(resolve => requestAnimationFrame(resolve));
-        
-        // Create a new chat session
-        try {
-          console.log(`[CHAT PANEL] Creating session with agentType: "rag"`);
-          const { session_id } = await agentChatService.createSession(undefined, 'rag');
+          const agentType = getAgentTypeFor(selectedAgentId);
+          console.log(`[CHAT PANEL] Creating session with agentType: "${agentType}" for agentId: ${selectedAgentId}`);
+          const { session_id } = await agentChatService.createSession(agentType);
           console.log(`[CHAT PANEL] Session created with ID: ${session_id}`);
           setSessionId(session_id);
           sessionIdRef.current = session_id;
+
+          // Ensure Pydantic docs are available when using Pydantic AI (best-effort)
+          if (selectedAgentId === 'pydantic-ai' && !ensuredPydanticKBRef.current) {
+            ensuredPydanticKBRef.current = true;
+            try {
+              const items = await knowledgeBaseService.getKnowledgeItems({ search: 'Pydantic Documentation - Llms-Full.Txt', per_page: 5 });
+              const found = items.items?.some(i => i.title?.toLowerCase().includes('pydantic') && i.title.toLowerCase().includes('llms-full'));
+              if (!found) {
+                await knowledgeBaseService.crawlUrl({
+                  url: 'https://ai.pydantic.dev/llms-full.txt',
+                  knowledge_type: 'technical',
+                  tags: ['pydantic', 'llmstxt'],
+                  max_depth: 0,
+                });
+              }
+            } catch (e) {
+              console.warn('Pydantic KB ensure failed (non-fatal):', e);
+            }
+          }
           
           // Load initial chat history
           try {
@@ -74,7 +101,13 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
             await agentChatService.streamMessages(
               session_id,
               (message: ChatMessage) => {
-                setMessages(prev => [...prev, message]);
+                setMessages(prev => {
+                  // Check if message already exists to prevent duplicates
+                  if (prev.some(msg => msg.id === message.id)) {
+                    return prev;
+                  }
+                  return [...prev, message];
+                });
                 setConnectionError(null); // Clear any previous errors on successful message
                 setConnectionStatus('online');
               },
@@ -111,7 +144,7 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
         }
         setConnectionStatus('offline');
       }
-    }, []);
+    }, [selectedAgentId]);
   
   // Initialize on mount and when explicitly requested
   useEffect(() => {
@@ -119,6 +152,22 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
       initializeChat();
     }
   }, [isInitialized, initializeChat]);
+
+  // Re-initialize session when selected agent changes
+  const prevAgentIdRef = React.useRef<string | null>(null);
+  useEffect(() => {
+    if (prevAgentIdRef.current && prevAgentIdRef.current !== selectedAgentId) {
+      if (sessionIdRef.current) {
+        agentChatService.stopStreaming(sessionIdRef.current);
+      }
+      setMessages([]);
+      setSessionId(null);
+      setIsInitialized(false);
+      setConnectionStatus('connecting');
+      initializeChat();
+    }
+    prevAgentIdRef.current = selectedAgentId;
+  }, [selectedAgentId, initializeChat]);
   
   // Cleanup effect - only on unmount
   useEffect(() => {
@@ -190,14 +239,37 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
     if (!inputValue.trim() || !sessionId) return;
 
     try {
-      // Add context for RAG agent
-      const context = {
-        match_count: 5,
-        // Can add source_filter here if needed in the future
-      };
-      
+      // Build context based on selected agent
+      const context = (() => {
+        if (selectedAgentId === 'profesora-maria') {
+          return {
+            student_level: 'intermediate',
+            conversation_mode: 'casual',
+          };
+        }
+        if (selectedAgentId === 'pydantic-ai') {
+          return {
+            domain: 'pydantic-ai',
+            knowledge_source: 'llmstxt',
+            dataset_hint: 'Pydantic Documentation - Llms-Full.Txt',
+            // Hint RAG to focus on Pydantic sources and your imported KB
+            source_filter: 'pydantic|ai.pydantic.dev|llms-full|ai-agent-mastery' +
+              (selectedSourceFilter ? `|${selectedSourceFilter}` : ''),
+            kb_only: kbOnly,
+          };
+        }
+        const base: Record<string, any> = {};
+        if (selectedSourceFilter) base.source_filter = selectedSourceFilter;
+        if (kbOnly) base.kb_only = true;
+        return base;
+      })();
+
       // Send message to agent via service
-      await agentChatService.sendMessage(sessionId, inputValue.trim(), context);
+      await agentChatService.sendMessage(sessionId, {
+        message: inputValue.trim(),
+        context,
+        agentId: selectedAgentId,
+      });
       setInputValue('');
       setConnectionError(null);
     } catch (error) {
@@ -208,11 +280,16 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
   /**
    * Format timestamp for display in messages
    */
-  const formatTime = (date: Date) => {
+  const formatTime = (timestamp: string | Date) => {
+    const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
     return date.toLocaleTimeString([], {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+  const placeholderForAgent = () => {
+    const label = selectedAgent?.label || 'Agent';
+    return `Message ${label}...`;
   };
   /**
    * Handle manual reconnection
@@ -256,14 +333,13 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-zinc-800/80">
           <div className="flex flex-col gap-2">
-            <div className="flex items-center">
+            <div className="flex items-center gap-3">
               {/* Archon Logo - No animation in header */}
-              <div className="relative w-8 h-8 mr-3 flex items-center justify-center">
+              <div className="relative w-8 h-8 flex items-center justify-center">
                 <img src="/logo-neon.png" alt="Archon" className="w-6 h-6 z-10 relative" />
               </div>
-              <h2 className="text-gray-800 dark:text-white font-medium z-10 relative">
-                Knowledge Base Assistant
-              </h2>
+              <AgentSwitcher label="Agent" />
+              <SourceFilterControl />
             </div>
           </div>
           
@@ -410,15 +486,15 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
           
           <div className="flex items-center gap-2">
             {/* Text input field */}
-            <div className="flex-1 backdrop-blur-md bg-gradient-to-b from-white/80 to-white/60 dark:from-white/10 dark:to-black/30 border border-gray-200 dark:border-zinc-800/80 rounded-md px-3 py-2 focus-within:border-blue-500 focus-within:shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all duration-200">
+            <div className="flex-1 backdrop-blur-md bg-gradient-to-b from-white/80 to-white/60 dark:from-white/10 dark:to-black/30 border border-gray-200 dark:border-zinc-800/80 rounded-md px-3 py-2 focus-within:border-blue-500 focus-within:shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all duration-200 flex items-center gap-2">
               <input 
                 type="text" 
                 value={inputValue} 
                 onChange={e => setInputValue(e.target.value)} 
                 placeholder={
-                  connectionStatus === 'offline' ? "Chat is offline..." :
-                  connectionStatus === 'connecting' ? "Connecting..." :
-                  "Search the knowledge base..."
+                  connectionStatus === 'offline' ? 'Chat is offline...' :
+                  connectionStatus === 'connecting' ? 'Connecting...' :
+                  placeholderForAgent()
                 }
                 disabled={connectionStatus !== 'online'} 
                 className="w-full bg-transparent text-gray-800 dark:text-white placeholder:text-gray-500 dark:placeholder:text-zinc-600 focus:outline-none disabled:opacity-50" 
@@ -426,6 +502,31 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
                   if (e.key === 'Enter') handleSendMessage();
                 }} 
               />
+              {kbOnly && (
+                <button
+                  type="button"
+                  onClick={() => setKbOnly(false)}
+                  className="text-[10px] px-1.5 py-0.5 rounded-full border border-green-300 text-green-700 bg-green-50 dark:border-green-800 dark:text-green-300 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 flex items-center gap-1"
+                  title="Disable KB-only"
+                  aria-label="Disable KB-only"
+                >
+                  <BookOpen className="w-3 h-3" />
+                  KB
+                </button>
+              )}
+              {selectedSourceFilter && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedSourceFilter('')}
+                  className="text-[10px] px-1.5 py-0.5 rounded-full border border-blue-300 text-blue-700 bg-blue-50 dark:border-blue-800 dark:text-blue-300 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 flex items-center gap-1"
+                  title={`Clear filter: ${selectedSourceFilter}`}
+                  aria-label="Clear source filter"
+                >
+                  <FilterIcon className="w-3 h-3" />
+                  Filter
+                  <XIcon className="w-3 h-3" />
+                </button>
+              )}
             </div>
             {/* Send button */}
             <button 

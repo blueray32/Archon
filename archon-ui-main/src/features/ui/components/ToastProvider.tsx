@@ -24,7 +24,7 @@ export function ToastProvider({ children, duration = 4000, swipeDirection = "rig
 
   return (
     <RadixToastProvider duration={duration} swipeDirection={swipeDirection}>
-      <ToastContext.Provider value={{ showToast, removeToast }}>
+      <ToastContext.Provider value={{ showToast }}>
         {children}
         {toasts.map((toast) => {
           const Icon = getToastIcon(toast.type);
