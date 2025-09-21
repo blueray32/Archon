@@ -38,6 +38,7 @@ from .services.crawler_manager import cleanup_crawler, initialize_crawler
 
 # Import utilities and core classes
 from .services.credential_service import initialize_credentials
+from .services.embeddings.embeddings_maintenance_service import run_embeddings_health_monitor
 
 # Import missing dependencies that the modular APIs need
 try:
@@ -118,6 +119,16 @@ async def lifespan(app: FastAPI):
             api_logger.info("✅ Main event loop set for background tasks")
         except Exception as e:
             api_logger.warning(f"Could not set main event loop: {e}")
+
+        # Start embeddings health monitor (periodic logging only)
+        try:
+            from .services.background_task_manager import get_task_manager as _get_tm
+
+            tm = _get_tm()
+            await tm.submit_task(run_embeddings_health_monitor, task_args=())
+            api_logger.info("✅ Embeddings health monitor started")
+        except Exception as e:
+            api_logger.warning(f"Could not start embeddings health monitor: {e}")
 
         # MCP Client functionality removed from architecture
         # Agents now use MCP tools directly
