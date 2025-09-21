@@ -43,6 +43,8 @@ export function EvalPage() {
   const [results, setResults] = useState<Record<string, { resp: RAGEvalResponse; durationMs: number; avgSim?: number; topSources?: Record<string, number> }>>({});
   const [presets, setPresets] = useState<Record<string, string>>({});
   const [presetName, setPresetName] = useState('');
+  const [lastResults, setLastResults] = useState<Record<string, { resp: RAGEvalResponse; durationMs: number; avgSim?: number; topSources?: Record<string, number> }>>({});
+  const [compareToLast, setCompareToLast] = useState(false);
 
   // Load persisted
   useEffect(() => {
@@ -53,6 +55,8 @@ export function EvalPage() {
       if (savedK) setK(Number(savedK) || 10);
       const savedPresets = localStorage.getItem('rag_eval_presets');
       if (savedPresets) setPresets(JSON.parse(savedPresets));
+      const savedLast = localStorage.getItem('rag_eval_last_results');
+      if (savedLast) setLastResults(JSON.parse(savedLast));
     } catch {}
   }, []);
 
@@ -74,6 +78,10 @@ export function EvalPage() {
     setRunning(true);
     const out: Record<string, { resp: RAGEvalResponse; durationMs: number; avgSim?: number; topSources?: Record<string, number> }> = {};
     try {
+      if (Object.keys(results).length > 0) {
+        setLastResults(results);
+        try { localStorage.setItem('rag_eval_last_results', JSON.stringify(results)); } catch {}
+      }
       for (const q of queries) {
         try {
           const t0 = performance.now();
@@ -204,6 +212,30 @@ export function EvalPage() {
                     title="Copy JSON of results to clipboard"
                   >Copy JSON</button>
                 )}
+                <label className="ml-2 inline-flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-300">
+                  <input type="checkbox" checked={compareToLast} onChange={(e) => setCompareToLast(e.target.checked)} />
+                  Compare to last run
+                </label>
+                {Object.keys(lastResults).length > 0 && (
+                  <>
+                    <button
+                      className="px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100/50 dark:hover:bg-zinc-800/30"
+                      onClick={() => {
+                        setLastResults(results);
+                        try { localStorage.setItem('rag_eval_last_results', JSON.stringify(results)); } catch {}
+                        showToast('Baseline updated to current results', 'success');
+                      }}
+                    >Set Baseline</button>
+                    <button
+                      className="px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100/50 dark:hover:bg-zinc-800/30"
+                      onClick={() => {
+                        setLastResults({});
+                        try { localStorage.removeItem('rag_eval_last_results'); } catch {}
+                        showToast('Baseline cleared', 'success');
+                      }}
+                    >Clear Baseline</button>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -215,6 +247,7 @@ export function EvalPage() {
             <div className="space-y-6">
               {queries.map((q) => {
                 const entry = results[q];
+                const prev = lastResults[q];
                 const items = (entry?.resp?.results || []) as RAGEvalResult[];
                 return (
                   <div key={q}>
@@ -223,6 +256,11 @@ export function EvalPage() {
                       <div className="text-xs text-zinc-500">
                         {entry?.avgSim !== undefined && <span className="mr-3">avg sim: {entry.avgSim.toFixed(3)}</span>}
                         {entry?.durationMs !== undefined && <span>time: {Math.round(entry.durationMs)} ms</span>}
+                        {compareToLast && prev?.avgSim !== undefined && entry?.avgSim !== undefined && (
+                          <span className={`ml-3 ${entry.avgSim - (prev.avgSim||0) >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                            Δ { (entry.avgSim - (prev.avgSim||0)).toFixed(3) }
+                          </span>
+                        )}
                       </div>
                     </div>
                     {items.length === 0 ? (
