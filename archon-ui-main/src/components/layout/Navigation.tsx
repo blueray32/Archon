@@ -1,4 +1,4 @@
-import { BookOpen, Settings, Database } from "lucide-react";
+import { BookOpen, Settings, Database, BarChart2 } from "lucide-react";
 import type React from "react";
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
@@ -88,6 +88,12 @@ export function Navigation({ className }: NavigationProps) {
       path: "/embeddings",
       icon: <Database className="h-5 w-5" />,
       label: "Embeddings",
+      enabled: true,
+    },
+    {
+      path: "/eval",
+      icon: <BarChart2 className="h-5 w-5" />,
+      label: "Eval",
       enabled: true,
     },
     {

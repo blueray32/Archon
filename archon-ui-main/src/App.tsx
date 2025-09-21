@@ -6,6 +6,7 @@ import { KnowledgeBasePage } from './pages/KnowledgeBasePage';
 import { SettingsPage } from './pages/SettingsPage';
 import { MCPPage } from './pages/MCPPage';
 import { EmbeddingsPage } from './pages/EmbeddingsPage';
+import { EvalPage } from './pages/EvalPage';
 import { OnboardingPage } from './pages/OnboardingPage';
 import { MainLayout } from './components/layout/MainLayout';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -52,6 +53,7 @@ const AppRoutes = () => {
       <Route path="/settings" element={<SettingsPage />} />
       <Route path="/mcp" element={<MCPPage />} />
       <Route path="/embeddings" element={<EmbeddingsPage />} />
+      <Route path="/eval" element={<EvalPage />} />
       {projectsEnabled ? (
         <>
           <Route path="/projects" element={<ProjectPage />} />
