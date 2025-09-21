@@ -9,7 +9,13 @@ export const MCPPage = () => {
     try {
       const res = await fetch('/api/mcp/session/init', { method: 'POST' });
       const txt = await res.text();
-      setInitResult(txt);
+      // Pretty print JSON if possible
+      try {
+        const obj = JSON.parse(txt);
+        setInitResult(JSON.stringify(obj, null, 2));
+      } catch {
+        setInitResult(txt);
+      }
     } catch (e: any) {
       setInitResult(e?.message || 'Failed to init session');
     }
@@ -19,7 +25,12 @@ export const MCPPage = () => {
     try {
       const res = await fetch('/api/mcp/session/info');
       const txt = await res.text();
-      setInfoResult(txt);
+      try {
+        const obj = JSON.parse(txt);
+        setInfoResult(JSON.stringify(obj, null, 2));
+      } catch {
+        setInfoResult(txt);
+      }
     } catch (e: any) {
       setInfoResult(e?.message || 'Failed to get session info');
     }

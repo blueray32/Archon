@@ -304,8 +304,23 @@ async def get_session_info():
 
                         resp = await client.post(f"{base}/mcp", json=call_body, headers=headers)
                         resp.raise_for_status()
-                        data = resp.json() if resp.headers.get("content-type","" ).startswith("application/json") else resp.text
-                        return data
+                        ctype = resp.headers.get("content-type", "")
+                        if ctype.startswith("application/json"):
+                            return resp.json()
+                        # Try to parse SSE "event: ...\ndata: {...}\n\n"
+                        text = resp.text or ""
+                        if text.startswith("event:") and "data:" in text:
+                            try:
+                                # take last data: line with JSON
+                                lines = [ln.strip() for ln in text.splitlines() if ln.strip().startswith("data:")]
+                                if lines:
+                                    payload = lines[-1].split("data:", 1)[1].strip()
+                                    import json as _json
+                                    return _json.loads(payload)
+                            except Exception:
+                                pass
+                        # Fallback: return raw text
+                        return text
                     except Exception as e:
                         last_error = e
                         continue
