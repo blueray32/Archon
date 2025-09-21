@@ -109,6 +109,28 @@ Once everything is running:
 3. **Test Projects**: Projects → Create a new project and add tasks
 4. **Integrate with your AI coding assistant**: MCP Dashboard → Copy connection config for your AI coding assistant 
 
+### Maintenance APIs (Embedding + MCP)
+
+- Embedding health: `GET /api/embeddings/health`
+  - Returns counts for crawled pages and code examples: total, missing, with_embedding.
+- Embedding backfill: `POST /api/embeddings/backfill`
+  - Body: `{ "tables": "all" | ["pages","code_examples"], "batch_size": 100, "limit": 1000, "dry_run": true, "source_id": "optional" }`
+  - Generates embeddings in batches; only updates on success; logs failures; supports dry-run.
+- MCP session init: `POST /api/mcp/session/init` → `{ session_id, mcp_url }`
+- MCP session info: `GET /api/mcp/session/info`
+  - Initializes a session then calls `session_info`; useful for debugging clients reporting missing session IDs.
+
+### Retrieval Evaluation Script
+
+Run a lightweight evaluation of top‑k results across queries:
+
+```bash
+python scripts/rag_eval.py --api http://localhost:8181 --k 10 \
+  --query "test" \
+  --query "embedding model" \
+  --query "pydantic test model"
+```
+
 ## Installing Make
 
 <details>
