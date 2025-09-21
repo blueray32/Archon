@@ -283,6 +283,27 @@ export function EvalPage() {
                         })}
                       </div>
                     )}
+                    {compareToLast && prev?.topSources && entry?.topSources && (
+                      <div className="mt-2 text-xs text-zinc-500">
+                        Sources Δ:{' '}
+                        {Object.keys({ ...(entry.topSources || {}), ...(prev.topSources || {}) })
+                          .map((s) => s)
+                          .sort()
+                          .slice(0, 8)
+                          .map((s, i) => {
+                            const cur = (entry.topSources || {})[s] || 0;
+                            const old = (prev.topSources || {})[s] || 0;
+                            const diff = cur - old;
+                            if (!diff) return null;
+                            return (
+                              <span key={s} className={diff > 0 ? 'text-emerald-600' : 'text-red-600'}>
+                                {i > 0 ? ' • ' : ''}{s}:{diff > 0 ? `+${diff}` : diff}
+                              </span>
+                            );
+                          })
+                        }
+                      </div>
+                    )}
                   </div>
                 );
               })}
