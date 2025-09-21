@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useMemo } from 'react';
-import { Search, Grid, Plus, Filter, BoxIcon, List, BookOpen, CheckSquare, Brain } from 'lucide-react';
+import { Search, Grid, Plus, Filter, BoxIcon, List, BookOpen, CheckSquare, Brain, Database } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -673,6 +674,17 @@ export const KnowledgeBasePage = () => {
             <Plus className="w-4 h-4 mr-2 inline" />
             <span>Knowledge</span>
           </Button>
+
+          <Link to="/embeddings">
+            <Button 
+              variant="secondary"
+              accentColor="emerald"
+              className="ml-2"
+            >
+              <Database className="w-4 h-4 mr-2 inline" />
+              <span>Embeddings</span>
+            </Button>
+          </Link>
         </motion.div>
       </motion.div>
 
