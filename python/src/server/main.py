@@ -374,6 +374,7 @@ async def _check_search_schema():
         }
 
         # Call both hybrid functions. Empty result is OK; exceptions indicate schema issues.
+        # Check hybrid functions (already present)
         try:
             client.rpc("hybrid_search_archon_crawled_pages", rpc_params).execute()
         except Exception as e:
@@ -420,7 +421,60 @@ async def _check_search_schema():
                 }
             api_logger.debug(f"Hybrid search check (code) inconclusive: {msg}")
 
-        return {"valid": True, "message": "Hybrid search functions healthy"}
+        # Check match functions as well for url type mismatches
+        try:
+            client.rpc("match_archon_crawled_pages", {
+                "query_embedding": probe_embedding,
+                "match_count": 1,
+                "filter": {},
+                "source_filter": None,
+            }).execute()
+        except Exception as e:
+            msg = str(e)
+            lower = msg.lower()
+            if "42804" in lower or "does not match function result type" in lower:
+                return {
+                    "valid": False,
+                    "message": (
+                        "Match search function type mismatch detected (crawled pages). "
+                        "Apply migration/fix_match_search_types.sql to set url as TEXT."
+                    ),
+                }
+            if "42883" in lower or ("function" in lower and "does not exist" in lower):
+                return {
+                    "valid": False,
+                    "message": (
+                        "Match search function missing (crawled pages). Run migrations to create it."
+                    ),
+                }
+
+        try:
+            client.rpc("match_archon_code_examples", {
+                "query_embedding": probe_embedding,
+                "match_count": 1,
+                "filter": {},
+                "source_filter": None,
+            }).execute()
+        except Exception as e:
+            msg = str(e)
+            lower = msg.lower()
+            if "42804" in lower or "does not match function result type" in lower:
+                return {
+                    "valid": False,
+                    "message": (
+                        "Match search function type mismatch detected (code examples). "
+                        "Apply migration/fix_match_search_types.sql to set url as TEXT."
+                    ),
+                }
+            if "42883" in lower or ("function" in lower and "does not exist" in lower):
+                return {
+                    "valid": False,
+                    "message": (
+                        "Match search function missing (code examples). Run migrations to create it."
+                    ),
+                }
+
+        return {"valid": True, "message": "Hybrid and match search functions healthy"}
 
     except Exception as e:
         # If any unexpected error, don't falsely block startup; report inconclusive

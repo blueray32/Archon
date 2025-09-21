@@ -7,10 +7,12 @@ Overview
 Key files
 - `migration/fix_hybrid_search_types.sql` — fixes PostgreSQL function result type mismatch (sets `url` to `TEXT`). Run this first if health reports a hybrid type error.
 - `migration/tune_hybrid_weighting.sql` — sets the weighting used to combine vector and keyword signals in the hybrid functions.
+- `migration/fix_match_search_types.sql` — fixes the `match_*` vector-only search functions to return `url TEXT` to match table schemas.
 
 When to run these
 - Type fix: When `/health` returns `migration_required` with message about hybrid function type mismatch, or if searches return empty with DB error 42804 (structure does not match function result type). Run `fix_hybrid_search_types.sql`.
 - Weight tuning: To adjust relevance bias between semantic (vector) and keyword matches. Run `tune_hybrid_weighting.sql`.
+- Match functions type fix: If the health check mentions `match_archon_*` type mismatch or you see 42804 errors when using vector search only. Run `fix_match_search_types.sql`.
 
 Current default (selected)
 - Balanced weighting: `vector_weight = 0.5`, `text_weight = 0.5` in `tune_hybrid_weighting.sql`.
@@ -36,4 +38,3 @@ Optional recall threshold
 Notes
 - Never store corrupted data or fallback zeros; failures should be logged with context (see logging in hybrid strategy).
 - Keep DB and repo in sync: after settling on weights, ensure `tune_hybrid_weighting.sql` reflects the intended default.
-
