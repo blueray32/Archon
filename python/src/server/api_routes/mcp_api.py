@@ -11,6 +11,7 @@ from typing import Any
 import docker
 from docker.errors import NotFound
 from fastapi import APIRouter, HTTPException
+import httpx
 
 # Import unified logging
 from ..config.logfire_config import api_logger, safe_set_attribute, safe_span
@@ -206,4 +207,112 @@ async def mcp_health():
         result = {"status": "healthy", "service": "mcp"}
         safe_set_attribute(span, "status", "healthy")
 
-        return result
+    return result
+
+
+@router.post("/session/init")
+async def init_mcp_session():
+    """Initialize an MCP session and return the session ID.
+
+    Useful for debugging clients that report "No valid session ID provided".
+    """
+    with safe_span("api_mcp_session_init") as span:
+        try:
+            mcp_port = int(os.getenv("ARCHON_MCP_PORT", "8051"))
+            candidates = [f"http://archon-mcp:{mcp_port}", f"http://localhost:{mcp_port}"]
+
+            payload = {
+                "jsonrpc": "2.0",
+                "method": "initialize",
+                "params": {
+                    "protocolVersion": "2024-11-05",
+                    "capabilities": {"tools": {}},
+                    "clientInfo": {"name": "archon-api", "version": "1.0.0"},
+                },
+                "id": "init",
+            }
+
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                session_id = None
+                mcp_url = None
+                last_error = None
+                for base in candidates:
+                    try:
+                        resp = await client.post(f"{base}/mcp", json=payload, headers={"Accept": "application/json, text/event-stream"})
+                        resp.raise_for_status()
+                        session_id = resp.headers.get("mcp-session-id")
+                        mcp_url = base
+                        break
+                    except Exception as e:
+                        last_error = e
+                        continue
+
+            if not session_id:
+                raise HTTPException(status_code=502, detail="MCP did not return a session ID")
+
+            return {"session_id": session_id, "mcp_url": mcp_url}
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            api_logger.error("Failed to initialize MCP session", exc_info=True)
+            raise HTTPException(status_code=500, detail={"error": str(e)})
+
+
+@router.get("/session/info")
+async def get_session_info():
+    """Call MCP session_info tool and return its response."""
+    with safe_span("api_mcp_session_info") as span:
+        try:
+            mcp_port = int(os.getenv("ARCHON_MCP_PORT", "8051"))
+            candidates = [f"http://archon-mcp:{mcp_port}", f"http://localhost:{mcp_port}"]
+
+            # Step 1: initialize to get a session id
+            init_body = {
+                "jsonrpc": "2.0",
+                "method": "initialize",
+                "params": {
+                    "protocolVersion": "2024-11-05",
+                    "capabilities": {"tools": {}},
+                    "clientInfo": {"name": "archon-api", "version": "1.0.0"},
+                },
+                "id": "init",
+            }
+
+            call_body = {
+                "jsonrpc": "2.0",
+                "method": "tools/call",
+                "params": {"name": "session_info", "arguments": {}},
+                "id": "call",
+            }
+
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                last_error = None
+                for base in candidates:
+                    try:
+                        init_resp = await client.post(
+                            f"{base}/mcp",
+                            json=init_body,
+                            headers={"Accept": "application/json, text/event-stream"},
+                        )
+                        init_resp.raise_for_status()
+                        session_id = init_resp.headers.get("mcp-session-id")
+
+                        headers = {"Accept": "application/json, text/event-stream"}
+                        if session_id:
+                            headers["mcp-session-id"] = session_id
+
+                        resp = await client.post(f"{base}/mcp", json=call_body, headers=headers)
+                        resp.raise_for_status()
+                        data = resp.json() if resp.headers.get("content-type","" ).startswith("application/json") else resp.text
+                        return data
+                    except Exception as e:
+                        last_error = e
+                        continue
+
+            raise HTTPException(status_code=502, detail={"error": str(last_error) if last_error else "All connection attempts failed"})
+
+            return data
+        except Exception as e:
+            api_logger.error("Failed to call MCP session_info", exc_info=True)
+            raise HTTPException(status_code=500, detail={"error": str(e)})
