@@ -130,6 +130,19 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             api_logger.warning(f"Could not start embeddings health monitor: {e}")
 
+        # Optionally start embeddings backfill scheduler (disabled by default)
+        try:
+            enabled = os.getenv("EMBEDDINGS_AUTOBACKFILL_ENABLED", "false").lower() in ("true", "1", "yes", "on")
+            if enabled:
+                from .services.embeddings.embeddings_maintenance_service import run_embeddings_backfill_scheduler
+
+                await tm.submit_task(run_embeddings_backfill_scheduler, task_args=())
+                api_logger.info("✅ Embeddings backfill scheduler started")
+            else:
+                api_logger.info("ℹ️ Embeddings backfill scheduler disabled (set EMBEDDINGS_AUTOBACKFILL_ENABLED=true to enable)")
+        except Exception as e:
+            api_logger.warning(f"Could not start embeddings backfill scheduler: {e}")
+
         # MCP Client functionality removed from architecture
         # Agents now use MCP tools directly
 

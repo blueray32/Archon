@@ -121,6 +121,20 @@ Once everything is running:
 - MCP session info: `GET /api/mcp/session/info`
   - Initializes a session then calls `session_info`; useful for debugging clients reporting missing session IDs.
 
+### Optional Background Monitors
+
+- Embeddings health logger (enabled by default): logs total/missing embeddings periodically.
+  - Env: `EMBEDDINGS_HEALTH_LOG_INTERVAL_MIN` (default: 60)
+- Embeddings backfill scheduler (disabled by default): conservative automated backfill loop.
+  - Envs:
+    - `EMBEDDINGS_AUTOBACKFILL_ENABLED` (default: false)
+    - `EMBEDDINGS_AUTOBACKFILL_INTERVAL_MIN` (default: 1440)
+    - `EMBEDDINGS_AUTOBACKFILL_LIMIT` (default: 200)
+    - `EMBEDDINGS_AUTOBACKFILL_BATCH_SIZE` (default: 50)
+    - `EMBEDDINGS_AUTOBACKFILL_TABLES` (default: "pages,code_examples")
+    - `EMBEDDINGS_AUTOBACKFILL_SOURCE_ID` (default: empty)
+    - `EMBEDDINGS_AUTOBACKFILL_DRY_RUN` (default: true)
+
 ### Retrieval Evaluation Script
 
 Run a lightweight evaluation of top‑k results across queries:
