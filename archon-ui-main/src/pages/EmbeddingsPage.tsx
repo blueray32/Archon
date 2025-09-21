@@ -187,7 +187,8 @@ export function EmbeddingsPage() {
                   Clear
                 </button>
               </div>
-            </div>
+          </div>
+          <div className="text-[10px] text-emerald-700/80 dark:text-emerald-300/70 mt-1">Summary shows rows updated and errors per table. Use Dry run to preview before writing.</div>
           </div>
         )}
 
@@ -219,12 +220,14 @@ export function EmbeddingsPage() {
                     setForm((f) => ({ ...f, tables: [v] as Array<'pages'|'code_examples'> }));
                   }
                 }}
+                title="Choose which tables to process: all rows, just pages, code examples, or both"
               >
                 <option value="all">All</option>
                 <option value="pages">Pages only</option>
                 <option value="code_examples">Code examples only</option>
                 <option value="custom">Custom (both)</option>
               </select>
+              <div className="mt-1 text-[10px] text-zinc-500">Scope the backfill to specific tables. Use Source ID to narrow further.</div>
             </div>
             <div>
               <label className="block text-xs text-zinc-500 mb-1">Source ID (optional)</label>
@@ -233,7 +236,9 @@ export function EmbeddingsPage() {
                 placeholder="c0ffee..."
                 value={form.source_id ?? ''}
                 onChange={(e) => setForm((f) => ({ ...f, source_id: e.target.value }))}
+                title="Only process rows with this source_id (optional)"
               />
+              <div className="mt-1 text-[10px] text-zinc-500">If set, only rows from this source are processed.</div>
             </div>
             <div>
               <label className="block text-xs text-zinc-500 mb-1">Batch Size</label>
@@ -244,7 +249,9 @@ export function EmbeddingsPage() {
                 max={1000}
                 value={form.batch_size ?? 100}
                 onChange={(e) => setForm((f) => ({ ...f, batch_size: Number(e.target.value) }))}
+                title="How many rows to embed per request batch"
               />
+              <div className="mt-1 text-[10px] text-zinc-500">Controls per-request size; larger batches may hit rate limits.</div>
             </div>
             <div>
               <label className="block text-xs text-zinc-500 mb-1">Limit</label>
@@ -255,7 +262,9 @@ export function EmbeddingsPage() {
                 max={10000}
                 value={form.limit ?? 500}
                 onChange={(e) => setForm((f) => ({ ...f, limit: Number(e.target.value) }))}
+                title="Maximum rows to process in this run"
               />
+              <div className="mt-1 text-[10px] text-zinc-500">Caps total processed rows for safety.</div>
             </div>
             <div className="flex items-center gap-2">
               <input
@@ -264,8 +273,10 @@ export function EmbeddingsPage() {
                 className="h-4 w-4"
                 checked={form.dry_run ?? true}
                 onChange={(e) => setForm((f) => ({ ...f, dry_run: e.target.checked }))}
+                title="If enabled, no database updates will be written"
               />
               <label htmlFor="dry-run" className="text-sm">Dry run</label>
+              <div className="text-[10px] text-zinc-500">Preview results without writing to the database.</div>
             </div>
           </div>
           <div className="mt-4 flex items-center gap-3">

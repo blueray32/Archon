@@ -196,7 +196,7 @@ export function Navigation({ className }: NavigationProps) {
                     {item.icon}
                     {item.path === "/embeddings" && missingEmbeddings > 0 && (
                       <span
-                        title={`${missingEmbeddings} missing embeddings`}
+                        title={`${missingEmbeddings} missing embeddings (auto-refreshes every 60s)`}
                         className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] leading-[18px] text-white bg-emerald-600 dark:bg-emerald-500 text-center"
                       >
                         {missingEmbeddings > 99 ? "99+" : missingEmbeddings}
