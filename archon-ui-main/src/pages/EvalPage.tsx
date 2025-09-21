@@ -40,7 +40,9 @@ export function EvalPage() {
   const [queriesText, setQueriesText] = useState('test\nembedding model\npydantic test model');
   const [k, setK] = useState<number>(10);
   const [running, setRunning] = useState(false);
-  const [results, setResults] = useState<Record<string, RAGEvalResponse>>({});
+  const [results, setResults] = useState<Record<string, { resp: RAGEvalResponse; durationMs: number; avgSim?: number; topSources?: Record<string, number> }>>({});
+  const [presets, setPresets] = useState<Record<string, string>>({});
+  const [presetName, setPresetName] = useState('');
 
   // Load persisted
   useEffect(() => {
@@ -49,6 +51,8 @@ export function EvalPage() {
       const savedK = localStorage.getItem('rag_eval_k');
       if (savedQ) setQueriesText(savedQ);
       if (savedK) setK(Number(savedK) || 10);
+      const savedPresets = localStorage.getItem('rag_eval_presets');
+      if (savedPresets) setPresets(JSON.parse(savedPresets));
     } catch {}
   }, []);
 
@@ -68,14 +72,26 @@ export function EvalPage() {
       return;
     }
     setRunning(true);
-    const out: Record<string, RAGEvalResponse> = {};
+    const out: Record<string, { resp: RAGEvalResponse; durationMs: number; avgSim?: number; topSources?: Record<string, number> }> = {};
     try {
       for (const q of queries) {
         try {
+          const t0 = performance.now();
           const data = await callRAG(q, k);
-          out[q] = data;
+          const t1 = performance.now();
+          const items = (data?.results || []) as RAGEvalResult[];
+          const sims = items
+            .map(it => (typeof it.similarity === 'number' ? it.similarity : (typeof it.similarity_score === 'number' ? it.similarity_score : (typeof it.score === 'number' ? it.score : undefined))))
+            .filter((v): v is number => typeof v === 'number');
+          const avgSim = sims.length ? sims.reduce((a, b) => a + b, 0) / sims.length : undefined;
+          const topSources: Record<string, number> = {};
+          items.forEach(it => {
+            const src = (it?.metadata?.source_id as string) || '';
+            if (src) topSources[src] = (topSources[src] || 0) + 1;
+          });
+          out[q] = { resp: data, durationMs: t1 - t0, avgSim, topSources };
         } catch (e: any) {
-          out[q] = { query: q, results: [], match_count: k } as RAGEvalResponse;
+          out[q] = { resp: { query: q, results: [], match_count: k }, durationMs: 0 };
           showToast(`RAG failed for "${q}": ${e?.message || e}`, 'error');
         }
       }
@@ -126,6 +142,69 @@ export function EvalPage() {
                   {running ? 'Running…' : 'Run'}
                 </button>
               </div>
+              <div className="mt-6 flex items-center gap-2 flex-wrap">
+                <input
+                  className="w-48 rounded-lg bg-white/70 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 px-3 py-2"
+                  placeholder="Preset name"
+                  value={presetName}
+                  onChange={(e) => setPresetName(e.target.value)}
+                  title="Save current queries as a preset"
+                />
+                <button
+                  className="px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100/50 dark:hover:bg-zinc-800/30"
+                  onClick={() => {
+                    if (!presetName.trim()) { showToast('Enter a preset name', 'warning'); return; }
+                    const next = { ...presets, [presetName.trim()]: queriesText };
+                    setPresets(next);
+                    try { localStorage.setItem('rag_eval_presets', JSON.stringify(next)); } catch {}
+                    showToast('Preset saved', 'success');
+                  }}
+                >Save</button>
+                {Object.keys(presets).length > 0 && (
+                  <select
+                    className="rounded-lg bg-white/70 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 px-3 py-2"
+                    onChange={(e) => {
+                      const key = e.target.value;
+                      if (key && presets[key]) setQueriesText(presets[key]);
+                    }}
+                    defaultValue=""
+                    title="Load preset"
+                  >
+                    <option value="" disabled>Load preset…</option>
+                    {Object.keys(presets).map(name => (
+                      <option key={name} value={name}>{name}</option>
+                    ))}
+                  </select>
+                )}
+                {Object.keys(presets).length > 0 && (
+                  <button
+                    className="px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100/50 dark:hover:bg-zinc-800/30"
+                    onClick={() => {
+                      if (!presetName.trim() || !presets[presetName.trim()]) { showToast('Select a saved preset name to delete', 'warning'); return; }
+                      const next = { ...presets };
+                      delete next[presetName.trim()];
+                      setPresets(next);
+                      try { localStorage.setItem('rag_eval_presets', JSON.stringify(next)); } catch {}
+                      showToast('Preset deleted', 'success');
+                    }}
+                  >Delete</button>
+                )}
+                {Object.keys(results).length > 0 && (
+                  <button
+                    className="ml-2 px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100/50 dark:hover:bg-zinc-800/30"
+                    onClick={() => {
+                      try {
+                        const payload = JSON.stringify(results, null, 2);
+                        navigator.clipboard.writeText(payload);
+                        showToast('Results copied to clipboard', 'success');
+                      } catch (e: any) {
+                        showToast(e?.message || 'Failed to copy', 'error');
+                      }
+                    }}
+                    title="Copy JSON of results to clipboard"
+                  >Copy JSON</button>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -135,11 +214,17 @@ export function EvalPage() {
             <h2 className="text-lg font-medium mb-3">Results</h2>
             <div className="space-y-6">
               {queries.map((q) => {
-                const r = results[q];
-                const items = (r?.results || []) as RAGEvalResult[];
+                const entry = results[q];
+                const items = (entry?.resp?.results || []) as RAGEvalResult[];
                 return (
                   <div key={q}>
-                    <div className="text-sm font-medium mb-2">Query: <span className="text-zinc-600 dark:text-zinc-300">{q}</span></div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-sm font-medium">Query: <span className="text-zinc-600 dark:text-zinc-300">{q}</span></div>
+                      <div className="text-xs text-zinc-500">
+                        {entry?.avgSim !== undefined && <span className="mr-3">avg sim: {entry.avgSim.toFixed(3)}</span>}
+                        {entry?.durationMs !== undefined && <span>time: {Math.round(entry.durationMs)} ms</span>}
+                      </div>
+                    </div>
                     {items.length === 0 ? (
                       <div className="text-sm text-zinc-500">No results.</div>
                     ) : (
@@ -172,4 +257,3 @@ export function EvalPage() {
 }
 
 export default EvalPage;
-
