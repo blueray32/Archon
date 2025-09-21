@@ -70,6 +70,19 @@ export function EvalPage() {
 
   const queries = useMemo(() => queriesText.split('\n').map(q => q.trim()).filter(Boolean), [queriesText]);
 
+  const summary = useMemo(() => {
+    const keys = Object.keys(results);
+    if (keys.length === 0) return null;
+    const sims = keys
+      .map((k) => results[k]?.avgSim)
+      .filter((v): v is number => typeof v === 'number');
+    const min = sims.length ? Math.min(...sims) : undefined;
+    const max = sims.length ? Math.max(...sims) : undefined;
+    const avg = sims.length ? sims.reduce((a, b) => a + b, 0) / sims.length : undefined;
+    const totalMs = keys.reduce((acc, k) => acc + (results[k]?.durationMs || 0), 0);
+    return { count: keys.length, min, max, avg, totalMs };
+  }, [results]);
+
   const onRun = async () => {
     if (queries.length === 0) {
       showToast('Add at least one query', 'warning');
@@ -240,6 +253,34 @@ export function EvalPage() {
             </div>
           </div>
         </div>
+
+        {summary && (
+          <div className="rounded-xl border border-zinc-200 dark:border-zinc-800/50 p-4 bg-white/60 dark:bg-zinc-900/40 backdrop-blur mb-4">
+            <h2 className="text-lg font-medium mb-2">Summary</h2>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
+              <div>
+                <div className="text-zinc-500 text-xs">Queries</div>
+                <div className="font-medium">{summary.count}</div>
+              </div>
+              <div>
+                <div className="text-zinc-500 text-xs">Avg sim</div>
+                <div className="font-medium">{summary.avg !== undefined ? summary.avg.toFixed(3) : '—'}</div>
+              </div>
+              <div>
+                <div className="text-zinc-500 text-xs">Min sim</div>
+                <div className="font-medium">{summary.min !== undefined ? summary.min.toFixed(3) : '—'}</div>
+              </div>
+              <div>
+                <div className="text-zinc-500 text-xs">Max sim</div>
+                <div className="font-medium">{summary.max !== undefined ? summary.max.toFixed(3) : '—'}</div>
+              </div>
+              <div>
+                <div className="text-zinc-500 text-xs">Total time</div>
+                <div className="font-medium">{Math.round(summary.totalMs)} ms</div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {Object.keys(results).length > 0 && (
           <div className="rounded-xl border border-zinc-200 dark:border-zinc-800/50 p-4 bg-white/60 dark:bg-zinc-900/40 backdrop-blur">
