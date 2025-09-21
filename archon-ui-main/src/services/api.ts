@@ -57,6 +57,27 @@ export interface DatabaseMetrics {
   last_sync: string;
 }
 
+// Embeddings maintenance
+export interface EmbeddingsHealth {
+  pages: { table: string; total: number; missing: number; with_embedding: number };
+  code_examples: { table: string; total: number; missing: number; with_embedding: number };
+  summary: { total: number; missing: number; with_embedding: number };
+}
+
+export interface EmbeddingsBackfillRequest {
+  tables?: 'all' | Array<'pages' | 'code_examples'>;
+  batch_size?: number;
+  limit?: number;
+  dry_run?: boolean;
+  source_id?: string;
+}
+
+export interface EmbeddingsBackfillResponse {
+  success: boolean;
+  duration_seconds: number;
+  summary: Record<string, { processed: number; updated: number; failed_count: number; dry_run: boolean }>;
+}
+
 const API_BASE_URL = '/api';
 
 // Retry wrapper for transient errors
@@ -161,4 +182,16 @@ export async function uploadDocument(file: File, options: UploadOptions = {}): P
 // Database Metrics
 export async function getDatabaseMetrics(): Promise<DatabaseMetrics> {
   return retry(() => apiRequest<DatabaseMetrics>('/database/metrics'));
+}
+
+// Embeddings Maintenance
+export async function getEmbeddingsHealth(): Promise<EmbeddingsHealth> {
+  return retry(() => apiRequest<EmbeddingsHealth>('/embeddings/health'));
+}
+
+export async function backfillEmbeddings(body: EmbeddingsBackfillRequest): Promise<EmbeddingsBackfillResponse> {
+  return retry(() => apiRequest<EmbeddingsBackfillResponse>('/embeddings/backfill', {
+    method: 'POST',
+    body: JSON.stringify(body ?? {}),
+  }));
 }
