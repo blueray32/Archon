@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Database } from 'lucide-react';
 import { MainLayout } from '../components/layout/MainLayout';
 import { backfillEmbeddings, getEmbeddingsHealth, type EmbeddingsBackfillRequest } from '../services/api';
+import { useToast } from '../features/ui/hooks/useToast';
 
 export function EmbeddingsPage() {
   const { data, isLoading, refetch, isFetching, error } = useQuery({
@@ -19,11 +20,50 @@ export function EmbeddingsPage() {
     source_id: '',
   });
 
+  // Load saved preferences on mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('embeddings_backfill_prefs');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        setForm((f) => ({ ...f, ...parsed }));
+      }
+    } catch {}
+  }, []);
+
+  // Persist preferences whenever form changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('embeddings_backfill_prefs', JSON.stringify(form));
+    } catch {}
+  }, [form]);
+
+  const { showToast } = useToast();
+
   const mutation = useMutation({
     mutationFn: (body: EmbeddingsBackfillRequest) => backfillEmbeddings(body),
-    onSuccess: async () => {
+    onSuccess: async (res) => {
       await refetch();
+      // Build a compact summary toast
+      try {
+        const parts: string[] = [];
+        const sum = res?.summary || {} as Record<string, any>;
+        Object.keys(sum).forEach((k) => {
+          const s = sum[k];
+          if (s && typeof s === 'object') {
+            parts.push(`${k}: +${s.updated ?? 0} upd, ${s.failed_count ?? 0} err`);
+          }
+        });
+        const msg = parts.length ? `Backfill ${form.dry_run ? 'dry-run' : 'completed'} (${res?.duration_seconds ?? 0}s) — ${parts.join(' | ')}` : 'Backfill completed';
+        showToast(msg, 'success');
+      } catch {
+        showToast('Backfill completed', 'success');
+      }
     },
+    onError: (err: any) => {
+      const msg = (err && err.message) ? err.message : 'Backfill failed';
+      showToast(msg, 'error');
+    }
   });
 
   const totalMissing = useMemo(() => data?.summary?.missing ?? 0, [data]);
@@ -162,7 +202,14 @@ export function EmbeddingsPage() {
           <div className="mt-4 flex items-center gap-3">
             <button
               className="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-50"
-              onClick={() => mutation.mutate(form)}
+              onClick={() => {
+                if (!form.dry_run) {
+                  const scope = Array.isArray(form.tables) ? form.tables.join(',') : (form.tables || 'all');
+                  const ok = window.confirm(`Run live backfill for: ${scope}? This will write embeddings to the database.`);
+                  if (!ok) return;
+                }
+                mutation.mutate(form);
+              }}
               disabled={mutation.isPending || (totalMissing === 0 && !form.source_id)}
             >
               {mutation.isPending ? 'Running…' : form.dry_run ? 'Dry Run Backfill' : 'Run Backfill'}
@@ -181,4 +228,3 @@ export function EmbeddingsPage() {
 }
 
 export default EmbeddingsPage;
-
