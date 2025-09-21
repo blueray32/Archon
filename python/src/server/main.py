@@ -247,6 +247,21 @@ async def health_check():
             "schema_valid": False
         }
 
+    # Check hybrid search function signatures (detect common 42804 mismatch)
+    search_schema_status = await _check_search_schema()
+    if not search_schema_status["valid"]:
+        return {
+            "status": "migration_required",
+            "service": "archon-backend",
+            "timestamp": datetime.now().isoformat(),
+            "ready": False,
+            "migration_required": True,
+            "message": search_schema_status["message"],
+            "migration_instructions": "Open Supabase Dashboard → SQL Editor → Run: migration/fix_hybrid_search_types.sql",
+            "schema_valid": True,
+            "search_schema_valid": False,
+        }
+
     return {
         "status": "healthy",
         "service": "archon-backend",
@@ -254,6 +269,7 @@ async def health_check():
         "ready": True,
         "credentials_loaded": True,
         "schema_valid": True,
+        "search_schema_valid": True,
     }
 
 
@@ -331,6 +347,83 @@ async def _check_database_schema():
         result = {"valid": True, "message": f"Schema check inconclusive: {str(e)}"}
         # Don't cache inconclusive results - allow retry
         return result
+
+
+# Additional search schema check for hybrid function signature/type issues
+async def _check_search_schema():
+    """Validate hybrid search functions are callable and not suffering type mismatch.
+
+    Detects the common PostgreSQL 42804 error: structure of query does not match function result type
+    caused by url declared as VARCHAR in RETURNS TABLE while underlying data is TEXT.
+    """
+    try:
+        from .services.client_manager import get_supabase_client
+
+        client = get_supabase_client()
+
+        # Minimal, read-only probe parameters
+        probe_embedding = [0.0] * 1536  # Does not persist; safe for health check
+        rpc_params = {
+            "query_embedding": probe_embedding,
+            "query_text": "health_check",
+            "match_count": 1,
+            "filter": {},
+            "source_filter": None,
+        }
+
+        # Call both hybrid functions. Empty result is OK; exceptions indicate schema issues.
+        try:
+            client.rpc("hybrid_search_archon_crawled_pages", rpc_params).execute()
+        except Exception as e:
+            msg = str(e)
+            lower = msg.lower()
+            # 42804: structure mismatch; 42883: function does not exist
+            if "42804" in lower or "does not match function result type" in lower:
+                return {
+                    "valid": False,
+                    "message": (
+                        "Hybrid search function type mismatch detected (crawled pages). "
+                        "Apply migration/fix_hybrid_search_types.sql to set url as TEXT."
+                    ),
+                }
+            if "42883" in lower or "function" in lower and "does not exist" in lower:
+                return {
+                    "valid": False,
+                    "message": (
+                        "Hybrid search function missing (crawled pages). Run migrations to create it."
+                    ),
+                }
+            # Other errors don't necessarily indicate migration; surface as inconclusive
+            api_logger.debug(f"Hybrid search check (crawled) inconclusive: {msg}")
+
+        try:
+            client.rpc("hybrid_search_archon_code_examples", rpc_params).execute()
+        except Exception as e:
+            msg = str(e)
+            lower = msg.lower()
+            if "42804" in lower or "does not match function result type" in lower:
+                return {
+                    "valid": False,
+                    "message": (
+                        "Hybrid code search function type mismatch detected. "
+                        "Apply migration/fix_hybrid_search_types.sql to set url as TEXT."
+                    ),
+                }
+            if "42883" in lower or "function" in lower and "does not exist" in lower:
+                return {
+                    "valid": False,
+                    "message": (
+                        "Hybrid code search function missing. Run migrations to create it."
+                    ),
+                }
+            api_logger.debug(f"Hybrid search check (code) inconclusive: {msg}")
+
+        return {"valid": True, "message": "Hybrid search functions healthy"}
+
+    except Exception as e:
+        # If any unexpected error, don't falsely block startup; report inconclusive
+        api_logger.debug(f"Search schema check error: {type(e).__name__}: {str(e)}")
+        return {"valid": True, "message": f"Search schema check inconclusive: {str(e)}"}
 
 
 # Export the app directly for uvicorn to use
