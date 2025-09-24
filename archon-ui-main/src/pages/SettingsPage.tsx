@@ -91,6 +91,20 @@ export const SettingsPage = () => {
     }
   };
 
+  const refreshAgents = async () => {
+    try {
+      const res = await fetch('/api/agents/refresh', { method: 'POST' });
+      if (!res.ok) {
+        let msg = `HTTP ${res.status}`;
+        try { const data = await res.json(); msg = data?.error || msg; } catch {}
+        throw new Error(msg);
+      }
+      showToast('Agents credentials refreshed', 'success');
+    } catch (e: any) {
+      showToast(`Failed to refresh agents: ${e?.message || e}`, 'error');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -162,6 +176,16 @@ export const SettingsPage = () => {
               defaultExpanded={true}
             >
               <APIKeysSection />
+              <div className="mt-4 flex items-center gap-2">
+                <button
+                  className="px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100/50 dark:hover:bg-zinc-800/30 text-sm"
+                  onClick={refreshAgents}
+                  title="Refresh agents credentials without restart"
+                >
+                  Refresh Agents Credentials
+                </button>
+                <span className="text-xs text-zinc-500">Use after updating API keys to apply changes immediately.</span>
+              </div>
             </CollapsibleSettingsCard>
           </motion.div>
           <motion.div variants={itemVariants}>

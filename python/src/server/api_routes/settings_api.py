@@ -114,6 +114,13 @@ async def create_credential(request: CredentialRequest):
                 f"Credential saved successfully | key={request.key} | is_encrypted={request.is_encrypted}"
             )
 
+            # Notify agents service to refresh credentials on relevant keys
+            try:
+                await _notify_agents_refresh_if_relevant(request.key, request.category)
+            except Exception:
+                # Non-fatal
+                pass
+
             return {
                 "success": True,
                 "message": f"Credential {request.key} {'encrypted and ' if request.is_encrypted else ''}saved successfully",
@@ -232,6 +239,10 @@ async def update_credential(key: str, request: dict[str, Any]):
             logfire.info(
                 f"Credential updated successfully | key={key} | is_encrypted={is_encrypted}"
             )
+            try:
+                await _notify_agents_refresh_if_relevant(key, category)
+            except Exception:
+                pass
 
             return {"success": True, "message": f"Credential {key} updated successfully"}
         else:
@@ -240,6 +251,48 @@ async def update_credential(key: str, request: dict[str, Any]):
 
     except Exception as e:
         logfire.error(f"Error updating credential | key={key} | error={str(e)}")
+        raise HTTPException(status_code=500, detail={"error": str(e)})
+
+
+async def _notify_agents_refresh_if_relevant(key: str, category: str | None):
+    """Notify agents service to refresh credentials on relevant changes.
+
+    Triggers on OPENAI_API_KEY, LLM keys, or category 'api_keys' updates.
+    Non-fatal if the agents service is unavailable.
+    """
+    lower_key = (key or "").lower()
+    relevant = lower_key in ("openai_api_key", "llm_api_key") or (category or "").lower() == "api_keys"
+    if not relevant:
+        return
+
+    await _notify_agents_refresh()
+
+
+async def _notify_agents_refresh():
+    try:
+        import httpx, os
+        agents_port = os.getenv("ARCHON_AGENTS_PORT", "8052")
+        hosts = [h for h in [os.getenv("ARCHON_AGENTS_HOST"), "archon-agents", "localhost", "127.0.0.1"] if h]
+        async with httpx.AsyncClient(timeout=3.0) as client:
+            for host in hosts:
+                try:
+                    resp = await client.post(f"http://{host}:{agents_port}/agents/refresh-credentials")
+                    if resp.status_code == 200:
+                        logfire.info(f"Agents credentials refresh succeeded via {host}")
+                        return
+                except Exception:
+                    continue
+    except Exception:
+        pass
+
+
+@router.post("/agents/refresh")
+async def refresh_agents_credentials():
+    """Manually trigger agents credentials refresh (no restart)."""
+    try:
+        await _notify_agents_refresh()
+        return {"success": True, "message": "Agents refresh triggered"}
+    except Exception as e:
         raise HTTPException(status_code=500, detail={"error": str(e)})
 
 

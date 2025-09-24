@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { Send, User, WifiOff, RefreshCw, BookOpen, Search, Mic, Volume2, VolumeX, MicOff, SlidersHorizontal, X, Filter as FilterIcon, X as XIcon } from 'lucide-react';
+import { Send, User, WifiOff, RefreshCw, Mic, Volume2, VolumeX, MicOff, SlidersHorizontal, X } from 'lucide-react';
 import * as Popover from '@radix-ui/react-popover';
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { ArchonLoadingSpinner, EdgeLitEffect } from '../animations/Animations';
@@ -8,7 +8,6 @@ import { knowledgeBaseService } from '../../services/knowledgeBaseService';
 import { AgentSwitcher } from '../../agents/AgentSwitcher';
 import { useAgentState } from '../../agents/AgentContext';
 import { getAgentTypeFor } from '../../agents/registry';
-import { SourceFilterControl } from './SourceFilterControl';
 
 /**
  * Props for the VoiceEnabledChatPanel component
@@ -24,7 +23,7 @@ interface VoiceEnabledChatPanelProps {
  * Adds speech-to-text input and text-to-speech output to the Spanish tutor chat
  */
 export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props => {
-  const { selectedAgentId, selectedAgent, selectedSourceFilter, kbOnly, setSelectedSourceFilter, setKbOnly } = useAgentState();
+  const { selectedAgentId, selectedAgent } = useAgentState();
   // Existing chat state
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -350,12 +349,35 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
       return;
     }
 
-    console.log('Starting TTS for text:', text);
+    // Sanitize text to avoid reading bullets, markdown, phonetics, etc.
+    const sanitizeForTTS = (raw: string): string => {
+      const lines = raw.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      const cleaned = lines.map(l =>
+        l
+          // Remove leading bullets or numeric list markers
+          .replace(/^\s*(?:[-*•]+|\d+[\.\)]\s*)\s*/, '')
+          // Remove markdown bold/italic markers
+          .replace(/\*\*(.*?)\*\*/g, '$1')
+          .replace(/\*(.*?)\*/g, '$1')
+          // Remove bracketed phonetics/asides
+          .replace(/\[[^\]]+\]/g, '')
+          // Remove stray bullet symbols
+          .replace(/[•▪︎◦·●]/g, '')
+          // Collapse whitespace
+          .replace(/\s{2,}/g, ' ')
+          .trim()
+      ).filter(Boolean);
+      return cleaned.join('\n');
+    };
+
+    const safeText = sanitizeForTTS(text);
+
+    console.log('Starting TTS for text:', safeText);
 
     // Cancel any ongoing speech
     window.speechSynthesis.cancel();
 
-    const utterance = new SpeechSynthesisUtterance(text);
+    const utterance = new SpeechSynthesisUtterance(safeText);
 
     // Function to set voice after voices are loaded
     const setVoiceAndSpeak = () => {
@@ -665,6 +687,17 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
             ...base,
             student_level: 'intermediate',
             conversation_mode: 'casual',
+            // Prefer concise bilingual read-out
+            response_style: 'minimal',
+            include_translation: true,
+            include_corrections: true,
+            include_grammar_notes: false,
+            include_vocabulary: true,
+            include_cultural_notes: false,
+            include_encouragement: true,
+            include_next_topic: true,
+            max_reply_sentences: 1,
+            reading_mode: true,
           };
         }
         if (selectedAgentId === 'pydantic-ai') {
@@ -673,16 +706,9 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
             domain: 'pydantic-ai',
             knowledge_source: 'llmstxt',
             dataset_hint: 'Pydantic Documentation - Llms-Full.Txt',
-            // Hint RAG to focus on Pydantic sources and your imported KB
-            source_filter: 'pydantic|ai.pydantic.dev|llms-full|ai-agent-mastery' +
-              (selectedSourceFilter ? `|${selectedSourceFilter}` : ''),
-            kb_only: kbOnly,
+            source_filter: 'pydantic|ai.pydantic.dev|llms-full|ai-agent-mastery',
           };
         }
-        if (selectedSourceFilter) {
-          base.source_filter = selectedSourceFilter;
-        }
-        if (kbOnly) base.kb_only = true;
         return base;
       })();
 
@@ -747,7 +773,6 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
         <div className="flex items-center gap-3">
           <img src="/logo-neon.png" alt="Archon" className="w-6 h-6" />
           <AgentSwitcher label="Agent" />
-          <SourceFilterControl />
           {isVoiceEnabled && (
             <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-1 rounded-full">
               Voice
@@ -1005,31 +1030,6 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
                 if (e.key === 'Enter') handleSendMessage();
               }}
             />
-            {kbOnly && (
-              <button
-                type="button"
-                onClick={() => setKbOnly(false)}
-                className="text-[10px] px-1.5 py-0.5 rounded-full border border-green-300 text-green-700 bg-green-50 dark:border-green-800 dark:text-green-300 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 flex items-center gap-1"
-                title="Disable KB-only"
-                aria-label="Disable KB-only"
-              >
-                <BookOpen className="w-3 h-3" />
-                KB
-              </button>
-            )}
-            {selectedSourceFilter && (
-              <button
-                type="button"
-                onClick={() => setSelectedSourceFilter('')}
-                className="text-[10px] px-1.5 py-0.5 rounded-full border border-blue-300 text-blue-700 bg-blue-50 dark:border-blue-800 dark:text-blue-300 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 flex items-center gap-1"
-                title={`Clear filter: ${selectedSourceFilter}`}
-                aria-label="Clear source filter"
-              >
-                <FilterIcon className="w-3 h-3" />
-                Filter
-                <XIcon className="w-3 h-3" />
-              </button>
-            )}
           </div>
 
           {/* Send button */}

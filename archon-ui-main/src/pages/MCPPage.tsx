@@ -43,7 +43,7 @@ export const MCPPage = () => {
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">MCP Session Helpers</h2>
           <div className="flex items-center gap-2">
-            <button className="px-3 py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-500" onClick={initSession}>Init Session</nbutton>
+            <button className="px-3 py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-500" onClick={initSession}>Init Session</button>
             <button className="px-3 py-1.5 rounded-lg bg-zinc-800 text-white hover:bg-zinc-700" onClick={getInfo}>Session Info</button>
           </div>
         </div>

@@ -124,6 +124,50 @@ async def send_message(session_id: str, request: dict):
         agents_port = os.getenv("ARCHON_AGENTS_PORT", "8052")
         agents_host_env = os.getenv("ARCHON_AGENTS_HOST")
         host_candidates = [h for h in [agents_host_env, "archon-agents", "localhost", "127.0.0.1"] if h]
+
+        # Preflight: check API key presence to avoid long timeouts when not configured
+        llm_keys = [
+            os.getenv("OPENAI_API_KEY"),
+            os.getenv("LLM_API_KEY"),
+        ]
+        has_llm_key = any(k and k.strip() for k in llm_keys)
+        if not has_llm_key and agent_type in ("rag", "spanish_tutor", "pydantic_ai"):
+            warn_msg = (
+                "Agent error: No LLM API key configured for Agents service. "
+                "Set OPENAI_API_KEY (or LLM_API_KEY) in environment or via Settings, then retry."
+            )
+            sessions[session_id]["messages"].append({
+                "id": str(uuid.uuid4()),
+                "content": warn_msg,
+                "sender": "agent",
+                "timestamp": datetime.now().isoformat(),
+                "agent_type": agent_type,
+            })
+            return {"status": "sent"}
+        def _unwrap_agent_result_text(text: str) -> str:
+            try:
+                if isinstance(text, str) and text.startswith("AgentRunResult(") and "output=" in text:
+                    import re as _re
+                    m = _re.search(r"output\s*=\s*'([^']*)'", text, flags=_re.S)
+                    if not m:
+                        m = _re.search(r'output\s*=\s*"([^"]*)"', text, flags=_re.S)
+                    if m:
+                        inner = m.group(1)
+                        inner = (
+                            inner
+                            .replace(r"\n", "\n")
+                            .replace(r"\t", "\t")
+                            .replace(r'\"', '"')
+                            .replace(r"\'", "'")
+                        )
+                        return inner
+                    # Fallback: strip wrapper
+                    stripped = text[len("AgentRunResult(") :]
+                    return stripped[:-1] if stripped.endswith(")") else stripped
+            except Exception:
+                return text
+            return text
+
         async with httpx.AsyncClient() as client:
             success = False
             final_error_text = None
@@ -138,7 +182,7 @@ async def send_message(session_id: str, request: dict):
                             response = await client.post(
                                 f"http://{host}:{agents_port}/agents/run",
                                 json=agents_request,
-                                timeout=8.0,
+                                timeout=6.0,
                             )
                             break
                         except Exception as e:
@@ -183,6 +227,9 @@ async def send_message(session_id: str, request: dict):
                             except Exception:
                                 content = str(output)
 
+                        # Sanitize wrapper if present
+                        content = _unwrap_agent_result_text(content)
+
                         agent_msg = {
                             "id": str(uuid.uuid4()),
                             "content": content,
@@ -203,15 +250,50 @@ async def send_message(session_id: str, request: dict):
                     continue
 
             if not success:
-                # Provide a helpful fallback message
-                fallback_msg = {
-                    "id": str(uuid.uuid4()),
-                    "content": f"Agent error: {final_error_text or 'Service unavailable'}",
-                    "sender": "agent",
-                    "timestamp": datetime.now().isoformat(),
-                    "agent_type": agent_type,
-                }
-                sessions[session_id]["messages"].append(fallback_msg)
+                # Fallback: attempt keyword-only search to provide some value without embeddings/LLM
+                try:
+                    from ..utils import get_supabase_client  # lazy import
+
+                    client = get_supabase_client()
+                    rpc_params = {
+                        "query_text": request.get("message", ""),
+                        "match_count": 5,
+                        "filter": {},
+                        "source_filter": None,
+                    }
+                    resp = client.rpc("keyword_search_archon_crawled_pages", rpc_params).execute()
+                    items = resp.data or []
+                    if items:
+                        lines = []
+                        for row in items[:3]:
+                            url = row.get("url") or row.get("metadata", {}).get("url")
+                            snippet = (row.get("content") or "").strip().replace("\n", " ")
+                            if len(snippet) > 180:
+                                snippet = snippet[:180] + "…"
+                            lines.append(f"• {url or '[no-url]'} — {snippet}")
+                        content = (
+                            "Here are some relevant passages (keyword-only search):\n" + "\n".join(lines)
+                        )
+                        sessions[session_id]["messages"].append({
+                            "id": str(uuid.uuid4()),
+                            "content": content,
+                            "sender": "agent",
+                            "timestamp": datetime.now().isoformat(),
+                            "agent_type": "keyword_fallback",
+                        })
+                        success = True
+                    else:
+                        raise Exception("No keyword results")
+                except Exception:
+                    # Provide a helpful error message
+                    fallback_msg = {
+                        "id": str(uuid.uuid4()),
+                        "content": f"Agent error: {final_error_text or 'Service unavailable'}",
+                        "sender": "agent",
+                        "timestamp": datetime.now().isoformat(),
+                        "agent_type": agent_type,
+                    }
+                    sessions[session_id]["messages"].append(fallback_msg)
 
     except Exception as e:
         logger.error(f"Failed to communicate with agents service: {e}")

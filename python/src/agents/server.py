@@ -11,6 +11,7 @@ The agents use MCP tools for all data operations.
 
 import asyncio
 import json
+import re
 import logging
 import os
 from collections.abc import AsyncGenerator
@@ -28,6 +29,7 @@ from .document_agent import DocumentAgent
 from .rag_agent import RagAgent
 from .pydantic_ai_loader import get_pydantic_ai_agent_class
 from .spanish_tutor_agent import SpanishTutorAgent
+from .researcher_agent import ResearcherAgent
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -58,6 +60,7 @@ AVAILABLE_AGENTS = {
     "document": DocumentAgent,
     "rag": RagAgent,
     "spanish_tutor": SpanishTutorAgent,
+    "researcher": ResearcherAgent,
     "pydantic_ai": get_pydantic_ai_agent_class(),
 }
 
@@ -132,6 +135,12 @@ async def lifespan(app: FastAPI):
             # Pass model configuration from credentials
             model_key = f"{name.upper()}_AGENT_MODEL"
             model = AGENT_CREDENTIALS.get(model_key, "openai:gpt-4o-mini")
+
+            # Override Spanish tutor to use gpt-4o-mini to avoid quota issues
+            if name == "spanish_tutor" and model == "openai:gpt-4o":
+                model = "openai:gpt-4o-mini"
+                logger.info(f"Overriding Spanish tutor to use gpt-4o-mini due to quota limits")
+
             logger.info(f"Using model: {model} for {name} agent")
 
             # agent_class may be a class, a factory function, or an instance
@@ -216,6 +225,31 @@ async def run_agent(request: AgentRequest):
                 conversation_mode=request.context.get("conversation_mode", "casual") if request.context else "casual",
                 focus_area=request.context.get("focus_area") if request.context else None,
                 previous_context=request.context.get("previous_context") if request.context else None,
+                response_style=request.context.get("response_style", "minimal") if request.context else "minimal",
+                include_translation=bool(request.context.get("include_translation", False)) if request.context else False,
+                include_corrections=bool(request.context.get("include_corrections", True)) if request.context else True,
+                include_grammar_notes=bool(request.context.get("include_grammar_notes", False)) if request.context else False,
+                include_vocabulary=bool(request.context.get("include_vocabulary", False)) if request.context else False,
+                include_cultural_notes=bool(request.context.get("include_cultural_notes", False)) if request.context else False,
+                include_encouragement=bool(request.context.get("include_encouragement", True)) if request.context else True,
+                include_next_topic=bool(request.context.get("include_next_topic", False)) if request.context else False,
+                max_reply_sentences=int(request.context.get("max_reply_sentences", 2)) if request.context else 2,
+                reading_mode=bool(request.context.get("reading_mode", False)) if request.context else False,
+            )
+        elif request.agent_type == "researcher":
+            from .researcher_agent import ResearcherDependencies
+
+            deps = ResearcherDependencies(
+                project_id=request.context.get("project_id") if request.context else None,
+                source_filter=request.context.get("source_filter") if request.context else None,
+                match_count=request.context.get("match_count", 5) if request.context else 5,
+                enable_web_search=request.context.get("enable_web_search", True) if request.context else True,
+                enable_image_analysis=request.context.get("enable_image_analysis", True) if request.context else True,
+                enable_code_execution=request.context.get("enable_code_execution", True) if request.context else True,
+                enable_knowledge_graph=request.context.get("enable_knowledge_graph", True) if request.context else True,
+                user_memories=request.context.get("user_memories", "") if request.context else "",
+                brave_api_key=os.getenv('BRAVE_API_KEY'),
+                searxng_base_url=os.getenv('SEARXNG_BASE_URL'),
             )
         else:
             # Default dependencies
@@ -247,10 +281,92 @@ async def run_agent(request: AgentRequest):
             except Exception:
                 return str(res)
 
-        normalized = {
-            "output": to_output(result),
-            "raw": result,
-        }
+        output_text = to_output(result)
+
+        # Enforce strict reading mode for Spanish tutor (two lines: Spanish then English)
+        def unwrap_agent_result_text(text: str) -> str:
+            try:
+                if isinstance(text, str) and text.startswith("AgentRunResult(") and "output=" in text:
+                    # Capture contents of output='...'
+                    m = re.search(r"output\s*=\s*'([^']*)'", text, flags=re.S)
+                    if not m:
+                        m = re.search(r'output\s*=\s*"([^"]*)"', text, flags=re.S)
+                    if m:
+                        inner = m.group(1)
+                        # Light unescape for common sequences without breaking UTF‑8
+                        inner = (
+                            inner
+                            .replace(r"\n", "\n")
+                            .replace(r"\t", "\t")
+                            .replace(r'\"', '"')
+                            .replace(r"\'", "'")
+                        )
+                        return inner
+                    # Fallback: strip wrapper if we can't parse cleanly
+                    stripped = text[len("AgentRunResult(") :]
+                    return stripped[:-1] if stripped.endswith(")") else stripped
+            except Exception:
+                return text
+            return text
+
+        def strip_emojis(s: str) -> str:
+            try:
+                # Remove common emoji ranges
+                return re.sub("[\U0001F300-\U0001F6FF\U0001F900-\U0001F9FF\U0001F1E6-\U0001F1FF\u2600-\u26FF\u2700-\u27BF]", "", s)
+            except re.error:
+                # Narrow fallback if wide unicode not supported
+                return s
+
+        def strip_bullets_markdown(s: str) -> str:
+            try:
+                # Remove leading bullets or numeric list markers
+                s = re.sub(r"^\s*(?:[-*•]+|\d+[\.\)]\s*)\s*", "", s)
+                # Remove markdown bold/italic
+                s = re.sub(r"\*\*(.*?)\*\*", r"\1", s)
+                s = re.sub(r"\*(.*?)\*", r"\1", s)
+                # Remove bracketed phonetics or asides
+                s = re.sub(r"\[[^\]]+\]", "", s)
+                # Remove stray bullet symbols (keep dashes in word pairs)
+                s = re.sub(r"[•▪︎◦·●]", "", s)
+                # Trim repeated spaces
+                s = re.sub(r"\s{2,}", " ", s)
+                return s.strip()
+            except re.error:
+                return s
+
+        def enforce_reading_mode(text: str) -> str:
+            # Unwrap wrappers and normalize
+            t = unwrap_agent_result_text(text)
+            # Split and sanitize lines
+            lines = [strip_bullets_markdown(strip_emojis(ln.strip())) for ln in t.splitlines() if ln.strip()]
+
+            # Expand any inline translations "Spanish (English)" into two lines
+            expanded: list[str] = []
+            for ln in lines:
+                m = re.match(r"^(.*?)\s*\(([^()]*)\)\s*$", ln)
+                if m:
+                    es = m.group(1).strip().strip('"“”')
+                    en = m.group(2).strip().strip('"“”')
+                    if es:
+                        expanded.append(es)
+                    if en:
+                        expanded.append(en)
+                else:
+                    expanded.append(ln)
+
+            # Remove any leftover list-like starts that slipped through
+            cleaned = [re.sub(r"^\s*(?:[-*•]+|\d+[\.\)]\s*)\s*", "", ln).strip() for ln in expanded if ln]
+
+            # Join back preserving order to keep bilingual pairs authored by the agent
+            return "\n".join([ln for ln in cleaned if ln])
+
+        # Always unwrap AgentRunResult wrappers for cleaner UI
+        output_text = unwrap_agent_result_text(output_text)
+
+        if request.agent_type == "spanish_tutor" and request.context and request.context.get("reading_mode"):
+            output_text = enforce_reading_mode(output_text)
+
+        normalized = {"output": output_text, "raw": result}
 
         return AgentResponse(
             success=True,
@@ -277,6 +393,53 @@ async def list_agents():
         }
 
     return {"agents": agents_info, "total": len(agents_info)}
+
+
+def _reinit_agents(app: FastAPI):
+    """Reinitialize agents using current AGENT_CREDENTIALS and registry."""
+    app.state.agents = {}
+    for name, agent_class in AVAILABLE_AGENTS.items():
+        try:
+            logger.info(f"Reinitializing {name} agent...")
+            model_key = f"{name.upper()}_AGENT_MODEL"
+            model = AGENT_CREDENTIALS.get(model_key, "openai:gpt-4o-mini")
+
+            # Override Spanish tutor to use gpt-4o-mini to avoid quota issues
+            if name == "spanish_tutor" and model == "openai:gpt-4o":
+                model = "openai:gpt-4o-mini"
+                logger.info(f"Overriding Spanish tutor to use gpt-4o-mini due to quota limits")
+            if isinstance(agent_class, type):
+                agent_instance = agent_class(model=model)
+            elif callable(agent_class):
+                try:
+                    agent_instance = agent_class(model=model)
+                except TypeError:
+                    agent_instance = agent_class()
+            else:
+                agent_instance = agent_class
+            app.state.agents[name] = agent_instance
+            logger.info(f"Agent {name} ready with model {model}")
+        except Exception as e:
+            logger.error(f"Failed to initialize {name}: {e}")
+
+
+@app.post("/agents/refresh-credentials")
+async def refresh_credentials():
+    """Refresh credentials from the main server and reinitialize agents.
+
+    Useful after updating OPENAI_API_KEY or model choices via Settings without restart.
+    """
+    try:
+        creds = await fetch_credentials_from_server()
+        # Update global creds
+        global AGENT_CREDENTIALS
+        AGENT_CREDENTIALS = creds
+        # Reinit agents with possibly updated models/keys
+        _reinit_agents(app)
+        return {"success": True, "message": "Credentials refreshed", "keys": list(creds.keys())}
+    except Exception as e:
+        logger.error(f"Refresh credentials failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/agents/{agent_type}/stream")
@@ -321,6 +484,31 @@ async def stream_agent(agent_type: str, request: AgentRequest):
                     conversation_mode=request.context.get("conversation_mode", "casual") if request.context else "casual",
                     focus_area=request.context.get("focus_area") if request.context else None,
                     previous_context=request.context.get("previous_context") if request.context else None,
+                    response_style=request.context.get("response_style", "minimal") if request.context else "minimal",
+                    include_translation=bool(request.context.get("include_translation", False)) if request.context else False,
+                    include_corrections=bool(request.context.get("include_corrections", True)) if request.context else True,
+                    include_grammar_notes=bool(request.context.get("include_grammar_notes", False)) if request.context else False,
+                    include_vocabulary=bool(request.context.get("include_vocabulary", False)) if request.context else False,
+                    include_cultural_notes=bool(request.context.get("include_cultural_notes", False)) if request.context else False,
+                    include_encouragement=bool(request.context.get("include_encouragement", True)) if request.context else True,
+                    include_next_topic=bool(request.context.get("include_next_topic", False)) if request.context else False,
+                    max_reply_sentences=int(request.context.get("max_reply_sentences", 2)) if request.context else 2,
+                    reading_mode=bool(request.context.get("reading_mode", False)) if request.context else False,
+                )
+            elif agent_type == "researcher":
+                from .researcher_agent import ResearcherDependencies
+
+                deps = ResearcherDependencies(
+                    project_id=request.context.get("project_id") if request.context else None,
+                    source_filter=request.context.get("source_filter") if request.context else None,
+                    match_count=request.context.get("match_count", 5) if request.context else 5,
+                    enable_web_search=request.context.get("enable_web_search", True) if request.context else True,
+                    enable_image_analysis=request.context.get("enable_image_analysis", True) if request.context else True,
+                    enable_code_execution=request.context.get("enable_code_execution", True) if request.context else True,
+                    enable_knowledge_graph=request.context.get("enable_knowledge_graph", True) if request.context else True,
+                    user_memories=request.context.get("user_memories", "") if request.context else "",
+                    brave_api_key=os.getenv('BRAVE_API_KEY'),
+                    searxng_base_url=os.getenv('SEARXNG_BASE_URL'),
                 )
             else:
                 # Default dependencies

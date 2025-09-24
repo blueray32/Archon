@@ -94,6 +94,10 @@ agents = [
     "httpx>=0.24.0",
     "python-dotenv>=1.0.0",
     "structlog>=23.1.0",
+    # For Researcher agent
+    "RestrictedPython>=6.2",
+    "openai>=1.0.0",
+    "supabase>=2.15.1",
 ]
 
 # All dependencies for running unit tests locally
@@ -122,6 +126,7 @@ all = [
     # Agents specific
     "pydantic-ai>=0.0.13",
     "structlog>=23.1.0",
+    "RestrictedPython>=6.2",
     # Shared utilities
     "httpx>=0.24.0",
     "pydantic>=2.0.0",

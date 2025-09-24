@@ -1,12 +1,11 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Send, User, WifiOff, RefreshCw, BookOpen, Search, Filter as FilterIcon, X as XIcon } from 'lucide-react';
+import { Send, User, WifiOff, RefreshCw } from 'lucide-react';
 import { ArchonLoadingSpinner, EdgeLitEffect } from '../animations/Animations';
 import { agentChatService, ChatMessage } from '../../services/agentChatService';
 import { knowledgeBaseService } from '../../services/knowledgeBaseService';
 import { AgentSwitcher } from '../../agents/AgentSwitcher';
 import { useAgentState } from '../../agents/AgentContext';
 import { getAgentTypeFor } from '../../agents/registry';
-import { SourceFilterControl } from './SourceFilterControl';
 
 /**
  * Props for the ArchonChatPanel component
@@ -21,7 +20,7 @@ interface ArchonChatPanelProps {
  * loading states, and input functionality connected to real AI agents.
  */
 export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
-  const { selectedAgentId, selectedAgent, selectedSourceFilter, kbOnly, setSelectedSourceFilter, setKbOnly } = useAgentState();
+  const { selectedAgentId, selectedAgent } = useAgentState();
   // State for messages, session, and other chat functionality
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -245,6 +244,17 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
           return {
             student_level: 'intermediate',
             conversation_mode: 'casual',
+            // Prefer concise bilingual read-out
+            response_style: 'minimal',
+            include_translation: true,
+            include_corrections: true,
+            include_grammar_notes: false,
+            include_vocabulary: true,
+            include_cultural_notes: false,
+            include_encouragement: true,
+            include_next_topic: true,
+            max_reply_sentences: 1,
+            reading_mode: true,
           };
         }
         if (selectedAgentId === 'pydantic-ai') {
@@ -252,16 +262,10 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
             domain: 'pydantic-ai',
             knowledge_source: 'llmstxt',
             dataset_hint: 'Pydantic Documentation - Llms-Full.Txt',
-            // Hint RAG to focus on Pydantic sources and your imported KB
-            source_filter: 'pydantic|ai.pydantic.dev|llms-full|ai-agent-mastery' +
-              (selectedSourceFilter ? `|${selectedSourceFilter}` : ''),
-            kb_only: kbOnly,
+            source_filter: 'pydantic|ai.pydantic.dev|llms-full|ai-agent-mastery',
           };
         }
-        const base: Record<string, any> = {};
-        if (selectedSourceFilter) base.source_filter = selectedSourceFilter;
-        if (kbOnly) base.kb_only = true;
-        return base;
+        return {};
       })();
 
       // Send message to agent via service
@@ -339,7 +343,6 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
                 <img src="/logo-neon.png" alt="Archon" className="w-6 h-6 z-10 relative" />
               </div>
               <AgentSwitcher label="Agent" />
-              <SourceFilterControl />
             </div>
           </div>
           

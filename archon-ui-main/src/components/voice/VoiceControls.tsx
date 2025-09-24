@@ -153,7 +153,22 @@ export const VoiceControls: React.FC<VoiceControlsProps> = ({
     // Cancel any ongoing speech
     synthesisRef.current.cancel();
 
-    const utterance = new SpeechSynthesisUtterance(text);
+    const sanitizeForTTS = (raw: string): string => {
+      const lines = raw.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      const cleaned = lines.map(l =>
+        l
+          .replace(/^\s*(?:[-*•]+|\d+[\.\)]\s*)\s*/, '')
+          .replace(/\*\*(.*?)\*\*/g, '$1')
+          .replace(/\*(.*?)\*/g, '$1')
+          .replace(/\[[^\]]+\]/g, '')
+          .replace(/[•▪︎◦·●]/g, '')
+          .replace(/\s{2,}/g, ' ')
+          .trim()
+      ).filter(Boolean);
+      return cleaned.join('\n');
+    };
+
+    const utterance = new SpeechSynthesisUtterance(sanitizeForTTS(text));
 
     // Set Spanish voice if available
     const voices = synthesisRef.current.getVoices();
