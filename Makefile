@@ -25,3 +25,6 @@ ingest-vault:
 
 export-summaries:
 	@bash scripts/export_summaries.sh
+
+publish:
+	@OBSIDIAN_VAULT="$$OBSIDIAN_VAULT" bash scripts/publish_to_obsidian.sh
