@@ -1,0 +1,19 @@
+name: PRP Guardrails
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+
+jobs:
+  guardrails:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Verify PRP guardrails
+        run: python3 .github/scripts/verify_prp.py

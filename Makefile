@@ -1,142 +1,27 @@
-# Archon Makefile - Simple, Secure, Cross-Platform
-SHELL := /bin/bash
-.SHELLFLAGS := -ec
+# Make targets for PRP/R‑D flow
+.PHONY: review verify-prp context-bundle story dev qa ingest-vault export-summaries
 
-# Docker compose command - prefer newer 'docker compose' plugin over standalone 'docker-compose'
-COMPOSE ?= $(shell docker compose version >/dev/null 2>&1 && echo "docker compose" || echo "docker-compose")
+review:
+	@bash scripts/project_review.sh || echo "review script optional; skip if absent"
 
-.PHONY: help dev dev-docker stop test test-fe test-be lint lint-fe lint-be clean install check
+verify-prp:
+	@python3 .github/scripts/verify_prp.py
 
-help:
-	@echo "Archon Development Commands"
-	@echo "==========================="
-	@echo "  make dev        - Backend in Docker, frontend local (recommended)"
-	@echo "  make dev-docker - Everything in Docker"
-	@echo "  make stop       - Stop all services"
-	@echo "  make test       - Run all tests"
-	@echo "  make test-fe    - Run frontend tests only"
-	@echo "  make test-be    - Run backend tests only"
-	@echo "  make lint       - Run all linters"
-	@echo "  make lint-fe    - Run frontend linter only"
-	@echo "  make lint-be    - Run backend linter only"
-	@echo "  make clean      - Remove containers and volumes"
-	@echo "  make install    - Install dependencies"
-	@echo "  make check      - Check environment setup"
-	@echo "\nContext Bundle Utilities"
-	@echo "  make bundle-new PURPOSE=\"...\"       - Create a new context bundle and set it current"
-	@echo "  make bundle-read PATH=path/to/file     - Append a file's contents to current bundle"
-	@echo "  make bundle-findings BULLETS='["Risk A","Risk B"]' - Append findings bullets"
-	@echo "  make bundle-load [BUNDLE=dir]          - Print consolidated bundle summary (default current)"
-	@echo "  make memory-lint [PATHS=...]           - Check memory files (≤50 lines / ≤500 tokens)"
+context-bundle:
+	@bash scripts/context_bundle.sh
 
-# Install dependencies
-install:
-	@echo "Installing dependencies..."
-	@cd archon-ui-main && npm install
-	@cd python && uv sync --group all --group dev
-	@echo "✓ Dependencies installed"
+# Agent mode helpers (wired via Archon buttons)
+story:
+	@bash scripts/story.sh $(ANALYST) $(ARCH) $(SM) $(F)
 
-# Check environment
-check:
-	@echo "Checking environment..."
-	@node -v >/dev/null 2>&1 || { echo "✗ Node.js not found (require Node 18+)."; exit 1; }
-	@node check-env.js
-	@echo "Checking Docker..."
-	@docker --version > /dev/null 2>&1 || { echo "✗ Docker not found"; exit 1; }
-	@$(COMPOSE) version > /dev/null 2>&1 || { echo "✗ Docker Compose not found"; exit 1; }
-	@echo "✓ Environment OK"
+dev:
+	@bash scripts/dev.sh $(STORY)
 
+qa:
+	@bash scripts/qa.sh $(STORY)
 
-# Hybrid development (recommended)
-dev: check
-	@echo "Starting hybrid development..."
-	@echo "Backend: Docker | Frontend: Local with hot reload"
-	@$(COMPOSE) --profile backend up -d --build
-	@set -a; [ -f .env ] && . ./.env; set +a; \
-	echo "Backend running at http://$${HOST:-localhost}:$${ARCHON_SERVER_PORT:-8181}"
-	@echo "Starting frontend..."
-	@cd archon-ui-main && \
-	VITE_ARCHON_SERVER_PORT=$${ARCHON_SERVER_PORT:-8181} \
-	VITE_ARCHON_SERVER_HOST=$${HOST:-} \
-	npm run dev
+ingest-vault:
+	@bash scripts/ingest_vault.sh
 
-# Full Docker development
-dev-docker: check
-	@echo "Starting full Docker environment..."
-	@$(COMPOSE) --profile full up -d --build
-	@echo "✓ All services running"
-	@echo "Frontend: http://localhost:3737"
-	@echo "API: http://localhost:8181"
-
-# Stop all services
-stop:
-	@echo "Stopping all services..."
-	@$(COMPOSE) --profile backend --profile frontend --profile full down
-	@echo "✓ Services stopped"
-
-# Run all tests
-test: test-fe test-be
-
-# Run frontend tests
-test-fe:
-	@echo "Running frontend tests..."
-	@cd archon-ui-main && npm test
-
-# Run backend tests
-test-be:
-	@echo "Running backend tests..."
-	@cd python && uv run pytest
-
-# Run all linters
-lint: lint-fe lint-be
-
-# Run frontend linter
-lint-fe:
-	@echo "Linting frontend..."
-	@cd archon-ui-main && npm run lint
-
-# Run backend linter
-lint-be:
-	@echo "Linting backend..."
-	@cd python && uv run ruff check --fix
-
-# Clean everything (with confirmation)
-clean:
-	@echo "⚠️  This will remove all containers and volumes"
-	@read -p "Are you sure? (y/N) " -n 1 -r; \
-	echo; \
-	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
-		$(COMPOSE) down -v --remove-orphans; \
-		echo "✓ Cleaned"; \
-	else \
-		echo "Cancelled"; \
-	fi
-
-.DEFAULT_GOAL := help
-
-# ===================== Context Bundle Targets =====================
-
-.PHONY: bundle-new bundle-read bundle-findings bundle-load
-
-bundle-new:
-	@if [ -z "$(PURPOSE)" ]; then echo "ERROR: PURPOSE is required. Example: make bundle-new PURPOSE=\"Kickoff context\""; exit 1; fi
-	@mkdir -p agents/context-bundles
-	@python3 scripts/context_bundle_writer.py new --purpose "$(PURPOSE)"
-
-bundle-read:
-	@if [ -z "$(PATH)" ]; then echo "ERROR: PATH is required. Example: make bundle-read PATH=README.md"; exit 1; fi
-	@python3 scripts/context_bundle_writer.py read --path "$(PATH)"
-
-bundle-findings:
-	@if [ -z "$(BULLETS)" ]; then echo "ERROR: BULLETS is required. Example: make bundle-findings BULLETS='[\"Risk A\",\"Risk B\"]'"; exit 1; fi
-	@python3 scripts/context_bundle_writer.py findings --bullets '$(BULLETS)'
-
-bundle-load:
-	@python3 scripts/load_bundle.py $(if $(BUNDLE),--bundle "$(BUNDLE)")
-
-# ===================== Memory Lint =====================
-
-.PHONY: memory-lint
-memory-lint:
-	@echo "Linting memory files (≤50 lines / ≤500 tokens)..."
-	@python3 scripts/lint_memory.py $(if $(PATHS),$(foreach P,$(PATHS),--paths "$(P)"),)
+export-summaries:
+	@bash scripts/export_summaries.sh
