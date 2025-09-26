@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
-# Usage examples:
-#   make story ANALYST=1 F=feature-weekly-review
-#   make story ARCH=1     F=feature-weekly-review
-#   make story SM=1       F=feature-weekly-review
+# Usage:
+#   make story ANALYST=1 F=feature-x
+#   make story ARCH=1     F=feature-x
+#   make story SM=1       F=feature-x [TYPE=BIM]
 set -euo pipefail
-F="${F:?usage: make story F=<feature> [ANALYST=1|ARCH=1|SM=1]}"
-TEMPLATE="ai_docs/PRPs/templates/PRP.md"
+F="${F:?usage: make story F=<feature> [ANALYST=1|ARCH=1|SM=1] [TYPE=BIM]}"
+TYPE="${TYPE:-GEN}"
+TPL_GEN="ai_docs/PRPs/templates/PRP.md"
+TPL_BIM="ai_docs/PRPs/templates/PRP_BIM.md"
 
 if [[ "${ANALYST:-0}" == "1" ]]; then
   mkdir -p "ai_docs/PRDs/$F"
@@ -33,10 +35,12 @@ fi
 
 if [[ "${SM:-0}" == "1" ]]; then
   mkdir -p "ai_docs/PRPs/$F/001"
+  TPL="$TPL_GEN"
+  [[ "$TYPE" == "BIM" ]] && TPL="$TPL_BIM"
   if [[ ! -f "ai_docs/PRPs/$F/001/PRP.md" ]]; then
-    cp "$TEMPLATE" "ai_docs/PRPs/$F/001/PRP.md"
-    # macOS sed (in-place) to stamp feature/id into the template
+    cp "$TPL" "ai_docs/PRPs/$F/001/PRP.md"
+    # Stamp feature/id into the template (macOS sed -i '')
     sed -i '' "s#<Feature>/<Story-ID>#$F/001#g" "ai_docs/PRPs/$F/001/PRP.md" || true
   fi
-  echo "SM: wrote ai_docs/PRPs/$F/001/PRP.md"
+  echo "SM: wrote ai_docs/PRPs/$F/001/PRP.md (TYPE=$TYPE)"
 fi
