@@ -17,7 +17,11 @@ def tracked():
   try:
     out = subprocess.check_output(["git", "ls-files", "-z"], text=False)
     return [p.decode("utf-8") for p in out.split(b"\x00") if p]
-  except Exception:
+  except subprocess.CalledProcessError as e:
+    print(f"Warning: git ls-files failed (exit code {e.returncode}): {e}", file=sys.stderr)
+    return []
+  except Exception as e:
+    print(f"Warning: Failed to get tracked files: {e}", file=sys.stderr)
     return []
 LARGE = 5 * 1024 * 1024
 for rel in tracked():
@@ -33,7 +37,11 @@ for rel in tracked():
 try:
   msg = subprocess.check_output(["git", "log", "-1", "--pretty=%B"], text=True).strip()
   changed = subprocess.check_output(["git", "diff", "--name-only", "HEAD~1..HEAD"], text=True).splitlines()
-except Exception:
+except subprocess.CalledProcessError as e:
+  print(f"Warning: git command failed (exit code {e.returncode}): {e}", file=sys.stderr)
+  msg, changed = "", []
+except Exception as e:
+  print(f"Warning: Failed to check git history: {e}", file=sys.stderr)
   msg, changed = "", []
 has_prp_ref = any("ai_docs/PRPs" in f for f in changed) or ("PRP" in msg or "ADR" in msg)
 if not has_prp_ref:

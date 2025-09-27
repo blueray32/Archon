@@ -5,11 +5,35 @@ def main():
     base = pathlib.Path("data/bim/standards")
     naming = base/"naming.yml"
     sheets = base/"sheets.yml"
-    if not naming.exists() or not sheets.exists():
-        print("Standards files missing. Expected naming.yml and sheets.yml under data/bim/standards/", file=sys.stderr)
+
+    # Check for missing files with specific reporting
+    missing = []
+    if not naming.exists(): missing.append(str(naming))
+    if not sheets.exists(): missing.append(str(sheets))
+    if missing:
+        print(f"Missing BIM standards files: {', '.join(missing)}", file=sys.stderr)
         sys.exit(2)
-    with open(naming) as f: n = yaml.safe_load(f)
-    with open(sheets) as f: s = yaml.safe_load(f)
+
+    # Load YAML files with error handling
+    try:
+        with open(naming) as f:
+            n = yaml.safe_load(f)
+    except yaml.YAMLError as e:
+        print(f"Error parsing {naming}: {e}", file=sys.stderr)
+        sys.exit(2)
+    except Exception as e:
+        print(f"Error reading {naming}: {e}", file=sys.stderr)
+        sys.exit(2)
+
+    try:
+        with open(sheets) as f:
+            s = yaml.safe_load(f)
+    except yaml.YAMLError as e:
+        print(f"Error parsing {sheets}: {e}", file=sys.stderr)
+        sys.exit(2)
+    except Exception as e:
+        print(f"Error reading {sheets}: {e}", file=sys.stderr)
+        sys.exit(2)
     print("BIM Standards Summary")
     print("- Families:", ", ".join(n.get("family_prefixes", [])))
     print("- Doors pattern:", next((tp["pattern"] for tp in n.get("type_patterns", []) if tp.get("category")=="Doors"), "n/a"))
