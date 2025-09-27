@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Usage: make dev STORY=feature-x/001
+# Usage: make dev STORY=feature-x/001  [RUN_CLAUDE=0 to skip CLI]
 set -euo pipefail
 STORY="${STORY:?usage: make dev STORY=feature-x/001}"
 PRP="ai_docs/PRPs/${STORY}/PRP.md"
@@ -14,35 +14,35 @@ mkdir -p "$ART/diffs"
   echo "- PRP: ${PRP}"
 } > "$ART/notes.md"
 
-# ---- Try to run Claude CLI if present (but never fail on it)
 PROMPT=$(
   cat <<'EOF'
-Follow this PRP strictly. Obey these guardrails:
+Follow this PRP strictly. Guardrails:
 - Use only files named within the PRP Inputs.
 - Keep diffs minimal and focused.
 - Update docs/tests exactly as Acceptance requires.
 - Summarize your plan BEFORE edits; then apply changes.
-EOF
-)
-if command -v claude >/dev/null 2>&1; then
-  echo "- Executor: Claude CLI detected" >> "$ART/notes.md"
-  HELP="$(claude code --help 2>&1 || true)"
-  # Prefer a --prompt-like flag if available
-  if printf "%s" "$HELP" | grep -q -- "--prompt"; then
-    claude code --prompt "$PROMPT
 
 --- PRP START ---
+EOF
+)
+PROMPT_TEXT="${PROMPT}
 $(cat "$PRP")
---- PRP END ---" || true
+--- PRP END ---"
+
+# Auto-run Claude Code unless disabled
+if [[ "${RUN_CLAUDE:-1}" = "1" && "$(command -v claude || true)" ]]; then
+  echo "- Executor: Claude CLI" >> "$ART/notes.md"
+  # Prefer a real TTY: use 'script' if present (avoids Ink raw-mode crash)
+  if command -v script >/dev/null 2>&1; then
+    script -q /dev/null -c "claude code --prompt $(printf %q "$PROMPT_TEXT")" || true
   else
-    # Fallback: try piping prompt to stdin; if unsupported, it will no-op
-    printf "%s\n\n--- PRP START ---\n%s\n--- PRP END ---\n" "$PROMPT" "$(cat "$PRP")" | claude code || true
+    claude code --prompt "$PROMPT_TEXT" || true
   fi
 else
-  echo "- Executor: manual mode (no claude CLI found)" >> "$ART/notes.md"
+  echo "- Executor: manual mode (RUN_CLAUDE=0 or no claude CLI)" >> "$ART/notes.md"
 fi
 
-# ---- Collect changes vs HEAD (staged, unstaged, and untracked)
+# Collect changes vs HEAD (tracked + untracked)
 TMP_LIST="$(mktemp)"
 git diff --name-only HEAD >> "$TMP_LIST" || true
 git diff --name-only --cached >> "$TMP_LIST" || true
@@ -50,15 +50,13 @@ git ls-files --others --exclude-standard >> "$TMP_LIST" || true
 sort -u "$TMP_LIST" > "$ART/changed_files.csv"
 rm -f "$TMP_LIST"
 
-# ---- Save per-file patches
+# Save per-file patches
 while IFS= read -r f; do
   [ -n "$f" ] || continue
   safe="$(printf "%s" "$f" | tr '/' '_')"
   if git ls-files --error-unmatch -- "$f" >/dev/null 2>&1; then
-    # tracked file: diff vs HEAD
     git diff HEAD -- "$f" > "$ART/diffs/${safe}.patch" || true
   else
-    # untracked file: create a no-index patch
     git diff --no-index -- /dev/null "$f" > "$ART/diffs/${safe}.patch" 2>/dev/null || true
   fi
 done < "$ART/changed_files.csv"
