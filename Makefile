@@ -28,3 +28,9 @@ export-summaries:
 
 publish:
 	@OBSIDIAN_VAULT="$$OBSIDIAN_VAULT" bash scripts/publish_to_obsidian.sh
+
+spec:
+	@bash scripts/speckit.sh $(NAME)
+
+check-bmad:
+	@grep -Rqs "BMAD" ai_docs/PRPs || echo "(warn) add 'BMAD' facet line to PRPs"
