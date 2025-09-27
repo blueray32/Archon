@@ -1,0 +1,49 @@
+diff --git a/data/bim/standards/naming.yml b/data/bim/standards/naming.yml
+new file mode 100644
+index 0000000..a822e06
+--- /dev/null
++++ b/data/bim/standards/naming.yml
+@@ -0,0 +1,42 @@
++# BIM Naming Standards
++# Family names in CamelCase, Type names in Snake_Case
++
++family_prefixes:
++  - Doors
++  - Windows
++  - Walls
++  - Floors
++  - Roofs
++  - Ceilings
++  - Stairs
++  - Railings
++  - Columns
++  - Beams
++
++type_patterns:
++  - category: Doors
++    pattern: "D_[Purpose]_[Material]_[Rating]"
++    example_types:
++      - "D_Internal_Fire_30"
++      - "D_External_Timber_60"
++      - "D_Internal_Glass_Standard"
++
++  - category: Windows
++    pattern: "W_[Material]_[Style]"
++    example_types:
++      - "W_Alu_Double"
++      - "W_Timber_Casement"
++      - "W_Steel_Fixed"
++
++  - category: Walls
++    pattern: "Wall_[Type]_[Thickness]"
++    example_types:
++      - "Wall_Partition_92"
++      - "Wall_External_200"
++      - "Wall_Structural_300"
++
++notes:
++  - "Family names must use CamelCase (e.g., Doors, Windows)"
++  - "Type names must use Snake_Case with underscores"
++  - "Type Marks must be unique within each category"
++  - "Follow pattern: Family:Type (e.g., Doors:D_Internal_Fire_30)"
+\ No newline at end of file

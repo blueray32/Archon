@@ -1,0 +1,4 @@
+number_pattern: '^A-[0-9]{3}$'
+title_examples:
+  - 'GA Floor Plan - Level 01'
+  - 'GA Elevations - North'

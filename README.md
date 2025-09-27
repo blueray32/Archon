@@ -28,6 +28,9 @@ make dev STORY=feature-weekly-review/001
 make qa STORY=feature-weekly-review/001
 ```
 
+## BIM Standards
+[BIM naming and sheet standards](data/bim/standards/) - YAML-based standards for Revit projects
+
 ## Definition of Done (DoD) per story
 - PR references a **PRP** and (optionally) an **ADR**
 - `artifacts/<feature>/<story>/` exists with `notes.md`, `changed_files.csv`, `diffs/`

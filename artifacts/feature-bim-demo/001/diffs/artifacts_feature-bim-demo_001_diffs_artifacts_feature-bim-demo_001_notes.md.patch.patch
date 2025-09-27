@@ -1,0 +1,16 @@
+diff --git a/artifacts/feature-bim-demo/001/diffs/artifacts_feature-bim-demo_001_notes.md.patch b/artifacts/feature-bim-demo/001/diffs/artifacts_feature-bim-demo_001_notes.md.patch
+new file mode 100644
+index 0000000..a4d5d02
+--- /dev/null
++++ b/artifacts/feature-bim-demo/001/diffs/artifacts_feature-bim-demo_001_notes.md.patch
+@@ -0,0 +1,10 @@
++diff --git a/artifacts/feature-bim-demo/001/notes.md b/artifacts/feature-bim-demo/001/notes.md
++new file mode 100644
++index 0000000..eaf9ea9
++--- /dev/null
+++++ b/artifacts/feature-bim-demo/001/notes.md
++@@ -0,0 +1,4 @@
+++# Dev run for feature-bim-demo/001
+++2025-09-27T00:06:11Z
+++- PRP: ai_docs/PRPs/feature-bim-demo/001/PRP.md
+++- Executor: Claude CLI

@@ -1,0 +1,30 @@
+diff --git a/data/bim/standards/sheets.yml b/data/bim/standards/sheets.yml
+new file mode 100644
+index 0000000..71ff93d
+--- /dev/null
++++ b/data/bim/standards/sheets.yml
+@@ -0,0 +1,23 @@
++# BIM Sheet Standards
++# Sheet numbering and title formatting
++
++number_pattern: "A-###"
++
++title_examples:
++  - "A-101 | GA Floor Plan - Level 01"
++  - "A-102 | GA Floor Plan - Level 02"
++  - "A-201 | GA Elevations - North"
++  - "A-202 | GA Elevations - South"
++  - "A-301 | GA Sections - Longitudinal"
++  - "A-401 | GA Details - Wall Connections"
++
++formatting_rules:
++  - "Sheet numbers use 3-digit format (A-###)"
++  - "Titles follow pattern: [Sheet Number] | [Drawing Type] - [Specific Location/View]"
++  - "Drawing types: GA (General Arrangement), Detail, Section, Elevation"
++  - "Use consistent title block family across all sheets"
++
++notes:
++  - "Sheet numbers must be unique across the project"
++  - "Title blocks must be consistent and follow project standards"
++  - "All sheets must use approved title block families"
+\ No newline at end of file
