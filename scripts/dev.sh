@@ -14,52 +14,43 @@ mkdir -p "$ART/diffs"
   echo "- PRP: ${PRP}"
 } > "$ART/notes.md"
 
-PROMPT=$(
-  cat <<'EOF'
-Follow this PRP strictly. Guardrails:
-- Use only files named within the PRP Inputs.
-- Keep diffs minimal and focused.
-- Update docs/tests exactly as Acceptance requires.
-- Summarize your plan BEFORE edits; then apply changes.
-
---- PRP START ---
-EOF
-)
-PROMPT_TEXT="${PROMPT}
-$(cat "$PRP")
---- PRP END ---"
-
+# --- run Claude Code interactively (no --prompt flags; ensure TTY) ---
 run_claude() {
-  # Try util-linux 'script' first (supports: script -q -c "cmd" /dev/null)
+  # util-linux 'script' (Linux): script -q -c "cmd" /dev/null
   if command -v script >/dev/null 2>&1 && script -q -c "true" /dev/null >/dev/null 2>&1; then
-    script -q -c "claude code --prompt $(printf %q "$PROMPT_TEXT")" /dev/null || true
+    script -q -c "claude code" /dev/null || true
     return
   fi
-  # Try BSD/macOS 'script' (no -c; file first, command after)
+  # BSD/macOS 'script': script -q /dev/null <cmd...>
   if command -v script >/dev/null 2>&1; then
-    script -q /dev/null /bin/sh -lc "claude code --prompt \"\$PROMPT_TEXT\"" || true
+    script -q /dev/null claude code || true
     return
   fi
-  # Fallback: run directly (may fail if no TTY, but we still proceed)
-  claude code --prompt "$PROMPT_TEXT" || true
+  # Fallback: run directly (may fail if no TTY)
+  claude code || true
 }
 
 if [[ "${RUN_CLAUDE:-1}" = "1" ]] && command -v claude >/dev/null 2>&1; then
-  echo "- Executor: Claude CLI" >> "$ART/notes.md"
+  echo "- Executor: Claude CLI (interactive)" >> "$ART/notes.md"
+  echo "- Tip: paste the PRP into Claude if needed -> $PRP" >> "$ART/notes.md"
   run_claude
 else
   echo "- Executor: manual mode (RUN_CLAUDE=0 or no claude CLI)" >> "$ART/notes.md"
 fi
 
-# Collect changes vs HEAD (staged, unstaged, untracked)
+# --- collect changes vs HEAD (tracked/unstaged/untracked), EXCLUDING noise ---
 TMP_LIST="$(mktemp)"
-git diff --name-only HEAD >> "$TMP_LIST" || true
-git diff --name-only --cached >> "$TMP_LIST" || true
-git ls-files --others --exclude-standard >> "$TMP_LIST" || true
+# helper: filter out noisy paths
+_filter_noise() { grep -Ev '^(artifacts/|\.git/|node_modules/|python/\.venv/|\.venv/|venv/)$|^artifacts/|^\.git/|^node_modules/|^python/\.venv/|^\.venv/|^venv/'; }
+
+git diff --name-only HEAD            | _filter_noise >> "$TMP_LIST" || true
+git diff --name-only --cached        | _filter_noise >> "$TMP_LIST" || true
+git ls-files --others --exclude-standard | _filter_noise >> "$TMP_LIST" || true
+
 sort -u "$TMP_LIST" > "$ART/changed_files.csv"
 rm -f "$TMP_LIST"
 
-# Save per-file patches
+# --- save per-file patches (tracked vs HEAD; untracked vs /dev/null) ---
 while IFS= read -r f; do
   [ -n "$f" ] || continue
   safe="$(printf "%s" "$f" | tr '/' '_')"
