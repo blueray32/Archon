@@ -29,20 +29,29 @@ PROMPT_TEXT="${PROMPT}
 $(cat "$PRP")
 --- PRP END ---"
 
-# Auto-run Claude Code unless disabled
-if [[ "${RUN_CLAUDE:-1}" = "1" && "$(command -v claude || true)" ]]; then
-  echo "- Executor: Claude CLI" >> "$ART/notes.md"
-  # Prefer a real TTY: use 'script' if present (avoids Ink raw-mode crash)
-  if command -v script >/dev/null 2>&1; then
-    script -q /dev/null -c "claude code --prompt $(printf %q "$PROMPT_TEXT")" || true
-  else
-    claude code --prompt "$PROMPT_TEXT" || true
+run_claude() {
+  # Try util-linux 'script' first (supports: script -q -c "cmd" /dev/null)
+  if command -v script >/dev/null 2>&1 && script -q -c "true" /dev/null >/dev/null 2>&1; then
+    script -q -c "claude code --prompt $(printf %q "$PROMPT_TEXT")" /dev/null || true
+    return
   fi
+  # Try BSD/macOS 'script' (no -c; file first, command after)
+  if command -v script >/dev/null 2>&1; then
+    script -q /dev/null /bin/sh -lc "claude code --prompt \"\$PROMPT_TEXT\"" || true
+    return
+  fi
+  # Fallback: run directly (may fail if no TTY, but we still proceed)
+  claude code --prompt "$PROMPT_TEXT" || true
+}
+
+if [[ "${RUN_CLAUDE:-1}" = "1" ]] && command -v claude >/dev/null 2>&1; then
+  echo "- Executor: Claude CLI" >> "$ART/notes.md"
+  run_claude
 else
   echo "- Executor: manual mode (RUN_CLAUDE=0 or no claude CLI)" >> "$ART/notes.md"
 fi
 
-# Collect changes vs HEAD (tracked + untracked)
+# Collect changes vs HEAD (staged, unstaged, untracked)
 TMP_LIST="$(mktemp)"
 git diff --name-only HEAD >> "$TMP_LIST" || true
 git diff --name-only --cached >> "$TMP_LIST" || true
