@@ -56,7 +56,11 @@ describe("useTaskQueries", () => {
 
   describe("taskKeys", () => {
     it("should generate correct query keys", () => {
-      expect(taskKeys.all("project-123")).toEqual(["projects", "project-123", "tasks"]);
+      expect(taskKeys.all("project-123")).toEqual([
+        "projects",
+        "project-123",
+        "tasks",
+      ]);
     });
   });
 
@@ -102,9 +106,12 @@ describe("useTaskQueries", () => {
     });
 
     it("should respect enabled flag", () => {
-      const { result } = renderHook(() => useProjectTasks("project-123", false), {
-        wrapper: createWrapper(),
-      });
+      const { result } = renderHook(
+        () => useProjectTasks("project-123", false),
+        {
+          wrapper: createWrapper(),
+        },
+      );
 
       expect(result.current.isLoading).toBe(false);
       expect(result.current.isFetching).toBe(false);
@@ -184,7 +191,9 @@ describe("useTaskQueries", () => {
 
     it("should rollback on error", async () => {
       const { taskService } = await import("../../services");
-      vi.mocked(taskService.createTask).mockRejectedValue(new Error("Network error"));
+      vi.mocked(taskService.createTask).mockRejectedValue(
+        new Error("Network error"),
+      );
 
       const wrapper = createWrapper();
       const { result } = renderHook(() => useCreateTask(), { wrapper });

@@ -37,6 +37,7 @@ module.exports = {
         'server-services',
         'api-reference',
         'mcp-server',
+        'polling',
         'socketio',
         'testing',
         'coding-best-practices',

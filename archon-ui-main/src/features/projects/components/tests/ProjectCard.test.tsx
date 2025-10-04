@@ -33,13 +33,27 @@ describe("ProjectCard", () => {
   });
 
   it("should render project title", () => {
-    render(<ProjectCard project={mockProject} isSelected={false} taskCounts={mockTaskCounts} {...mockHandlers} />);
+    render(
+      <ProjectCard
+        project={mockProject}
+        isSelected={false}
+        taskCounts={mockTaskCounts}
+        {...mockHandlers}
+      />,
+    );
 
     expect(screen.getByText("Test Project")).toBeInTheDocument();
   });
 
   it("should display task counts", () => {
-    render(<ProjectCard project={mockProject} isSelected={false} taskCounts={mockTaskCounts} {...mockHandlers} />);
+    render(
+      <ProjectCard
+        project={mockProject}
+        isSelected={false}
+        taskCounts={mockTaskCounts}
+        {...mockHandlers}
+      />,
+    );
 
     // Task count badges should be visible
     // Note: Component only shows todo, doing, and done (not review)
@@ -50,7 +64,14 @@ describe("ProjectCard", () => {
   });
 
   it("should call onSelect when clicked", () => {
-    render(<ProjectCard project={mockProject} isSelected={false} taskCounts={mockTaskCounts} {...mockHandlers} />);
+    render(
+      <ProjectCard
+        project={mockProject}
+        isSelected={false}
+        taskCounts={mockTaskCounts}
+        {...mockHandlers}
+      />,
+    );
 
     const card = screen.getByRole("listitem");
     fireEvent.click(card);
@@ -60,7 +81,14 @@ describe("ProjectCard", () => {
   });
 
   it("should apply selected styles when isSelected is true", () => {
-    render(<ProjectCard project={mockProject} isSelected={true} taskCounts={mockTaskCounts} {...mockHandlers} />);
+    render(
+      <ProjectCard
+        project={mockProject}
+        isSelected={true}
+        taskCounts={mockTaskCounts}
+        {...mockHandlers}
+      />,
+    );
 
     const card = screen.getByRole("listitem");
     // Check for selected-specific classes
@@ -71,7 +99,14 @@ describe("ProjectCard", () => {
   it("should apply pinned styles when project is pinned", () => {
     const pinnedProject = { ...mockProject, pinned: true };
 
-    render(<ProjectCard project={pinnedProject} isSelected={false} taskCounts={mockTaskCounts} {...mockHandlers} />);
+    render(
+      <ProjectCard
+        project={pinnedProject}
+        isSelected={false}
+        taskCounts={mockTaskCounts}
+        {...mockHandlers}
+      />,
+    );
 
     const card = screen.getByRole("listitem");
     // Check for pinned-specific classes
@@ -81,21 +116,35 @@ describe("ProjectCard", () => {
 
   it("should render aurora glow effect when selected", () => {
     const { container } = render(
-      <ProjectCard project={mockProject} isSelected={true} taskCounts={mockTaskCounts} {...mockHandlers} />,
+      <ProjectCard
+        project={mockProject}
+        isSelected={true}
+        taskCounts={mockTaskCounts}
+        {...mockHandlers}
+      />,
     );
 
     // Aurora glow div should exist when selected
-    const glowEffect = container.querySelector(".animate-\\[pulse_8s_ease-in-out_infinite\\]");
+    const glowEffect = container.querySelector(
+      ".animate-\\[pulse_8s_ease-in-out_infinite\\]",
+    );
     expect(glowEffect).toBeInTheDocument();
   });
 
   it("should not render aurora glow effect when not selected", () => {
     const { container } = render(
-      <ProjectCard project={mockProject} isSelected={false} taskCounts={mockTaskCounts} {...mockHandlers} />,
+      <ProjectCard
+        project={mockProject}
+        isSelected={false}
+        taskCounts={mockTaskCounts}
+        {...mockHandlers}
+      />,
     );
 
     // Aurora glow div should not exist when not selected
-    const glowEffect = container.querySelector(".animate-\\[pulse_8s_ease-in-out_infinite\\]");
+    const glowEffect = container.querySelector(
+      ".animate-\\[pulse_8s_ease-in-out_infinite\\]",
+    );
     expect(glowEffect).not.toBeInTheDocument();
   });
 
@@ -107,7 +156,14 @@ describe("ProjectCard", () => {
       done: 0,
     };
 
-    render(<ProjectCard project={mockProject} isSelected={false} taskCounts={zeroTaskCounts} {...mockHandlers} />);
+    render(
+      <ProjectCard
+        project={mockProject}
+        isSelected={false}
+        taskCounts={zeroTaskCounts}
+        {...mockHandlers}
+      />,
+    );
 
     // All counts should show 0 (ProjectCard may not show review count)
     const zeros = screen.getAllByText("0");
@@ -121,7 +177,14 @@ describe("ProjectCard", () => {
         "This is an extremely long project title that should be truncated properly to avoid breaking the layout of the card component",
     };
 
-    render(<ProjectCard project={longTitleProject} isSelected={false} taskCounts={mockTaskCounts} {...mockHandlers} />);
+    render(
+      <ProjectCard
+        project={longTitleProject}
+        isSelected={false}
+        taskCounts={mockTaskCounts}
+        {...mockHandlers}
+      />,
+    );
 
     const title = screen.getByText(/This is an extremely long project title/);
     expect(title).toBeInTheDocument();

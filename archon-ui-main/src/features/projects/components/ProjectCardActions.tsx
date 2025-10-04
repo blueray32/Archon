@@ -65,7 +65,9 @@ export const ProjectCardActions: React.FC<ProjectCardActionsProps> = ({
             glassmorphism.priority.critical.glow,
             isDeleting && "opacity-50 cursor-not-allowed",
           )}
-          aria-label={isDeleting ? "Deleting project..." : `Delete ${projectTitle}`}
+          aria-label={
+            isDeleting ? "Deleting project..." : `Delete ${projectTitle}`
+          }
         >
           <Trash2 className={cn("w-3 h-3", isDeleting && "animate-pulse")} />
         </button>

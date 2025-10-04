@@ -182,7 +182,7 @@ async def send_message(session_id: str, request: dict):
                             response = await client.post(
                                 f"http://{host}:{agents_port}/agents/run",
                                 json=agents_request,
-                                timeout=6.0,
+                                timeout=30.0,
                             )
                             break
                         except Exception as e:

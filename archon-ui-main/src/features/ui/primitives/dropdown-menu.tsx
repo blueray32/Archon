@@ -95,7 +95,8 @@ export const DropdownMenuCheckboxItem = React.forwardRef<
     {children}
   </DropdownMenuPrimitive.CheckboxItem>
 ));
-DropdownMenuCheckboxItem.displayName = DropdownMenuPrimitive.CheckboxItem.displayName;
+DropdownMenuCheckboxItem.displayName =
+  DropdownMenuPrimitive.CheckboxItem.displayName;
 
 // Radio Item
 export const DropdownMenuRadioItem = React.forwardRef<
@@ -133,7 +134,11 @@ export const DropdownMenuLabel = React.forwardRef<
 >(({ className, inset, ...props }, ref) => (
   <DropdownMenuPrimitive.Label
     ref={ref}
-    className={cn("px-2 py-1.5 text-xs font-semibold text-gray-600 dark:text-gray-400", inset && "pl-8", className)}
+    className={cn(
+      "px-2 py-1.5 text-xs font-semibold text-gray-600 dark:text-gray-400",
+      inset && "pl-8",
+      className,
+    )}
     {...props}
   />
 ));
@@ -153,9 +158,18 @@ export const DropdownMenuSeparator = React.forwardRef<
 DropdownMenuSeparator.displayName = DropdownMenuPrimitive.Separator.displayName;
 
 // Shortcut
-export const DropdownMenuShortcut = ({ className, ...props }: React.HTMLAttributes<HTMLSpanElement>) => {
+export const DropdownMenuShortcut = ({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLSpanElement>) => {
   return (
-    <span className={cn("ml-auto text-xs tracking-widest text-gray-500 dark:text-gray-400", className)} {...props} />
+    <span
+      className={cn(
+        "ml-auto text-xs tracking-widest text-gray-500 dark:text-gray-400",
+        className,
+      )}
+      {...props}
+    />
   );
 };
 DropdownMenuShortcut.displayName = "DropdownMenuShortcut";

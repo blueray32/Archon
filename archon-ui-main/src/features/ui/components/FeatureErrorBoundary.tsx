@@ -55,9 +55,19 @@ export class FeatureErrorBoundary extends Component<Props, State> {
       const isDevelopment = process.env.NODE_ENV === "development";
 
       return (
-        <div className={cn("min-h-[400px] flex items-center justify-center p-8", glassmorphism.background.subtle)}>
+        <div
+          className={cn(
+            "min-h-[400px] flex items-center justify-center p-8",
+            glassmorphism.background.subtle,
+          )}
+        >
           <div className="max-w-2xl w-full">
-            <div className="flex items-start gap-4" role="alert" aria-live="assertive" aria-atomic="true">
+            <div
+              className="flex items-start gap-4"
+              role="alert"
+              aria-live="assertive"
+              aria-atomic="true"
+            >
               <div
                 className={cn(
                   "p-3 rounded-lg",
@@ -78,7 +88,8 @@ export class FeatureErrorBoundary extends Component<Props, State> {
                 </h2>
 
                 <p className="text-gray-700 dark:text-gray-300 mb-4">
-                  An error occurred in this feature. The error has been logged for investigation.
+                  An error occurred in this feature. The error has been logged
+                  for investigation.
                 </p>
 
                 {/* Show detailed error in development */}
@@ -91,13 +102,19 @@ export class FeatureErrorBoundary extends Component<Props, State> {
                       "font-mono text-xs",
                     )}
                   >
-                    <div className="text-red-600 dark:text-red-400 font-semibold mb-2">{error.toString()}</div>
+                    <div className="text-red-600 dark:text-red-400 font-semibold mb-2">
+                      {error.toString()}
+                    </div>
                     {error.stack && (
-                      <pre className="text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{error.stack}</pre>
+                      <pre className="text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
+                        {error.stack}
+                      </pre>
                     )}
                     {errorInfo?.componentStack && (
                       <div className="mt-4 pt-4 border-t border-gray-300 dark:border-gray-600">
-                        <div className="text-gray-700 dark:text-gray-300 font-semibold mb-2">Component Stack:</div>
+                        <div className="text-gray-700 dark:text-gray-300 font-semibold mb-2">
+                          Component Stack:
+                        </div>
                         <pre className="text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
                           {errorInfo.componentStack}
                         </pre>
@@ -106,7 +123,12 @@ export class FeatureErrorBoundary extends Component<Props, State> {
                   </div>
                 )}
 
-                <Button onClick={this.handleReset} variant="default" size="sm" className="gap-2">
+                <Button
+                  onClick={this.handleReset}
+                  variant="default"
+                  size="sm"
+                  className="gap-2"
+                >
                   <RefreshCw className="w-4 h-4" />
                   Try Again
                 </Button>

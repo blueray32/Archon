@@ -58,7 +58,7 @@ import { getApiUrl } from "../config/api";
 class CredentialsService {
   private baseUrl = getApiUrl();
 
-  private handleCredentialError(error: any, context: string): Error {
+  private handleCredentialError(error: unknown, context: string): Error {
     const errorMessage = error instanceof Error ? error.message : String(error);
 
     // Check for network errors
@@ -98,7 +98,7 @@ class CredentialsService {
     // Convert to array format expected by frontend
     if (result.credentials && typeof result.credentials === "object") {
       return Object.entries(result.credentials).map(
-        ([key, value]: [string, any]) => {
+        ([key, value]: [string, unknown]) => {
           if (value && typeof value === "object" && value.is_encrypted) {
             return {
               key,
@@ -111,7 +111,7 @@ class CredentialsService {
           } else {
             return {
               key,
-              value: value,
+              value: (typeof value === 'string' ? value : String(value ?? '')),
               encrypted_value: undefined,
               is_encrypted: false,
               category,
@@ -184,7 +184,7 @@ class CredentialsService {
             "CRAWL_WAIT_STRATEGY",
           ].includes(cred.key)
         ) {
-          (settings as any)[cred.key] = cred.value || "";
+          (settings as unknown as Record<string, unknown>)[cred.key] = cred.value || "";
         }
         // Number fields
         else if (
@@ -202,8 +202,9 @@ class CredentialsService {
             "CODE_SUMMARY_MAX_WORKERS",
           ].includes(cred.key)
         ) {
-          (settings as any)[cred.key] =
-            parseInt(cred.value || "0", 10) || (settings as any)[cred.key];
+          const current = (settings as unknown as Record<string, unknown>)[cred.key];
+          (settings as unknown as Record<string, unknown>)[cred.key] =
+            Number.parseInt(cred.value || "0", 10) || (current as number | undefined) || 0;
         }
         // Float fields
         else if (cred.key === "CRAWL_DELAY_BEFORE_HTML") {
@@ -211,7 +212,7 @@ class CredentialsService {
         }
         // Boolean fields
         else {
-          (settings as any)[cred.key] = cred.value === "true";
+          (settings as unknown as Record<string, unknown>)[cred.key] = cred.value === "true";
         }
       }
     });

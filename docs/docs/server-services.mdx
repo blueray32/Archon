@@ -351,6 +351,8 @@ async def join_project(sid, data):
 ```
 FastAPI Endpoints (projects_api.py)
     ↓
+> Legacy Notice: Socket.IO handler details are retained for history. Archon Beta uses HTTP polling.
+
 Socket.IO Handlers (socketio_handlers.py)
     ↓
 Service Classes (ProjectService, TaskService, etc.)
@@ -363,8 +365,8 @@ Database (Supabase) / External APIs (OpenAI)
 **Key Architectural Changes:**
 - **Extracted Socket.IO Handlers**: Moved from embedded namespace classes to dedicated `socketio_handlers.py` file (~225 lines)
 - **Service Layer Separation**: Business logic now in separate service classes instead of embedded in API routes
-- **Simplified Socket.IO**: Eliminated complex namespace hierarchy in favor of simple `@sio.event` decorators
-- **Progress Tracking**: Centralized in `ProgressService` with real-time Socket.IO broadcasting
+- **Polling-first updates**: Live updates use HTTP polling with ETag caching
+- **Progress Tracking**: Centralized in `ProgressService` with `/api/progress/{id}` polling
 
 ## Architecture Benefits
 

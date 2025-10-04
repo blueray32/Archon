@@ -6,6 +6,7 @@ import { knowledgeBaseService } from '../../services/knowledgeBaseService';
 import { AgentSwitcher } from '../../agents/AgentSwitcher';
 import { useAgentState } from '../../agents/AgentContext';
 import { getAgentTypeFor } from '../../agents/registry';
+import { logger } from '../../utils/logger';
 
 /**
  * Props for the ArchonChatPanel component
@@ -27,12 +28,12 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
   const [isInitialized, setIsInitialized] = useState(false);
   // State for input field, panel width, loading state, and dragging state
   const [inputValue, setInputValue] = useState('');
-  const [width, setWidth] = useState(416); // Default width - increased by 30% from 320px
-  const [isTyping, setIsTyping] = useState(false);
+  const [width, _setWidth] = useState(416); // Default width - increased by 30% from 320px
+  const [isTyping, _setIsTyping] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
-  const [streamingMessage, setStreamingMessage] = useState<string>('');
-  const [isStreaming, setIsStreaming] = useState(false);
+  const [streamingMessage, _setStreamingMessage] = useState<string>('');
+  const [isStreaming, _setIsStreaming] = useState(false);
   
   // Add connection status state
   const [connectionStatus, setConnectionStatus] = useState<'online' | 'offline' | 'connecting'>('connecting');
@@ -59,9 +60,9 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
       // Create a new chat session
       try {
           const agentType = getAgentTypeFor(selectedAgentId);
-          console.log(`[CHAT PANEL] Creating session with agentType: "${agentType}" for agentId: ${selectedAgentId}`);
+          logger.info(`[CHAT PANEL] Creating session with agentType: "${agentType}" for agentId: ${selectedAgentId}`);
           const { session_id } = await agentChatService.createSession(agentType);
-          console.log(`[CHAT PANEL] Session created with ID: ${session_id}`);
+          logger.info(`[CHAT PANEL] Session created with ID: ${session_id}`);
           setSessionId(session_id);
           sessionIdRef.current = session_id;
 
@@ -80,17 +81,17 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
                 });
               }
             } catch (e) {
-              console.warn('Pydantic KB ensure failed (non-fatal):', e);
+              logger.warn('Pydantic KB ensure failed (non-fatal):', e);
             }
           }
           
           // Load initial chat history
           try {
             const history = await agentChatService.getChatHistory(session_id);
-            console.log(`[CHAT PANEL] Loaded chat history:`, history);
+            logger.debug(`[CHAT PANEL] Loaded chat history:`, history);
             setMessages(history || []);
           } catch (error) {
-            console.error('Failed to load chat history:', error);
+            logger.error('Failed to load chat history:', error);
             // Initialize with empty messages if history can't be loaded
             setMessages([]);
           }
@@ -111,13 +112,13 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
                 setConnectionStatus('online');
               },
               (error: Error) => {
-                console.error('Message streaming error:', error);
+                logger.error('Message streaming error:', error);
                 setConnectionStatus('offline');
                 setConnectionError('Chat service is offline. Messages will not be received.');
               }
             );
           } catch (error) {
-            console.error('Failed to start message streaming:', error);
+            logger.error('Failed to start message streaming:', error);
             // Continue anyway - the chat will work in offline mode
           }
           
@@ -125,7 +126,7 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
           setConnectionStatus('online');
           setConnectionError(null);
         } catch (error) {
-          console.error('Failed to initialize chat session:', error);
+          logger.error('Failed to initialize chat session:', error);
           if (error instanceof Error && error.message.includes('not available')) {
             setConnectionError('Agent chat service is disabled. Enable it in docker-compose to use this feature.');
           } else {
@@ -135,7 +136,7 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
         }
         
       } catch (error) {
-        console.error('Failed to initialize chat:', error);
+        logger.error('Failed to initialize chat:', error);
         if (error instanceof Error && error.message.includes('not available')) {
           setConnectionError('Agent chat service is disabled. Enable it in docker-compose to use this feature.');
         } else {
@@ -172,7 +173,7 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
   useEffect(() => {
     return () => {
       if (sessionIdRef.current) {
-        console.log('[CHAT PANEL] Component unmounting, cleaning up session:', sessionIdRef.current);
+        logger.debug('[CHAT PANEL] Component unmounting, cleaning up session:', sessionIdRef.current);
         // Stop streaming messages when component unmounts
         agentChatService.stopStreaming(sessionIdRef.current);
       }
@@ -277,7 +278,7 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
       setInputValue('');
       setConnectionError(null);
     } catch (error) {
-      console.error('Failed to send message:', error);
+      logger.error('Failed to send message:', error);
       setConnectionError('Failed to send message. Please try again.');
     }
   };
@@ -315,7 +316,7 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
         setConnectionStatus('offline');
       }
     } catch (error) {
-      console.error('Manual reconnection failed:', error);
+      logger.error('Manual reconnection failed:', error);
       setConnectionError('Reconnection failed. Please try again later.');
       setConnectionStatus('offline');
     } finally {

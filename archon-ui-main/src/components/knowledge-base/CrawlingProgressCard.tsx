@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Activity,
@@ -6,7 +6,7 @@ import {
   CheckCircle,
   ChevronDown,
   ChevronUp,
-  Clock,
+  
   Globe,
   FileText,
   RotateCcw,
@@ -185,6 +185,9 @@ export const CrawlingProgressCard: React.FC<CrawlingProgressCardProps> = ({
   };
   
   const crawlType = getCrawlTypeDisplay();
+  // Safe batch metrics
+  const safeTotalBatches = ((displayData as any).totalBatches ?? (displayData as any).total_batches ?? 0) as number;
+  const safeCompletedBatches = ((displayData as any).completedBatches ?? (displayData as any).completed_batches ?? 0) as number;
   
   // Handle stop
   const handleStop = async () => {
@@ -546,22 +549,22 @@ export const CrawlingProgressCard: React.FC<CrawlingProgressCardProps> = ({
               className="h-1.5 rounded-full bg-blue-500 dark:bg-blue-400"
               initial={{ width: 0 }}
               animate={{ 
-                width: `${Math.round(((displayData.completedBatches || 0) / displayData.totalBatches) * 100)}%` 
+                width: `${Math.round((safeCompletedBatches / Math.max(1, safeTotalBatches)) * 100)}%` 
               }}
               transition={{ duration: 0.5, ease: 'easeOut' }}
             />
           </div>
           
           <div className="grid grid-cols-2 gap-2 text-xs">
-            {displayData.activeWorkers !== undefined && (
+            {displayData.active_workers !== undefined && (
               <div className="text-blue-600 dark:text-blue-400/80">
-                <span className="font-medium">{displayData.activeWorkers}</span> parallel {displayData.activeWorkers === 1 ? 'worker' : 'workers'}
+                <span className="font-medium">{displayData.active_workers}</span> parallel {displayData.active_workers === 1 ? 'worker' : 'workers'}
               </div>
             )}
             
-            {displayData.currentBatch && displayData.totalChunksInBatch && (
+            {displayData.current_batch && displayData.total_chunks_in_batch && (
               <div className="text-blue-600 dark:text-blue-400/80">
-                Current: <span className="font-medium">{displayData.chunksInBatch || 0}/{displayData.totalChunksInBatch}</span> chunks
+                Current: <span className="font-medium">{displayData.chunks_in_batch || 0}/{displayData.total_chunks_in_batch}</span> chunks
               </div>
             )}
             
@@ -725,7 +728,7 @@ export const CrawlingProgressCard: React.FC<CrawlingProgressCardProps> = ({
                   className="bg-gray-900 dark:bg-black rounded-md p-3 max-h-48 overflow-y-auto"
                 >
                   <div className="space-y-1 font-mono text-xs">
-                    {displayData.logs.map((log, index) => (
+                    {displayData.logs.map((log: string, index: number) => (
                       <div key={index} className="text-green-400">
                         {log}
                       </div>

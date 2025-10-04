@@ -51,6 +51,10 @@ crawl_semaphore = asyncio.Semaphore(CONCURRENT_CRAWL_LIMIT)
 # Track active async crawl tasks for cancellation support
 active_crawl_tasks: dict[str, asyncio.Task] = {}
 
+# Concurrency guard for export operation (single export at a time)
+active_export_task: asyncio.Task | None = None
+active_export_progress_id: str | None = None
+
 
 # Request Models
 class KnowledgeItemRequest(BaseModel):
@@ -86,6 +90,44 @@ class RagQueryRequest(BaseModel):
     query: str
     source: str | None = None
     match_count: int = 5
+
+
+class ExportRequest(BaseModel):
+    target: str | None = None  # Optional override for OBSIDIAN_VAULT
+    source_ids: list[str] | None = None
+    tags: list[str] | None = None
+    knowledge_type: str | None = None
+    updated_since: str | None = None  # ISO8601 string
+
+
+@router.get("/knowledge-items/export-default-target")
+async def get_export_default_target():
+    """Return the server's default export target directory (OBSIDIAN_VAULT).
+
+    Provides visibility for the UI about the effective default vault path without requiring a client override.
+    """
+    try:
+        import os
+        # Compute effective default target using the same fallback logic as export
+        effective: str | None = None
+        env_target = os.getenv("OBSIDIAN_VAULT")
+        if env_target and os.path.isdir(os.path.expanduser(env_target)):
+            effective = os.path.expanduser(env_target)
+        else:
+            in_container = os.path.exists("/.dockerenv")
+            if in_container and os.path.isdir("/vault"):
+                effective = "/vault"
+            else:
+                home_vault = os.path.expanduser("~/Documents/ArchonVault")
+                if os.path.isdir(home_vault):
+                    effective = home_vault
+
+        exists = bool(effective and os.path.exists(effective))
+        is_dir = bool(effective and os.path.isdir(effective))
+        return {"defaultTarget": effective, "exists": exists, "isDir": is_dir}
+    except Exception as e:
+        safe_logfire_error(f"Failed to get export default target | error={str(e)}")
+        raise HTTPException(status_code=500, detail={"error": str(e)})
 
 
 @router.get("/crawl-progress/{progress_id}")
@@ -579,6 +621,146 @@ async def _perform_crawl_with_progress(
                 )
 
 
+@router.post("/knowledge-items/export-to-vault")
+async def export_knowledge_to_vault(request: ExportRequest):
+    """Export knowledge base to local Obsidian vault.
+
+    Starts a background export task and returns a progressId for polling via /api/crawl-progress/{progress_id}.
+    """
+    try:
+        # Determine effective target path with sensible fallbacks
+        import os
+        effective_target: str | None = None
+
+        # 1) Explicit request target takes priority
+        if request.target and str(request.target).strip():
+            candidate = os.path.expanduser(str(request.target).strip())
+            if not os.path.isdir(candidate):
+                raise HTTPException(status_code=422, detail={"error": f"Target path is not a directory: {request.target}"})
+            effective_target = candidate
+        else:
+            # 2) Environment variable OBSIDIAN_VAULT
+            env_target = os.getenv("OBSIDIAN_VAULT")
+            if env_target and os.path.isdir(os.path.expanduser(env_target)):
+                effective_target = os.path.expanduser(env_target)
+            else:
+                # 3) If running in container, prefer /vault if present
+                in_container = os.path.exists("/.dockerenv")
+                if in_container and os.path.isdir("/vault"):
+                    effective_target = "/vault"
+                else:
+                    # 4) Local default fallback: ~/Documents/ArchonVault
+                    home_vault = os.path.expanduser("~/Documents/ArchonVault")
+                    try:
+                        os.makedirs(home_vault, exist_ok=True)
+                    except Exception:
+                        pass
+                    if os.path.isdir(home_vault):
+                        effective_target = home_vault
+
+        if not effective_target:
+            # Provide a clear error with guidance
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "error": "No valid export target directory. Set OBSIDIAN_VAULT, provide 'target', or create ~/Documents/ArchonVault",
+                },
+            )
+
+        # If an export is already running, return existing progressId
+        global active_export_task, active_export_progress_id
+        if active_export_task and not active_export_task.done() and active_export_progress_id:
+            safe_logfire_info(
+                f"Export already running | progress_id={active_export_progress_id}"
+            )
+            return {
+                "success": True,
+                "progressId": active_export_progress_id,
+                "message": "Export already in progress",
+            }
+
+        # Create progress tracker for a new export
+        progress_id = str(uuid.uuid4())
+        from ..utils.progress.progress_tracker import ProgressTracker
+        tracker = ProgressTracker(progress_id, operation_type="export")
+        await tracker.start({
+            "status": "starting",
+            "progress": 0,
+            "log": "Starting knowledge export to vault",
+            "target": effective_target,
+        })
+
+        # Background export using thread to avoid blocking event loop
+        import asyncio
+        loop = asyncio.get_running_loop()
+
+        from ...scripts.export_kb_to_vault import run_export  # local import to avoid circulars
+
+        def _progress_hook(total: int, done: int, message: str):
+            pct = int((done / max(total, 1)) * 100)
+            try:
+                asyncio.run_coroutine_threadsafe(
+                    tracker.update(
+                        status="exporting",
+                        progress=pct,
+                        log=message,
+                        total_sources=total,
+                        exported=done,
+                    ),
+                    loop,
+                )
+            except Exception:
+                # Best-effort progress; keep running on errors
+                pass
+
+        async def _run_in_bg():
+            try:
+                # Create client in the worker thread to avoid cross-thread reuse
+                def _work():
+                    from ..services.client_manager import get_supabase_client as _get_client
+                    client = _get_client()
+                    return run_export(
+                        client,
+                        vault_path=effective_target,
+                        progress_hook=_progress_hook,
+                        source_ids=request.source_ids,
+                        tags=request.tags,
+                        knowledge_type=request.knowledge_type,
+                        updated_since=request.updated_since,
+                    )
+
+                summary = await asyncio.to_thread(_work)
+                await tracker.complete({
+                    "status": "completed",
+                    "log": f"Export complete: {summary.get('exported', 0)} sources exported, {summary.get('failed', 0)} failures",
+                    "result": summary,
+                })
+            except Exception as e:
+                import traceback
+                tb = traceback.format_exc()
+                safe_logfire_error(f"Export failed | error={str(e)} | traceback={tb}")
+                await tracker.error(str(e))
+            finally:
+                if progress_id in active_crawl_tasks:
+                    del active_crawl_tasks[progress_id]
+                # Clear export concurrency guard
+                global active_export_task, active_export_progress_id
+                active_export_task = None
+                active_export_progress_id = None
+
+        task = asyncio.create_task(_run_in_bg())
+        active_crawl_tasks[progress_id] = task
+        active_export_task = task
+        active_export_progress_id = progress_id
+
+        return {"success": True, "progressId": progress_id, "message": "Export started"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        safe_logfire_error(f"Failed to start export | error={str(e)}")
+        raise HTTPException(status_code=500, detail={"error": str(e)})
+
+
 @router.post("/documents/upload")
 async def upload_document(
     file: UploadFile = File(...),
@@ -1024,12 +1206,12 @@ async def get_crawl_task_status(task_id: str):
 
 @router.post("/knowledge-items/stop/{progress_id}")
 async def stop_crawl_task(progress_id: str):
-    """Stop a running crawl task."""
+    """Stop a running crawl or export task."""
     try:
         from ..services.crawling import get_active_orchestration, unregister_orchestration
 
 
-        safe_logfire_info(f"Stop crawl requested | progress_id={progress_id}")
+        safe_logfire_info(f"Stop task requested | progress_id={progress_id}")
 
         found = False
         # Step 1: Cancel the orchestration service
@@ -1053,15 +1235,29 @@ async def stop_crawl_task(progress_id: str):
         # Step 3: Remove from active orchestrations registry
         unregister_orchestration(progress_id)
 
+        # Step 3.5: Cancel export task if it matches
+        global active_export_task, active_export_progress_id
+        if (not found) and active_export_progress_id == progress_id and active_export_task:
+            task = active_export_task
+            if not task.done():
+                task.cancel()
+                try:
+                    await asyncio.wait_for(task, timeout=2.0)
+                except (asyncio.TimeoutError, asyncio.CancelledError):
+                    pass
+            active_export_task = None
+            active_export_progress_id = None
+            found = True
+
         # Step 4: Update progress tracker to reflect cancellation (only if we found and cancelled something)
         if found:
             try:
                 from ..utils.progress.progress_tracker import ProgressTracker
-                tracker = ProgressTracker(progress_id, operation_type="crawl")
+                tracker = ProgressTracker(progress_id, operation_type="export")
                 await tracker.update(
                     status="cancelled",
                     progress=-1,
-                    log="Crawl cancelled by user"
+                    log="Operation cancelled by user"
                 )
             except Exception:
                 # Best effort - don't fail the cancellation if tracker update fails
@@ -1070,10 +1266,10 @@ async def stop_crawl_task(progress_id: str):
         if not found:
             raise HTTPException(status_code=404, detail={"error": "No active task for given progress_id"})
 
-        safe_logfire_info(f"Successfully stopped crawl task | progress_id={progress_id}")
+        safe_logfire_info(f"Successfully stopped task | progress_id={progress_id}")
         return {
             "success": True,
-            "message": "Crawl task stopped successfully",
+            "message": "Task stopped successfully",
             "progressId": progress_id,
         }
 

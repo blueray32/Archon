@@ -48,6 +48,20 @@ except ImportError:
     AsyncWebCrawler = None
     BrowserConfig = None
 
+# Load environment variables from project root .env (for local runs)
+try:
+    from dotenv import load_dotenv  # type: ignore
+    from pathlib import Path
+
+    # Project root is three levels up from this file: python/src/server/main.py -> repo root
+    _repo_root = Path(__file__).resolve().parents[3]
+    _env_file = _repo_root / ".env"
+    if _env_file.exists():
+        load_dotenv(dotenv_path=_env_file, override=False)
+except Exception:
+    # Dotenv is optional; ignore if unavailable
+    pass
+
 # Logger will be initialized after credentials are loaded
 logger = logging.getLogger(__name__)
 

@@ -4,9 +4,18 @@
  */
 
 import { validateCreateProject, validateUpdateProject } from "../schemas";
-import { formatRelativeTime, formatZodErrors, ValidationError } from "../shared/api";
+import {
+  formatRelativeTime,
+  formatZodErrors,
+  ValidationError,
+} from "../shared/api";
 import { callAPIWithETag, invalidateETagCache } from "../shared/apiWithEtag";
-import type { CreateProjectRequest, Project, ProjectFeatures, UpdateProjectRequest } from "../types";
+import type {
+  CreateProjectRequest,
+  Project,
+  ProjectFeatures,
+  UpdateProjectRequest,
+} from "../types";
 
 export const projectService = {
   /**
@@ -15,7 +24,9 @@ export const projectService = {
   async listProjects(): Promise<Project[]> {
     try {
       // Fetching projects from API
-      const response = await callAPIWithETag<{ projects: Project[] }>("/api/projects");
+      const response = await callAPIWithETag<{ projects: Project[] }>(
+        "/api/projects",
+      );
       // API response received
 
       const projects = response.projects || [];
@@ -50,7 +61,9 @@ export const projectService = {
    */
   async getProject(projectId: string): Promise<Project> {
     try {
-      const project = await callAPIWithETag<Project>(`/api/projects/${projectId}`);
+      const project = await callAPIWithETag<Project>(
+        `/api/projects/${projectId}`,
+      );
 
       return {
         ...project,
@@ -99,7 +112,10 @@ export const projectService = {
       // Project creation response received
       return response;
     } catch (error) {
-      console.error("[PROJECT SERVICE] Failed to initiate project creation:", error);
+      console.error(
+        "[PROJECT SERVICE] Failed to initiate project creation:",
+        error,
+      );
       if (error instanceof Error) {
         console.error("[PROJECT SERVICE] Error details:", {
           message: error.message,
@@ -113,7 +129,10 @@ export const projectService = {
   /**
    * Update an existing project
    */
-  async updateProject(projectId: string, updates: UpdateProjectRequest): Promise<Project> {
+  async updateProject(
+    projectId: string,
+    updates: UpdateProjectRequest,
+  ): Promise<Project> {
     // Validate input
     // Updating project with provided data
     const validation = validateUpdateProject(updates);
@@ -124,10 +143,13 @@ export const projectService = {
 
     try {
       // Sending update request to API
-      const project = await callAPIWithETag<Project>(`/api/projects/${projectId}`, {
-        method: "PUT",
-        body: JSON.stringify(validation.data),
-      });
+      const project = await callAPIWithETag<Project>(
+        `/api/projects/${projectId}`,
+        {
+          method: "PUT",
+          body: JSON.stringify(validation.data),
+        },
+      );
 
       // Invalidate caches after update
       invalidateETagCache("/api/projects");
@@ -173,7 +195,9 @@ export const projectService = {
   /**
    * Get features from a project's features JSONB field
    */
-  async getProjectFeatures(projectId: string): Promise<{ features: ProjectFeatures; count: number }> {
+  async getProjectFeatures(
+    projectId: string,
+  ): Promise<{ features: ProjectFeatures; count: number }> {
     try {
       const response = await callAPIWithETag<{
         features: ProjectFeatures;

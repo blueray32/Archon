@@ -29,7 +29,9 @@ async function callRAG(query: string, k: number): Promise<RAGEvalResponse> {
     try {
       const data = await res.json();
       msg = data?.error || msg;
-    } catch {}
+    } catch {
+      void 0;
+    }
     throw new Error(msg);
   }
   return res.json();
@@ -57,15 +59,17 @@ export function EvalPage() {
       if (savedPresets) setPresets(JSON.parse(savedPresets));
       const savedLast = localStorage.getItem('rag_eval_last_results');
       if (savedLast) setLastResults(JSON.parse(savedLast));
-    } catch {}
+    } catch {
+      void 0;
+    }
   }, []);
 
   // Persist
   useEffect(() => {
-    try { localStorage.setItem('rag_eval_queries', queriesText); } catch {}
+    try { localStorage.setItem('rag_eval_queries', queriesText); } catch { void 0; }
   }, [queriesText]);
   useEffect(() => {
-    try { localStorage.setItem('rag_eval_k', String(k)); } catch {}
+    try { localStorage.setItem('rag_eval_k', String(k)); } catch { void 0; }
   }, [k]);
 
   const queries = useMemo(() => queriesText.split('\n').map(q => q.trim()).filter(Boolean), [queriesText]);
@@ -93,7 +97,7 @@ export function EvalPage() {
     try {
       if (Object.keys(results).length > 0) {
         setLastResults(results);
-        try { localStorage.setItem('rag_eval_last_results', JSON.stringify(results)); } catch {}
+        try { localStorage.setItem('rag_eval_last_results', JSON.stringify(results)); } catch { void 0; }
       }
       for (const q of queries) {
         try {
@@ -177,7 +181,7 @@ export function EvalPage() {
                     if (!presetName.trim()) { showToast('Enter a preset name', 'warning'); return; }
                     const next = { ...presets, [presetName.trim()]: queriesText };
                     setPresets(next);
-                    try { localStorage.setItem('rag_eval_presets', JSON.stringify(next)); } catch {}
+                    try { localStorage.setItem('rag_eval_presets', JSON.stringify(next)); } catch { void 0; }
                     showToast('Preset saved', 'success');
                   }}
                 >Save</button>
@@ -205,7 +209,7 @@ export function EvalPage() {
                       const next = { ...presets };
                       delete next[presetName.trim()];
                       setPresets(next);
-                      try { localStorage.setItem('rag_eval_presets', JSON.stringify(next)); } catch {}
+                      try { localStorage.setItem('rag_eval_presets', JSON.stringify(next)); } catch { void 0; }
                       showToast('Preset deleted', 'success');
                     }}
                   >Delete</button>
@@ -235,7 +239,7 @@ export function EvalPage() {
                       className="px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100/50 dark:hover:bg-zinc-800/30"
                       onClick={() => {
                         setLastResults(results);
-                        try { localStorage.setItem('rag_eval_last_results', JSON.stringify(results)); } catch {}
+                        try { localStorage.setItem('rag_eval_last_results', JSON.stringify(results)); } catch { void 0; }
                         showToast('Baseline updated to current results', 'success');
                       }}
                     >Set Baseline</button>
@@ -243,7 +247,7 @@ export function EvalPage() {
                       className="px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100/50 dark:hover:bg-zinc-800/30"
                       onClick={() => {
                         setLastResults({});
-                        try { localStorage.removeItem('rag_eval_last_results'); } catch {}
+                        try { localStorage.removeItem('rag_eval_last_results'); } catch { void 0; }
                         showToast('Baseline cleared', 'success');
                       }}
                     >Clear Baseline</button>

@@ -35,10 +35,13 @@ export function useProjectDocuments(projectId: string | undefined) {
       });
       if (dropped.length > 0) {
         // Detailed logging to aid debugging in beta without crashing the UI
-        console.error(`Dropped ${dropped.length} invalid document(s) from project ${projectId}`, {
-          dropped,
-          total: raw.length,
-        });
+        console.error(
+          `Dropped ${dropped.length} invalid document(s) from project ${projectId}`,
+          {
+            dropped,
+            total: raw.length,
+          },
+        );
       }
       return valid;
     },

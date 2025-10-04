@@ -1,8 +1,10 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, useEffect, useCallback } from 'react';
 import { knowledgeBaseService, KnowledgeItem } from '../services/knowledgeBaseService';
 import { CrawlProgressData } from '../types/crawl';
 import { useToast } from '../contexts/ToastContext';
+import { useDatabaseMutation } from '../features/ui/hooks/useDatabaseMutation';
+import { callAPIWithETag } from '../features/projects/shared/apiWithEtag';
 
 // Query keys factory
 export const crawlKeys = {
@@ -57,43 +59,44 @@ export function useCrawlProgressPolling(progressId: string | null, options?: any
     queryKey: crawlKeys.progress(progressId!),
     queryFn: async () => {
       if (!progressId) throw new Error('No progress ID');
-      
-      const response = await fetch(`/api/progress/${progressId}`, {
-        method: 'GET',
-        headers: { Accept: 'application/json' },
-        credentials: 'include',
-      });
-      
-      if (response.status === 404) {
-        // Track consecutive 404s
-        const notFoundKey = `crawl_404_${progressId}`;
-        const notFoundCount = parseInt(localStorage.getItem(notFoundKey) || '0') + 1;
-        localStorage.setItem(notFoundKey, notFoundCount.toString());
-        
-        if (notFoundCount >= 5) {
-          localStorage.removeItem(notFoundKey);
-          throw new Error('Resource no longer exists');
+      // Use ETag-aware helper for efficient polling
+      try {
+        const data = await callAPIWithETag<any>(`/api/progress/${progressId}`);
+        // Reset counter on success
+        localStorage.removeItem(`crawl_404_${progressId}`);
+        return data;
+      } catch (e: any) {
+        // Map 404s to transient nulls, and escalate after 5 tries
+        const statusText = e?.message || '';
+        if (/404|Not Found/i.test(statusText)) {
+          // Track consecutive 404s
+          const notFoundKey = `crawl_404_${progressId}`;
+          const notFoundCount = parseInt(localStorage.getItem(notFoundKey) || '0') + 1;
+          localStorage.setItem(notFoundKey, notFoundCount.toString());
+          
+          if (notFoundCount >= 5) {
+            localStorage.removeItem(notFoundKey);
+            throw new Error('Resource no longer exists');
+          }
+          
+          console.log(`Resource not found (404), attempt ${notFoundCount}/5: ${progressId}`);
+          return null;
         }
-        
-        console.log(`Resource not found (404), attempt ${notFoundCount}/5: ${progressId}`);
-        return null;
+        throw e;
       }
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
-      }
-      
-      // Reset 404 counter on success
-      localStorage.removeItem(`crawl_404_${progressId}`);
-      
-      return response.json();
     },
     enabled: !!progressId && !isComplete,
     refetchInterval: 1000, // Poll every second
     retry: false, // Don't retry on error
     staleTime: 0, // Always refetch
-    onError: handleError,
   });
+
+  // Handle errors from query
+  useEffect(() => {
+    if (query.error) {
+      handleError(query.error as Error);
+    }
+  }, [query.error, handleError]);
   
   // Stop polling when operation is complete or failed
   useEffect(() => {
@@ -140,97 +143,109 @@ export function useKnowledgeItems(page = 1, perPage = 100) {
       return response;
     },
     staleTime: 30000, // Consider data stale after 30 seconds
-    cacheTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
   });
 }
 
 // Delete knowledge item mutation
 export function useDeleteKnowledgeItem() {
-  const queryClient = useQueryClient();
   const { showToast } = useToast();
 
-  return useMutation({
+  return useDatabaseMutation<unknown, string>({
     mutationFn: async (sourceId: string) => {
       return await knowledgeBaseService.deleteKnowledgeItem(sourceId);
     },
-    onSuccess: (data, sourceId) => {
-      // Optimistically update the cache
-      queryClient.setQueryData(knowledgeKeys.items(), (old: any) => {
+    optimisticUpdate: (qc, sourceId) => {
+      const previous = qc.getQueryData(knowledgeKeys.items());
+      qc.setQueryData(knowledgeKeys.items(), (old: any) => {
         if (!old) return old;
         return {
           ...old,
           items: old.items.filter((item: KnowledgeItem) => item.source_id !== sourceId),
-          total: old.total - 1
+          total: Math.max(0, (old.total || 0) - 1),
         };
       });
-      
+      return () => {
+        if (previous) qc.setQueryData(knowledgeKeys.items(), previous);
+      };
+    },
+    onSuccess: () => {
       showToast('Item deleted successfully', 'success');
     },
     onError: (error) => {
       showToast('Failed to delete item', 'error');
       console.error('Delete failed:', error);
-    }
+    },
+    cancelQueryKeys: [],
   });
 }
 
 // Delete multiple items mutation
 export function useDeleteMultipleItems() {
-  const queryClient = useQueryClient();
+  const _queryClient = useQueryClient();
   const { showToast } = useToast();
 
-  return useMutation({
+  return useDatabaseMutation<unknown, string[]>({
     mutationFn: async (sourceIds: string[]) => {
-      const deletePromises = sourceIds.map(id => 
-        knowledgeBaseService.deleteKnowledgeItem(id)
-      );
-      return await Promise.all(deletePromises);
+      await Promise.all(sourceIds.map((id) => knowledgeBaseService.deleteKnowledgeItem(id)));
     },
-    onSuccess: (data, sourceIds) => {
-      // Optimistically update the cache
-      queryClient.setQueryData(knowledgeKeys.items(), (old: any) => {
+    optimisticUpdate: (qc, sourceIds) => {
+      const previous = qc.getQueryData(knowledgeKeys.items());
+      qc.setQueryData(knowledgeKeys.items(), (old: any) => {
         if (!old) return old;
         const idsSet = new Set(sourceIds);
+        const nextItems = old.items.filter((item: KnowledgeItem) => !idsSet.has(item.source_id));
         return {
           ...old,
-          items: old.items.filter((item: KnowledgeItem) => !idsSet.has(item.source_id)),
-          total: old.total - sourceIds.length
+          items: nextItems,
+          total: Math.max(0, (old.total || 0) - (old.items.length - nextItems.length)),
         };
       });
-      
+      return () => {
+        if (previous) qc.setQueryData(knowledgeKeys.items(), previous);
+      };
+    },
+    onSuccess: (_d, sourceIds) => {
       showToast(`Deleted ${sourceIds.length} items successfully`, 'success');
     },
     onError: (error) => {
       showToast('Failed to delete some items', 'error');
       console.error('Batch delete failed:', error);
-    }
+    },
+    cancelQueryKeys: [],
   });
 }
 
 // Refresh knowledge item mutation
 export function useRefreshKnowledgeItem() {
-  const queryClient = useQueryClient();
+  const _queryClient = useQueryClient();
   const { showToast } = useToast();
 
-  return useMutation({
+  return useDatabaseMutation<unknown, string>({
     mutationFn: async (sourceId: string) => {
-      return await knowledgeBaseService.refreshKnowledgeItem(sourceId);
+      await knowledgeBaseService.refreshKnowledgeItem(sourceId);
     },
-    onSuccess: (data, sourceId) => {
-      // Remove the item from cache as it's being refreshed
-      queryClient.setQueryData(knowledgeKeys.items(), (old: any) => {
+    optimisticUpdate: (qc, sourceId) => {
+      const previous = qc.getQueryData(knowledgeKeys.items());
+      qc.setQueryData(knowledgeKeys.items(), (old: any) => {
         if (!old) return old;
         return {
           ...old,
-          items: old.items.filter((item: KnowledgeItem) => item.source_id !== sourceId)
+          items: old.items.filter((item: KnowledgeItem) => item.source_id !== sourceId),
         };
       });
-      
+      return () => {
+        if (previous) qc.setQueryData(knowledgeKeys.items(), previous);
+      };
+    },
+    onSuccess: () => {
       showToast('Refresh started', 'info');
     },
     onError: (error) => {
       showToast('Failed to refresh item', 'error');
       console.error('Refresh failed:', error);
-    }
+    },
+    cancelQueryKeys: [],
   });
 }
 
@@ -238,10 +253,8 @@ export function useRefreshKnowledgeItem() {
 export function useCrawlUrl() {
   const { showToast } = useToast();
 
-  return useMutation({
-    mutationFn: async (params: any) => {
-      return await knowledgeBaseService.crawlUrl(params);
-    },
+  return useDatabaseMutation<unknown, any>({
+    mutationFn: async (params: any) => knowledgeBaseService.crawlUrl(params),
     onSuccess: (data) => {
       if (data.progressId) {
         showToast('Crawl started successfully', 'success');
@@ -250,7 +263,8 @@ export function useCrawlUrl() {
     onError: (error) => {
       showToast('Failed to start crawl', 'error');
       console.error('Crawl failed:', error);
-    }
+    },
+    cancelQueryKeys: [],
   });
 }
 
@@ -258,10 +272,8 @@ export function useCrawlUrl() {
 export function useUploadDocument() {
   const { showToast } = useToast();
 
-  return useMutation({
-    mutationFn: async ({ file, metadata }: { file: File, metadata: any }) => {
-      return await knowledgeBaseService.uploadDocument(file, metadata);
-    },
+  return useDatabaseMutation<unknown, { file: File; metadata: any }>({
+    mutationFn: async ({ file, metadata }) => knowledgeBaseService.uploadDocument(file, metadata),
     onSuccess: (data) => {
       if (data.progressId) {
         showToast('Document upload started', 'success');
@@ -270,7 +282,8 @@ export function useUploadDocument() {
     onError: (error) => {
       showToast('Failed to upload document', 'error');
       console.error('Upload failed:', error);
-    }
+    },
+    cancelQueryKeys: [],
   });
 }
 
@@ -278,17 +291,16 @@ export function useUploadDocument() {
 export function useStopCrawl() {
   const { showToast } = useToast();
 
-  return useMutation({
-    mutationFn: async (progressId: string) => {
-      return await knowledgeBaseService.stopCrawl(progressId);
-    },
+  return useDatabaseMutation<unknown, string>({
+    mutationFn: async (progressId: string) => knowledgeBaseService.stopCrawl(progressId),
     onSuccess: () => {
       showToast('Crawl stopped', 'info');
     },
     onError: (error) => {
       showToast('Failed to stop crawl', 'error');
       console.error('Stop crawl failed:', error);
-    }
+    },
+    cancelQueryKeys: [],
   });
 }
 
@@ -297,27 +309,32 @@ export function useCreateGroup() {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
 
-  return useMutation({
-    mutationFn: async ({ items, groupName }: { items: KnowledgeItem[], groupName: string }) => {
-      const updatePromises = items.map(item =>
-        knowledgeBaseService.updateKnowledgeItem(item.source_id, {
-          metadata: {
+  return useDatabaseMutation<
+    unknown,
+    { items: KnowledgeItem[]; groupName: string }
+  >({
+    mutationFn: async ({ items, groupName }) => {
+      await Promise.all(
+        items.map((item) =>
+          knowledgeBaseService.updateKnowledgeItem(item.source_id, {
             ...item.metadata,
-            group_name: groupName
-          }
-        })
+            group_name: groupName,
+          }),
+        ),
       );
-      return await Promise.all(updatePromises);
     },
-    onSuccess: (data, variables) => {
-      // Invalidate the cache to refetch with new groups
+    onSuccess: (_d, variables) => {
       queryClient.invalidateQueries({ queryKey: knowledgeKeys.items() });
-      showToast(`Created group "${variables.groupName}" with ${variables.items.length} items`, 'success');
+      showToast(
+        `Created group "${variables.groupName}" with ${variables.items.length} items`,
+        'success',
+      );
     },
     onError: (error) => {
       showToast('Failed to create group', 'error');
       console.error('Group creation failed:', error);
-    }
+    },
+    cancelQueryKeys: [],
   });
 }
 

@@ -20,6 +20,8 @@ export interface ProviderInfo {
  * - if provider === 'ollama': return true (local, no API key needed)
  * - if no provider: check for any valid API key (OpenAI or Google)
  */
+import { logger } from './logger';
+
 export function isLmConfigured(
   ragCreds: NormalizedCredential[],
   apiKeyCreds: NormalizedCredential[]
@@ -29,8 +31,8 @@ export function isLmConfigured(
   const provider = providerCred?.value?.toLowerCase();
 
   // Debug logging
-  console.log('🔎 isLmConfigured - Provider:', provider);
-  console.log('🔎 isLmConfigured - API Keys:', apiKeyCreds.map(c => ({
+  logger.debug('🔎 isLmConfigured - Provider:', provider);
+  logger.debug('🔎 isLmConfigured - API Keys:', apiKeyCreds.map(c => ({
     key: c.key,
     value: c.value,
     encrypted_value: c.encrypted_value,
@@ -54,8 +56,8 @@ export function isLmConfigured(
   const hasOpenAIKey = hasValidCredential(openAIKeyCred);
   const hasGoogleKey = hasValidCredential(googleKeyCred);
 
-  console.log('🔎 isLmConfigured - OpenAI key valid:', hasOpenAIKey);
-  console.log('🔎 isLmConfigured - Google key valid:', hasGoogleKey);
+  logger.debug('🔎 isLmConfigured - OpenAI key valid:', hasOpenAIKey);
+  logger.debug('🔎 isLmConfigured - Google key valid:', hasGoogleKey);
 
   // Check based on provider
   if (provider === 'openai') {
@@ -69,7 +71,7 @@ export function isLmConfigured(
     return true;
   } else if (provider) {
     // Unknown provider, assume it doesn't need an API key
-    console.log('🔎 isLmConfigured - Unknown provider, assuming configured:', provider);
+    logger.warn('🔎 isLmConfigured - Unknown provider, assuming configured:', provider);
     return true;
   } else {
     // No provider specified, check if ANY API key is configured

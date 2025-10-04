@@ -3,8 +3,7 @@ import {
   LinkIcon, 
   Upload, 
   BoxIcon, 
-  Brain,
-  Plus
+  Brain
 } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';

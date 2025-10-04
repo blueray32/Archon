@@ -10,9 +10,11 @@ import Admonition from '@theme/Admonition';
 
 # Agent Chat Panel
 
+> Note: This document includes legacy Socket.IO streaming references. Current Beta uses HTTP endpoints for chat operations, with optional polling where needed.
+
 ## Overview
 
-The Agent Chat Panel provides a real-time interface for interacting with AI agents. It uses Socket.IO for reliable bidirectional communication and supports streaming responses from agents.
+The Agent Chat Panel provides a live interface for interacting with AI agents. It primarily uses HTTP endpoints and polling; previous versions referenced Socket.IO for streaming.
 
 <Admonition type="success" title="Key Features">
 - **Real-time streaming**: See agent responses as they're generated

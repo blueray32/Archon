@@ -1,5 +1,5 @@
 # Make targets for PRP/R‑D flow
-.PHONY: review verify-prp context-bundle story dev qa ingest-vault export-summaries
+.PHONY: review verify-prp context-bundle story dev qa ingest-vault export-summaries export-kb
 
 review:
 	@bash scripts/project_review.sh || echo "review script optional; skip if absent"
@@ -28,6 +28,10 @@ export-summaries:
 
 publish:
 	@OBSIDIAN_VAULT="$$OBSIDIAN_VAULT" bash scripts/publish_to_obsidian.sh
+
+# Export knowledge base (sources, pages, code examples) to your Obsidian vault
+export-kb:
+	@OBSIDIAN_VAULT="$$OBSIDIAN_VAULT" uv run python -m src.scripts.export_kb_to_vault
 
 spec:
 	@bash scripts/speckit.sh $(NAME)

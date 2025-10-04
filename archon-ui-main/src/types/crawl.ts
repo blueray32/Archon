@@ -32,7 +32,7 @@ export interface CrawlProgressData {
   progress: number;  // Required field representing progress 0-100
   message?: string;
   error?: string;
-  result?: any;
+  result?: unknown;
   timestamp?: string;
   
   // Step information from backend

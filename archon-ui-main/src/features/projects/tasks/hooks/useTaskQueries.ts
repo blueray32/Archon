@@ -1,5 +1,6 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { usePolling } from "../../../ui/hooks";
+import { useDatabaseMutation } from "../../../ui/hooks/useDatabaseMutation";
 import { useToast } from "../../../ui/hooks/useToast";
 import { projectKeys } from "../../hooks/useProjectQueries";
 import { taskService } from "../services";
@@ -30,14 +31,15 @@ export function useCreateTask() {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
 
-  return useMutation({
-    mutationFn: (taskData: CreateTaskRequest) => taskService.createTask(taskData),
-    onMutate: async (newTaskData) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: taskKeys.all(newTaskData.project_id) });
-
+  return useDatabaseMutation<Task, CreateTaskRequest>({
+    mutationFn: (taskData) => taskService.createTask(taskData),
+    optimisticUpdate: (qc, newTaskData) => {
+      // Cancel any outgoing refetches for this project's tasks
+      qc.cancelQueries({ queryKey: taskKeys.all(newTaskData.project_id) });
       // Snapshot the previous value
-      const previousTasks = queryClient.getQueryData(taskKeys.all(newTaskData.project_id));
+      const previousTasks = qc.getQueryData(
+        taskKeys.all(newTaskData.project_id),
+      );
 
       // Create optimistic task with temporary ID
       const tempId = `temp-${Date.now()}`;
@@ -53,42 +55,53 @@ export function useCreateTask() {
       } as Task;
 
       // Optimistically add the new task
-      queryClient.setQueryData(taskKeys.all(newTaskData.project_id), (old: Task[] | undefined) => {
-        if (!old) return [optimisticTask];
-        return [...old, optimisticTask];
-      });
+      qc.setQueryData(
+        taskKeys.all(newTaskData.project_id),
+        (old: Task[] | undefined) => {
+          if (!old) return [optimisticTask];
+          return [...old, optimisticTask];
+        },
+      );
 
-      return { previousTasks, tempId };
+      return () => {
+        if (previousTasks) {
+          qc.setQueryData(taskKeys.all(newTaskData.project_id), previousTasks);
+        }
+      };
     },
-    onError: (error, variables, context) => {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+    onError: (error, variables) => {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       console.error("Failed to create task:", error, { variables });
-      // Rollback on error
-      if (context?.previousTasks) {
-        queryClient.setQueryData(taskKeys.all(variables.project_id), context.previousTasks);
-      }
       showToast(`Failed to create task: ${errorMessage}`, "error");
     },
-    onSuccess: (data, variables, context) => {
+    onSuccess: (data, variables) => {
       // Replace optimistic task with real one from server
-      queryClient.setQueryData(taskKeys.all(variables.project_id), (old: Task[] | undefined) => {
-        if (!old) return [data];
-        // Replace only the specific temp task with real one
-        return old
-          .map((task) => (task.id === context?.tempId ? data : task))
-          .filter(
-            (task, index, self) =>
-              // Remove any duplicates just in case
-              index === self.findIndex((t) => t.id === task.id),
-          );
-      });
+      queryClient.setQueryData(
+        taskKeys.all(variables.project_id),
+        (old: Task[] | undefined) => {
+          if (!old) return [data];
+          // Replace only the specific temp task with real one
+          return old
+            .map((task) => (task.id?.startsWith?.("temp-") ? data : task))
+            .filter(
+              (task, index, self) =>
+                // Remove any duplicates just in case
+                index === self.findIndex((t) => t.id === task.id),
+            );
+        },
+      );
       queryClient.invalidateQueries({ queryKey: projectKeys.taskCounts() });
       showToast("Task created successfully", "success");
     },
     onSettled: (_data, _error, variables) => {
       // Always refetch to ensure consistency after operation completes
-      queryClient.invalidateQueries({ queryKey: taskKeys.all(variables.project_id) });
+      queryClient.invalidateQueries({
+        queryKey: taskKeys.all(variables.project_id),
+      });
     },
+    // Dynamic cancel is scoped inside optimisticUpdate since project_id
+    // is provided at mutate time.
   });
 }
 
@@ -97,31 +110,34 @@ export function useUpdateTask(projectId: string) {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
 
-  return useMutation<Task, Error, { taskId: string; updates: UpdateTaskRequest }, { previousTasks?: Task[] }>({
-    mutationFn: ({ taskId, updates }: { taskId: string; updates: UpdateTaskRequest }) =>
+  return useDatabaseMutation<
+    Task,
+    { taskId: string; updates: UpdateTaskRequest },
+    Error
+  >({
+    mutationFn: ({ taskId, updates }) =>
       taskService.updateTask(taskId, updates),
-    onMutate: async ({ taskId, updates }) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: taskKeys.all(projectId) });
-
+    optimisticUpdate: (qc, { taskId, updates }) => {
       // Snapshot the previous value
-      const previousTasks = queryClient.getQueryData<Task[]>(taskKeys.all(projectId));
+      const previousTasks = qc.getQueryData<Task[]>(taskKeys.all(projectId));
 
       // Optimistically update
-      queryClient.setQueryData<Task[]>(taskKeys.all(projectId), (old) => {
+      qc.setQueryData<Task[]>(taskKeys.all(projectId), (old) => {
         if (!old) return old;
-        return old.map((task) => (task.id === taskId ? { ...task, ...updates } : task));
+        return old.map((task) =>
+          task.id === taskId ? { ...task, ...updates } : task,
+        );
       });
 
-      return { previousTasks };
+      return () => {
+        if (previousTasks)
+          qc.setQueryData(taskKeys.all(projectId), previousTasks);
+      };
     },
-    onError: (error, variables, context) => {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+    onError: (error, variables) => {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       console.error("Failed to update task:", error, { variables });
-      // Rollback on error
-      if (context?.previousTasks) {
-        queryClient.setQueryData(taskKeys.all(projectId), context.previousTasks);
-      }
       showToast(`Failed to update task: ${errorMessage}`, "error");
       // Refetch on error to ensure consistency
       queryClient.invalidateQueries({ queryKey: taskKeys.all(projectId) });
@@ -139,6 +155,7 @@ export function useUpdateTask(projectId: string) {
         showToast(`Task moved to ${updates.status}`, "success");
       }
     },
+    cancelQueryKeys: [taskKeys.all(projectId)],
   });
 }
 
@@ -147,30 +164,27 @@ export function useDeleteTask(projectId: string) {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
 
-  return useMutation<void, Error, string, { previousTasks?: Task[] }>({
+  return useDatabaseMutation<void, string, Error>({
     mutationFn: (taskId: string) => taskService.deleteTask(taskId),
-    onMutate: async (taskId) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: taskKeys.all(projectId) });
-
+    optimisticUpdate: (qc, taskId) => {
       // Snapshot the previous value
-      const previousTasks = queryClient.getQueryData<Task[]>(taskKeys.all(projectId));
+      const previousTasks = qc.getQueryData<Task[]>(taskKeys.all(projectId));
 
       // Optimistically remove the task
-      queryClient.setQueryData<Task[]>(taskKeys.all(projectId), (old) => {
+      qc.setQueryData<Task[]>(taskKeys.all(projectId), (old) => {
         if (!old) return old;
         return old.filter((task) => task.id !== taskId);
       });
 
-      return { previousTasks };
+      return () => {
+        if (previousTasks)
+          qc.setQueryData(taskKeys.all(projectId), previousTasks);
+      };
     },
-    onError: (error, taskId, context) => {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+    onError: (error, taskId) => {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       console.error("Failed to delete task:", error, { taskId });
-      // Rollback on error
-      if (context?.previousTasks) {
-        queryClient.setQueryData(taskKeys.all(projectId), context.previousTasks);
-      }
       showToast(`Failed to delete task: ${errorMessage}`, "error");
     },
     onSuccess: () => {
@@ -180,5 +194,6 @@ export function useDeleteTask(projectId: string) {
       // Always refetch counts after deletion
       queryClient.invalidateQueries({ queryKey: projectKeys.taskCounts() });
     },
+    cancelQueryKeys: [taskKeys.all(projectId)],
   });
 }

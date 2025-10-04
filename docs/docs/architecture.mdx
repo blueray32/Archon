@@ -73,10 +73,10 @@ async def delete_source(ctx: Context, source: str) -> str:
 
 ## Key Components
 
-### Server Service (Port 8080)
+### Server Service (Port 8181)
 - FastAPI application
 - REST API endpoints
-- Socket.IO real-time communication
+- HTTP polling for live updates
 - Direct service layer access
 - Business logic implementation
 
@@ -113,46 +113,42 @@ OR
 5. Response sent through MCP to AI client
 ```
 
-### Smart Crawl Operation (Simplified Socket.IO)
+### Smart Crawl Operation (Polling)
 ```
 1. User initiates crawl
 2. UI calls POST /api/knowledge-items/crawl
 3. FastAPI endpoint:
    - Uses CrawlingService to detect URL type
    - Calls appropriate crawl method
-   - Services emit Socket.IO progress directly to rooms
+   - Services expose progress via `/api/progress/{id}`
    - Uses DocumentStorageService from `/services/storage/` for chunking
-4. UI listens to Socket.IO room for real-time updates
+4. UI polls `/api/progress/{id}` for live updates
 ```
 
 ### Task Update Flow (Simplified)
 ```
 1. MCP tool calls POST /api/tasks
 2. API endpoint creates task using TaskService
-3. TaskService emits Socket.IO event directly to project room
-4. UI subscribed to project room receives update immediately
-5. No database polling needed
+3. UI retrieves task updates via project/task endpoints with ETag
+4. ETag-based caching avoids unnecessary payloads
+5. Predictable polling replaces push updates
 ```
 
-## Simplified Real-Time Architecture
+## Live Update Architecture (Polling)
 
-### Simplified Socket.IO (2025 Pattern)
 ```
-MCP Tools → HTTP API → Services → @sio.event → Rooms → UI
+MCP Tools → HTTP API → Services → ETag/ETag checks → UI polling
 ```
 
 Key improvements:
-- **No database polling** - Eliminated 2-second polling system
-- **Simple @sio.event handlers** - Official Socket.IO 2025 pattern
-- **Direct room management** - `sio.enter_room()` and `sio.emit()` calls
-- **No namespace classes** - Removed complex abstraction layers
-- **Single root namespace** - Everything on `/` namespace for simplicity
+- **ETag caching** - 304 Not Modified reduces bandwidth
+- **Smart intervals** - Pause when tab hidden; resume on focus
+- **Simple services** - No socket handlers required
+- **Deterministic UX** - Predictable polling cadence
 
 ## Important Notes
 
 - **No MCP imports in FastAPI** - Services only
 - **No direct DB access in MCP** - HTTP only
 - **Services are the single source of truth** - All logic here
-- **Simple @sio.event handlers** - Official Socket.IO 2025 pattern
-- **Root namespace only** - No complex namespace management
-- **Direct room management** - Simple `sio.enter_room()` and `sio.emit()` calls
+- **Polling-first** - No socket namespaces or room management

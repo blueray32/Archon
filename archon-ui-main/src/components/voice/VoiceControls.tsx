@@ -13,7 +13,7 @@ interface VoiceControlsProps {
 export const VoiceControls: React.FC<VoiceControlsProps> = ({
   onVoiceInput,
   onVoiceResponse,
-  isListening,
+  isListening: _isListening,
   isSpeaking,
   disabled = false,
   language = 'es-ES'
@@ -157,11 +157,11 @@ export const VoiceControls: React.FC<VoiceControlsProps> = ({
       const lines = raw.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
       const cleaned = lines.map(l =>
         l
-          .replace(/^\s*(?:[-*•]+|\d+[\.\)]\s*)\s*/, '')
+          .replace(/^\s*(?:[-*•]+|\d+[.)]\s*)\s*/, '')
           .replace(/\*\*(.*?)\*\*/g, '$1')
           .replace(/\*(.*?)\*/g, '$1')
           .replace(/\[[^\]]+\]/g, '')
-          .replace(/[•▪︎◦·●]/g, '')
+          .replace(/[•◦·●]|▪︎/g, '')
           .replace(/\s{2,}/g, ' ')
           .trim()
       ).filter(Boolean);

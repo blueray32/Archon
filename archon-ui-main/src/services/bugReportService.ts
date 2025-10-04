@@ -132,7 +132,7 @@ class BugReportService {
   /**
    * Get recent logs from browser console
    */
-  private async getRecentLogs(limit: number): Promise<string[]> {
+  private async getRecentLogs(_limit: number): Promise<string[]> {
     // This is a simplified version - in a real implementation,
     // you'd want to capture console logs proactively
     return [

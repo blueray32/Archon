@@ -51,7 +51,9 @@ export const getOrderGlow = (order: number) => {
 };
 
 // Get column header color based on status
-export const getColumnColor = (status: "todo" | "doing" | "review" | "done") => {
+export const getColumnColor = (
+  status: "todo" | "doing" | "review" | "done",
+) => {
   switch (status) {
     case "todo":
       return "text-gray-600 dark:text-gray-400";

@@ -30,6 +30,7 @@ from .rag_agent import RagAgent
 from .pydantic_ai_loader import get_pydantic_ai_agent_class
 from .spanish_tutor_agent import SpanishTutorAgent
 from .researcher_agent import ResearcherAgent
+from .prp_agent import PRPAgent
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -62,6 +63,7 @@ AVAILABLE_AGENTS = {
     "spanish_tutor": SpanishTutorAgent,
     "researcher": ResearcherAgent,
     "pydantic_ai": get_pydantic_ai_agent_class(),
+    "prp": PRPAgent,
 }
 
 # Global credentials storage
@@ -126,6 +128,25 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"Failed to fetch credentials: {e}")
         # Continue with defaults if we can't get credentials
+
+    # Initialize PRP service for RAG retrieval
+    app.state.prp_service = None
+    try:
+        from supabase import create_client
+        from ..server.services.prp_service import PRPService
+
+        supabase_url = os.getenv("SUPABASE_URL")
+        supabase_key = os.getenv("SUPABASE_SERVICE_KEY")
+        openai_key = os.getenv("OPENAI_API_KEY")
+
+        if supabase_url and supabase_key:
+            supabase_client = create_client(supabase_url, supabase_key)
+            app.state.prp_service = PRPService(supabase_client, openai_key)
+            logger.info("PRPService initialized successfully")
+        else:
+            logger.warning("PRPService not initialized - missing Supabase credentials")
+    except Exception as e:
+        logger.error(f"Failed to initialize PRPService: {e}")
 
     # Initialize agents with fetched credentials
     app.state.agents = {}
@@ -251,14 +272,57 @@ async def run_agent(request: AgentRequest):
                 brave_api_key=os.getenv('BRAVE_API_KEY'),
                 searxng_base_url=os.getenv('SEARXNG_BASE_URL'),
             )
+        elif request.agent_type == "prp":
+            from .prp_agent import PRPAgent
+
+            # Use run_with_context for PRP agent to enable RAG retrieval
+            session_id = request.context.get("session_id", "default") if request.context else "default"
+            persona_name = request.context.get("persona_name", "chat_gpt_like") if request.context else "chat_gpt_like"
+
+            # Get RAG retriever from PRPService
+            rag_retriever = None
+            if hasattr(app.state, "prp_service") and app.state.prp_service:
+                async def retriever_func(sid: str, msg: str):
+                    return await app.state.prp_service.retrieve_context(sid, msg)
+                rag_retriever = retriever_func
+
+            # Call run_with_context instead of run
+            result = await agent.run_with_context(
+                user_prompt=request.prompt,
+                session_id=session_id,
+                persona_name=persona_name,
+                rag_retriever=rag_retriever
+            )
+
+            # Store message in database if PRPService is available
+            if app.state.prp_service:
+                try:
+                    await app.state.prp_service.store_message(
+                        session_id=session_id,
+                        role="user",
+                        content=request.prompt,
+                        agent_type="prp"
+                    )
+                    await app.state.prp_service.store_message(
+                        session_id=session_id,
+                        role="assistant",
+                        content=result.output if hasattr(result, "output") else str(result),
+                        agent_type="prp"
+                    )
+                except Exception as e:
+                    logger.warning(f"Failed to store PRP messages: {e}")
+
+            # Skip the normal agent.run() path for PRP
+            deps = None  # Signal to skip normal run
         else:
             # Default dependencies
             from .base_agent import ArchonDependencies
 
             deps = ArchonDependencies()
 
-        # Run the agent
-        result = await agent.run(request.prompt, deps)
+        # Run the agent (skip if already run for PRP)
+        if deps is not None:
+            result = await agent.run(request.prompt, deps)
 
         # Normalize result into a consistent shape `{ output: string, raw: Any }`
         def to_output(res: Any) -> str:

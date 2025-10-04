@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react';
-import { Key, Plus, Trash2, Save, Lock, Unlock, Eye, EyeOff } from 'lucide-react';
-import { Input } from '../ui/Input';
+import { useState, useEffect, useCallback } from 'react';
+import { Plus, Trash2, Save, Lock, Unlock, Eye, EyeOff } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
-import { credentialsService, Credential } from '../../services/credentialsService';
+import { credentialsService } from '../../services/credentialsService';
 import { useToast } from '../../contexts/ToastContext';
 
 interface CustomCredential {
@@ -27,18 +26,7 @@ export const APIKeysSection = () => {
 
   const { showToast } = useToast();
 
-  // Load credentials on mount
-  useEffect(() => {
-    loadCredentials();
-  }, []);
-
-  // Track unsaved changes
-  useEffect(() => {
-    const hasChanges = customCredentials.some(cred => cred.hasChanges || cred.isNew);
-    setHasUnsavedChanges(hasChanges);
-  }, [customCredentials]);
-
-  const loadCredentials = async () => {
+  const loadCredentials = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -53,8 +41,6 @@ export const APIKeysSection = () => {
       
       // Convert to UI format
       const uiCredentials = apiKeys.map(cred => {
-        const isEncryptedFromBackend = cred.is_encrypted && cred.value === '[ENCRYPTED]';
-        
         return {
           key: cred.key,
           value: cred.value || '',
@@ -66,7 +52,7 @@ export const APIKeysSection = () => {
           showValue: false,
           isNew: false,
           isFromBackend: !cred.isNew, // Mark as from backend unless it's a new credential
-        };
+        } as CustomCredential;
       });
       
       setCustomCredentials(uiCredentials);
@@ -76,7 +62,20 @@ export const APIKeysSection = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast]);
+
+  // Load credentials on mount
+  useEffect(() => {
+    loadCredentials();
+  }, [loadCredentials]);
+
+  // Track unsaved changes
+  useEffect(() => {
+    const hasChanges = customCredentials.some(cred => cred.hasChanges || cred.isNew);
+    setHasUnsavedChanges(hasChanges);
+  }, [customCredentials]);
+
+  
 
   const handleAddNewRow = () => {
     const newCred: CustomCredential = {
@@ -94,7 +93,11 @@ export const APIKeysSection = () => {
     setCustomCredentials([...customCredentials, newCred]);
   };
 
-  const updateCredential = (index: number, field: keyof CustomCredential, value: any) => {
+  const updateCredential = (
+    index: number,
+    field: keyof CustomCredential,
+    value: CustomCredential[keyof CustomCredential]
+  ) => {
     setCustomCredentials(customCredentials.map((cred, i) => {
       if (i === index) {
         const updated = { ...cred, [field]: value };

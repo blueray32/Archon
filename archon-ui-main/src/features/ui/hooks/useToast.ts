@@ -36,19 +36,22 @@ export function useToast() {
 export function createToastContext() {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const showToast = useCallback((message: string, type: Toast["type"] = "info", duration = 4000) => {
-    const id = Date.now().toString();
-    const newToast: Toast = { id, message, type, duration };
+  const showToast = useCallback(
+    (message: string, type: Toast["type"] = "info", duration = 4000) => {
+      const id = Date.now().toString();
+      const newToast: Toast = { id, message, type, duration };
 
-    setToasts((prev) => [...prev, newToast]);
+      setToasts((prev) => [...prev, newToast]);
 
-    // Auto-dismiss after duration
-    if (duration > 0) {
-      setTimeout(() => {
-        setToasts((prev) => prev.filter((toast) => toast.id !== id));
-      }, duration);
-    }
-  }, []);
+      // Auto-dismiss after duration
+      if (duration > 0) {
+        setTimeout(() => {
+          setToasts((prev) => prev.filter((toast) => toast.id !== id));
+        }, duration);
+      }
+    },
+    [],
+  );
 
   const removeToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));

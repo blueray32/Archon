@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FileCode, Copy, Check } from 'lucide-react';
+import { Copy, Check } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { useToast } from '../../contexts/ToastContext';
@@ -386,15 +386,16 @@ archon:manage_task(
     const elements: JSX.Element[] = [];
     let inCodeBlock = false;
     let codeBlockContent: string[] = [];
-    let codeBlockLang = '';
-    const listStack: string[] = [];
+    // Language hint for fenced code blocks (currently unused)
+    const _listStack: string[] = [];
 
     lines.forEach((line, index) => {
       // Code blocks
       if (line.startsWith('```')) {
         if (!inCodeBlock) {
           inCodeBlock = true;
-          codeBlockLang = line.slice(3).trim();
+          // Language hint captured but not used
+          /* const _lang = */ line.slice(3).trim();
           codeBlockContent = [];
         } else {
           inCodeBlock = false;

@@ -74,7 +74,11 @@ export const ComboBox = React.forwardRef<HTMLButtonElement, ComboBoxProps>(
 
     // Handle custom value input
     const handleCustomValue = () => {
-      if (allowCustomValue && search && !filteredOptions.some((opt) => opt.label === search)) {
+      if (
+        allowCustomValue &&
+        search &&
+        !filteredOptions.some((opt) => opt.label === search)
+      ) {
         onValueChange(search);
         setOpen(false);
         setSearch("");
@@ -199,19 +203,24 @@ export const ComboBox = React.forwardRef<HTMLButtonElement, ComboBoxProps>(
                       "text-gray-900 dark:text-white",
                       "transition-colors duration-200",
                       "focus:outline-none focus:bg-gray-100/80 dark:focus:bg-white/10",
-                      value === option.value && "bg-cyan-50/50 dark:bg-cyan-900/20",
+                      value === option.value &&
+                        "bg-cyan-50/50 dark:bg-cyan-900/20",
                     )}
                   >
                     <Check
                       className={cn(
                         "mr-2 h-4 w-4",
-                        value === option.value ? "opacity-100 text-cyan-600 dark:text-cyan-400" : "opacity-0",
+                        value === option.value
+                          ? "opacity-100 text-cyan-600 dark:text-cyan-400"
+                          : "opacity-0",
                       )}
                     />
                     <div className="flex-1 text-left">
                       <div className="font-medium">{option.label}</div>
                       {option.description && (
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{option.description}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                          {option.description}
+                        </div>
                       )}
                     </div>
                   </button>

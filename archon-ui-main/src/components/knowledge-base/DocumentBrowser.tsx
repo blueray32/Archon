@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Search, Filter, FileText, Globe, X } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Search, Globe, X, FileText } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { Badge } from '../ui/Badge';
-import { Button } from '../ui/Button';
 import { knowledgeBaseService } from '../../services/knowledgeBaseService';
 
 interface DocumentChunk {
@@ -111,7 +110,7 @@ export const DocumentBrowser: React.FC<DocumentBrowserProps> = ({
     }
   };
 
-  const loadChunksWithDomainFilter = async (domain: string) => {
+  const _loadChunksWithDomainFilter = async (domain: string) => {
     try {
       setLoading(true);
       setError(null);
@@ -264,6 +263,11 @@ export const DocumentBrowser: React.FC<DocumentBrowserProps> = ({
           
           {/* Content */}
           <div className="flex-1 overflow-auto">
+            {error && (
+              <div className="mx-4 my-3 p-3 rounded-md border border-red-500/40 bg-red-500/10 text-red-300 text-sm">
+                {error}
+              </div>
+            )}
             {loading ? (
               <div className="h-full flex items-center justify-center">
                 <div className="text-center">

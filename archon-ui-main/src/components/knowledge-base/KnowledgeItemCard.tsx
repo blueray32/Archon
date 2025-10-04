@@ -1,12 +1,18 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { Link as LinkIcon, Upload, Trash2, RefreshCw, Code, FileText, Brain, BoxIcon, Pencil } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Checkbox } from '../ui/Checkbox';
 import { KnowledgeItem, knowledgeBaseService } from '../../services/knowledgeBaseService';
+import { useToast } from '../../contexts/ToastContext';
 import { useCardTilt } from '../../hooks/useCardTilt';
-import { CodeViewerModal, CodeExample } from '../code/CodeViewerModal';
-import { EditKnowledgeItemModal } from './EditKnowledgeItemModal';
+import type { CodeExample } from '../code/CodeViewerModal';
+const CodeViewerModal = lazy(() =>
+  import('../code/CodeViewerModal').then((m) => ({ default: m.CodeViewerModal })),
+);
+const EditKnowledgeItemModal = lazy(() =>
+  import('./EditKnowledgeItemModal').then((m) => ({ default: m.EditKnowledgeItemModal })),
+);
 import '../../styles/card-animations.css';
 
 // Helper function to guess language from title
@@ -154,6 +160,8 @@ export const KnowledgeItemCard = ({
   const [loadedCodeExamples, setLoadedCodeExamples] = useState<any[] | null>(null);
   const [isLoadingCodeExamples, setIsLoadingCodeExamples] = useState(false);
   const [isRecrawling, setIsRecrawling] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const { showToast } = useToast();
 
   const statusColorMap = {
     active: 'green',
@@ -224,8 +232,25 @@ export const KnowledgeItemCard = ({
     }
   };
 
-  // Get code examples count from metadata
-  const codeExamplesCount = item.metadata.code_examples_count || 0;
+  const handleExport = async () => {
+    if (isExporting) return;
+    try {
+      setIsExporting(true);
+      let targetPath: string | undefined = undefined;
+      try { targetPath = localStorage.getItem('archonExportVaultPath') || undefined; } catch { /* ignore */ }
+      const res = await knowledgeBaseService.exportToVault({ sourceIds: [item.source_id], targetPath });
+      const msg = res.message ? `Export: ${res.message} (progressId: ${res.progressId})` : `Export started (progressId: ${res.progressId})`;
+      showToast(msg, 'success');
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      showToast(`Failed to start export: ${msg}`, 'error');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // Get code examples count from item (metadata may not include a count)
+  const codeExamplesCount = (item.code_examples?.length ?? 0);
 
   // Load code examples when modal opens
   const handleOpenCodeModal = async () => {
@@ -325,7 +350,6 @@ export const KnowledgeItemCard = ({
             {item.metadata.source_type === 'url' ? (
               <LinkIcon 
                 className={`w-4 h-4 ${sourceIconColor}`} 
-                title={item.metadata.original_url || item.url || 'URL not available'}
               />
             ) : (
               <Upload className={`w-4 h-4 ${sourceIconColor}`} />
@@ -373,8 +397,8 @@ export const KnowledgeItemCard = ({
           
           {/* Footer section - anchored to bottom */}
           <div className="flex items-end justify-between mt-auto card-3d-layer-1">
-            {/* Left side - refresh button and updated stacked */}
-            <div className="flex flex-col">
+            {/* Left side - actions */}
+            <div className="flex flex-col gap-1">
               {item.metadata.source_type === 'url' && (
                 <button
                   onClick={handleRefresh}
@@ -392,6 +416,27 @@ export const KnowledgeItemCard = ({
                   <span className="text-sm font-medium">{isRecrawling ? 'Recrawling...' : 'Recrawl'}</span>
                 </button>
               )}
+
+              {/* Export button */}
+              <button
+                onClick={handleExport}
+                disabled={isExporting}
+                className={`flex items-center gap-1 px-2 py-1 transition-colors ${
+                  isExporting
+                    ? 'text-gray-400 dark:text-gray-600 cursor-not-allowed'
+                    : item.metadata.source_type === 'url'
+                      ? (item.metadata.knowledge_type === 'technical'
+                          ? 'text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300'
+                          : 'text-cyan-500 hover:text-cyan-600 dark:text-cyan-400 dark:hover:text-cyan-300')
+                      : (item.metadata.knowledge_type === 'technical'
+                          ? 'text-purple-500 hover:text-purple-600 dark:text-purple-400 dark:hover:text-purple-300'
+                          : 'text-pink-500 hover:text-pink-600 dark:text-pink-400 dark:hover:text-pink-300')
+                }`}
+                title={isExporting ? 'Export in progress…' : 'Export this source to Obsidian vault'}
+              >
+                <FileText className={`w-3 h-3 ${isExporting ? 'animate-pulse' : ''}`} />
+                <span className="text-sm font-medium">{isExporting ? 'Exporting…' : 'Export'}</span>
+              </button>
               <span className="text-xs text-gray-500 dark:text-zinc-500">
                 Updated: {new Date(item.updated_at).toLocaleDateString()}
               </span>
@@ -513,11 +558,13 @@ export const KnowledgeItemCard = ({
       
       {/* Code Examples Modal */}
       {showCodeModal && (
-        <CodeViewerModal
-          examples={codeExamples}
-          onClose={() => setShowCodeModal(false)}
-          isLoading={isLoadingCodeExamples}
-        />
+        <Suspense fallback={<div className="p-2 text-xs text-zinc-500">Loading code…</div>}>
+          <CodeViewerModal
+            examples={codeExamples}
+            onClose={() => setShowCodeModal(false)}
+            isLoading={isLoadingCodeExamples}
+          />
+        </Suspense>
       )}
       
       {showDeleteConfirm && (
@@ -531,13 +578,15 @@ export const KnowledgeItemCard = ({
       
       {/* Edit Modal */}
       {showEditModal && (
-        <EditKnowledgeItemModal
-          item={item}
-          onClose={() => setShowEditModal(false)}
-          onUpdate={() => {
-            if (onUpdate) onUpdate();
-          }}
-        />
+        <Suspense fallback={<div className="p-2 text-xs text-zinc-500">Loading editor…</div>}>
+          <EditKnowledgeItemModal
+            item={item}
+            onClose={() => setShowEditModal(false)}
+            onUpdate={() => {
+              if (onUpdate) onUpdate();
+            }}
+          />
+        </Suspense>
       )}
     </div>
   );

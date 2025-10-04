@@ -1,0 +1,99 @@
+---
+title: Polling & Caching
+description: Efficient HTTP polling with ETag caching for live updates
+sidebar_position: 9
+---
+
+# Polling & Caching
+
+Archon Beta replaces Socket.IO with efficient HTTP polling and ETag-based caching. This approach reduces bandwidth, simplifies services, and provides predictable, resilient updates.
+
+## Concepts
+
+- ETag headers: Server computes a stable ETag for a response body. If the client sends `If-None-Match` with the same ETag, the server responds `304 Not Modified` with no body.
+- Smart intervals: UI adapts polling based on page focus/visibility to avoid waste.
+- Progress endpoints: Long-running operations expose `/api/progress/{id}` with ETag support.
+
+## Server Helpers
+
+Key utilities live in `python/src/server/utils/etag_utils.py` and are used by endpoints such as:
+
+- `/api/progress/{id}`: python/src/server/api_routes/progress_api.py
+- `/api/projects` and related: python/src/server/api_routes/projects_api.py
+
+Typical flow:
+
+1. Compute `current_etag = generate_etag(response_payload_without_timestamps)`
+2. Compare `If-None-Match` with `current_etag`
+3. Return 304 + `ETag` header when unchanged, else 200 + body + `ETag`
+
+## Frontend Utilities
+
+### ETag-aware fetch
+
+Use `callAPIWithETag` to automatically set `If-None-Match`, handle 304s, and cache results.
+
+```ts
+import { callAPIWithETag } from "src/features/projects/shared/apiWithEtag";
+
+const status = await callAPIWithETag("/api/mcp/status");
+```
+
+### Generic polling
+
+Use `usePolling` to combine React Query with smart intervals.
+
+```ts
+import { usePolling } from "src/features/ui/hooks";
+
+const statusQuery = usePolling({
+  key: ["mcp", "status"],
+  fetcher: () => callAPIWithETag("/api/mcp/status"),
+  baseInterval: 5000,
+});
+```
+
+### Mutations with invalidation
+
+Use `useDatabaseMutation` or `useProjectMutation` for optimistic updates, rollback, and ETag/query invalidation.
+
+```ts
+const createProject = useProjectMutation({
+  mutationFn: (data) => projectService.createProject(data),
+  optimisticUpdate: (qc, data) => {
+    const prev = qc.getQueryData(["projects", "list"]);
+    qc.setQueryData(["projects", "list"], [
+      { id: `temp-${Date.now()}`, title: data.title, ... },
+      ...(prev ?? []),
+    ]);
+    return () => qc.setQueryData(["projects", "list"], prev);
+  },
+});
+```
+
+## Progress Pattern
+
+Start a long-running task to receive a `progress_id`, then poll `/api/progress/{id}`:
+
+```ts
+const progress = usePolling({
+  key: ["crawl", "progress", progressId],
+  fetcher: () => callAPIWithETag(`/api/progress/${progressId}`),
+  baseInterval: 1000,
+  enabled: !!progressId,
+});
+```
+
+## Best Practices
+
+- Exclude timestamps from the ETag calculation to avoid unnecessary misses
+- Use `gcTime` (React Query v5) instead of deprecated `cacheTime`
+- Invalidate specific endpoints after mutations using `invalidateETagCache` when appropriate
+- Keep payloads small and stable for better ETag hit rates
+
+## Troubleshooting
+
+- Unexpected 304 without cached data: Clear entry via `invalidateETagCache`
+- Too many refetches hidden tabs: Verify `useSmartPolling` integration
+- Drifting UI state after optimistic updates: Ensure rollback returns previous snapshot
+

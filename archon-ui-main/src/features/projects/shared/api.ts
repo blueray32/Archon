@@ -46,11 +46,18 @@ interface ValidationErrorObject {
 }
 
 export function formatValidationErrors(errors: ValidationErrorObject): string {
-  return errors.errors.map((error: ValidationErrorDetail) => `${error.path.join(".")}: ${error.message}`).join(", ");
+  return errors.errors
+    .map(
+      (error: ValidationErrorDetail) =>
+        `${error.path.join(".")}: ${error.message}`,
+    )
+    .join(", ");
 }
 
 // Helper to convert Zod errors to ValidationErrorObject format
-export function formatZodErrors(zodError: { issues: Array<{ path: (string | number)[]; message: string }> }): string {
+export function formatZodErrors(zodError: {
+  issues: Array<{ path: (string | number)[]; message: string }>;
+}): string {
   const validationErrors: ValidationErrorObject = {
     errors: zodError.issues.map((issue) => ({
       path: issue.path.map(String),
@@ -61,10 +68,15 @@ export function formatZodErrors(zodError: { issues: Array<{ path: (string | numb
 }
 
 // Helper function to call FastAPI endpoints directly
-export async function callAPI<T = unknown>(endpoint: string, options: RequestInit = {}): Promise<T> {
+export async function callAPI<T = unknown>(
+  endpoint: string,
+  options: RequestInit = {},
+): Promise<T> {
   try {
     // Remove /api prefix if it exists since API_BASE_URL already includes it
-    const cleanEndpoint = endpoint.startsWith("/api") ? endpoint.substring(4) : endpoint;
+    const cleanEndpoint = endpoint.startsWith("/api")
+      ? endpoint.substring(4)
+      : endpoint;
     const response = await fetch(`${API_BASE_URL}${cleanEndpoint}`, {
       headers: {
         "Content-Type": "application/json",
@@ -86,7 +98,11 @@ export async function callAPI<T = unknown>(endpoint: string, options: RequestIni
         // Ignore parse errors, use default message
       }
 
-      throw new ProjectServiceError(errorMessage, "HTTP_ERROR", response.status);
+      throw new ProjectServiceError(
+        errorMessage,
+        "HTTP_ERROR",
+        response.status,
+      );
     }
 
     // Handle 204 No Content responses (common for DELETE operations)
@@ -122,9 +138,12 @@ export function formatRelativeTime(dateString: string): string {
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
   if (diffInSeconds < 60) return "just now";
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
-  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} days ago`;
+  if (diffInSeconds < 3600)
+    return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+  if (diffInSeconds < 86400)
+    return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+  if (diffInSeconds < 604800)
+    return `${Math.floor(diffInSeconds / 86400)} days ago`;
 
   return `${Math.floor(diffInSeconds / 604800)} weeks ago`;
 }

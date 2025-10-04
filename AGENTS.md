@@ -290,7 +290,7 @@ We're migrating to a vertical slice architecture where each feature is self-cont
 - `src/server/` - Main FastAPI application
 - `src/server/api_routes/` - API route handlers
 - `src/server/services/` - Business logic services
-- `src/mcp/` - MCP server implementation
+- `src/mcp_server/` - MCP server implementation
 - `src/agents/` - PydanticAI agent implementations
 
 ## Database Schema

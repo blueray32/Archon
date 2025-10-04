@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { McpViewWithBoundary } from '../features/mcp';
 
-export const MCPPage = () => {
+export const MCPPage = (): JSX.Element => {
   const [initResult, setInitResult] = useState<string>('');
   const [infoResult, setInfoResult] = useState<string>('');
 
-  const initSession = async () => {
+  const initSession = async (): Promise<void> => {
     try {
       const res = await fetch('/api/mcp/session/init', { method: 'POST' });
       const txt = await res.text();
@@ -16,12 +16,13 @@ export const MCPPage = () => {
       } catch {
         setInitResult(txt);
       }
-    } catch (e: any) {
-      setInitResult(e?.message || 'Failed to init session');
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setInitResult(msg || 'Failed to init session');
     }
   };
 
-  const getInfo = async () => {
+  const getInfo = async (): Promise<void> => {
     try {
       const res = await fetch('/api/mcp/session/info');
       const txt = await res.text();
@@ -31,8 +32,9 @@ export const MCPPage = () => {
       } catch {
         setInfoResult(txt);
       }
-    } catch (e: any) {
-      setInfoResult(e?.message || 'Failed to get session info');
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setInfoResult(msg || 'Failed to get session info');
     }
   };
 

@@ -23,14 +23,16 @@ export const SourceFilterControl: React.FC<{ className?: string }> = ({ classNam
   }, [selectedSourceFilter]);
 
   // Fetch KB items and derive suggestion tokens (tags, source_ids, normalized titles)
+  type KBItemLite = { source_id?: string | number; title?: string; metadata?: { tags?: string[] } };
+
   const fetchPage = React.useCallback(
-    async (nextPage: number) => {
+    async (nextPage: number): Promise<void> => {
       setLoading(true);
       try {
         const res = await fetch(`/api/knowledge-items?per_page=100&page=${nextPage}`);
         if (!res.ok) throw new Error('failed');
         const data = await res.json();
-        const items: any[] = data?.items || [];
+        const items: KBItemLite[] = Array.isArray(data?.items) ? data.items : [];
         // Update hasMore based on page size
         setHasMore(items.length === 100);
         const set = tokensSetRef.current;
@@ -47,7 +49,7 @@ export const SourceFilterControl: React.FC<{ className?: string }> = ({ classNam
             }
           }
           if (includeTags) {
-            const tags: string[] = Array.isArray(it?.metadata?.tags) ? it.metadata.tags : [];
+            const tags: string[] = Array.isArray(it?.metadata?.tags) ? (it.metadata?.tags as string[]) : [];
             for (const tag of tags) {
               const tt = (tag || '').toString().trim();
               if (tt) set.add(tt);
@@ -92,15 +94,23 @@ export const SourceFilterControl: React.FC<{ className?: string }> = ({ classNam
   }, [includeSourceIds, includeTitles, includeTags, open, fetchPage]);
 
   // Fetch known sources from backend canonical endpoint
-  const fetchKnownSources = React.useCallback(async () => {
+  const fetchKnownSources = React.useCallback(async (): Promise<void> => {
     setLoadingSources(true);
     try {
       const res = await fetch('/api/rag/sources');
       if (!res.ok) throw new Error('failed');
-      const data = await res.json();
-      const list: string[] = Array.isArray(data?.sources)
-        ? data.sources.map((s: any) => (typeof s === 'string' ? s : s?.source_id)).filter(Boolean)
-        : Array.isArray(data) ? data : [];
+      const data: unknown = await res.json();
+      const sourcesField = (data as { sources?: unknown }).sources;
+      const list: string[] = Array.isArray(sourcesField)
+        ? (sourcesField as unknown[]).map((s: unknown) => {
+            if (typeof s === 'string') return s;
+            if (s && typeof s === 'object' && 'source_id' in s) {
+              const v = (s as { source_id?: unknown }).source_id;
+              return typeof v === 'string' ? v : String(v ?? '');
+            }
+            return '';
+          }).filter((x: string) => x.length > 0)
+        : Array.isArray(data) ? (data as string[]) : [];
       setKnownSources(list.slice(0, 100));
     } catch {
       setKnownSources([]);

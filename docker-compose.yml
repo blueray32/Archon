@@ -29,12 +29,16 @@ services:
       - ARCHON_MCP_PORT=${ARCHON_MCP_PORT:-8051}
       - ARCHON_AGENTS_PORT=${ARCHON_AGENTS_PORT:-8052}
       - AGENTS_ENABLED=${AGENTS_ENABLED:-false}
+      # Export vault path inside container (mount provided below)
+      - OBSIDIAN_VAULT=/vault
     networks:
       - app-network
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock # Docker socket for MCP container control
       - ./python/src:/app/src # Mount source code for hot reload
       - ./python/tests:/app/tests # Mount tests for UI test execution
+      # Mount host Obsidian vault into the container at /vault
+      - ${OBSIDIAN_VAULT:-./data/obsidian_vault}:/vault
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped

@@ -98,13 +98,17 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 <ListTodo
                   className={cn(
                     "w-4 h-4",
-                    isSelected ? "text-pink-600 dark:text-pink-400" : "text-gray-500 dark:text-gray-600",
+                    isSelected
+                      ? "text-pink-600 dark:text-pink-400"
+                      : "text-gray-500 dark:text-gray-600",
                   )}
                 />
                 <span
                   className={cn(
                     "text-[8px] font-medium",
-                    isSelected ? "text-pink-600 dark:text-pink-400" : "text-gray-500 dark:text-gray-600",
+                    isSelected
+                      ? "text-pink-600 dark:text-pink-400"
+                      : "text-gray-500 dark:text-gray-600",
                   )}
                 >
                   ToDo
@@ -113,13 +117,17 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               <div
                 className={cn(
                   "flex-1 flex items-center justify-center border-l",
-                  isSelected ? "border-pink-300 dark:border-pink-500/30" : "border-gray-300/50 dark:border-gray-700/50",
+                  isSelected
+                    ? "border-pink-300 dark:border-pink-500/30"
+                    : "border-gray-300/50 dark:border-gray-700/50",
                 )}
               >
                 <span
                   className={cn(
                     "text-lg font-bold",
-                    isSelected ? "text-pink-600 dark:text-pink-400" : "text-gray-500 dark:text-gray-600",
+                    isSelected
+                      ? "text-pink-600 dark:text-pink-400"
+                      : "text-gray-500 dark:text-gray-600",
                   )}
                 >
                   {taskCounts.todo || 0}
@@ -148,13 +156,17 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 <Activity
                   className={cn(
                     "w-4 h-4",
-                    isSelected ? "text-blue-600 dark:text-blue-400" : "text-gray-500 dark:text-gray-600",
+                    isSelected
+                      ? "text-blue-600 dark:text-blue-400"
+                      : "text-gray-500 dark:text-gray-600",
                   )}
                 />
                 <span
                   className={cn(
                     "text-[8px] font-medium",
-                    isSelected ? "text-blue-600 dark:text-blue-400" : "text-gray-500 dark:text-gray-600",
+                    isSelected
+                      ? "text-blue-600 dark:text-blue-400"
+                      : "text-gray-500 dark:text-gray-600",
                   )}
                 >
                   Doing
@@ -163,13 +175,17 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               <div
                 className={cn(
                   "flex-1 flex items-center justify-center border-l",
-                  isSelected ? "border-blue-300 dark:border-blue-500/30" : "border-gray-300/50 dark:border-gray-700/50",
+                  isSelected
+                    ? "border-blue-300 dark:border-blue-500/30"
+                    : "border-gray-300/50 dark:border-gray-700/50",
                 )}
               >
                 <span
                   className={cn(
                     "text-lg font-bold",
-                    isSelected ? "text-blue-600 dark:text-blue-400" : "text-gray-500 dark:text-gray-600",
+                    isSelected
+                      ? "text-blue-600 dark:text-blue-400"
+                      : "text-gray-500 dark:text-gray-600",
                   )}
                 >
                   {(taskCounts.doing || 0) + (taskCounts.review || 0)}
@@ -198,13 +214,17 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 <CheckCircle2
                   className={cn(
                     "w-4 h-4",
-                    isSelected ? "text-green-600 dark:text-green-400" : "text-gray-500 dark:text-gray-600",
+                    isSelected
+                      ? "text-green-600 dark:text-green-400"
+                      : "text-gray-500 dark:text-gray-600",
                   )}
                 />
                 <span
                   className={cn(
                     "text-[8px] font-medium",
-                    isSelected ? "text-green-600 dark:text-green-400" : "text-gray-500 dark:text-gray-600",
+                    isSelected
+                      ? "text-green-600 dark:text-green-400"
+                      : "text-gray-500 dark:text-gray-600",
                   )}
                 >
                   Done
@@ -221,7 +241,9 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 <span
                   className={cn(
                     "text-lg font-bold",
-                    isSelected ? "text-green-600 dark:text-green-400" : "text-gray-500 dark:text-gray-600",
+                    isSelected
+                      ? "text-green-600 dark:text-green-400"
+                      : "text-gray-500 dark:text-gray-600",
                   )}
                 >
                   {taskCounts.done || 0}

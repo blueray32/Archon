@@ -1,6 +1,6 @@
 /// <reference types="vitest" />
 import path from "path";
-import { defineConfig, loadEnv } from "vite";
+import { defineConfig, loadEnv, splitVendorChunkPlugin } from "vite";
 import react from "@vitejs/plugin-react";
 import { exec } from 'child_process';
 import { readFile } from 'fs/promises';
@@ -24,6 +24,8 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
   return {
     plugins: [
       react(),
+      // Split large vendor chunks automatically to reduce initial bundle size
+      splitVendorChunkPlugin(),
       // Custom plugin to add test endpoint
       {
         name: 'test-runner',
@@ -306,6 +308,37 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
             });
           }
         }
+      },
+    },
+    build: {
+      // Keep warning threshold, but route-based lazy loading + vendor split
+      // should reduce the main chunk below this in production builds.
+      chunkSizeWarningLimit: 700,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+                return 'react-vendor';
+              }
+              if (id.includes('@tanstack')) {
+                return 'tanstack';
+              }
+              if (id.includes('framer-motion')) {
+                return 'framer-motion';
+              }
+              if (id.includes('lucide-react')) {
+                return 'icons';
+              }
+            }
+            return undefined;
+          },
+        },
+      },
+      // Drop console/debugger in production builds for smaller bundles
+      minify: 'esbuild',
+      esbuild: {
+        drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : [],
       },
     },
     define: {

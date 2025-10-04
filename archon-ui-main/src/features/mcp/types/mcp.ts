@@ -14,7 +14,15 @@ export interface McpServerConfig {
 
 export interface McpClient {
   session_id: string;
-  client_type: "Claude" | "Cursor" | "Windsurf" | "Cline" | "KiRo" | "Augment" | "Gemini" | "Unknown";
+  client_type:
+    | "Claude"
+    | "Cursor"
+    | "Windsurf"
+    | "Cline"
+    | "KiRo"
+    | "Augment"
+    | "Gemini"
+    | "Unknown";
   connected_at: string;
   last_activity: string;
   status: "active" | "idle";
@@ -28,7 +36,14 @@ export interface McpSessionInfo {
 }
 
 // we actually support all ides and mcp clients
-export type SupportedIDE = "windsurf" | "cursor" | "claudecode" | "cline" | "kiro" | "augment" | "gemini";
+export type SupportedIDE =
+  | "windsurf"
+  | "cursor"
+  | "claudecode"
+  | "cline"
+  | "kiro"
+  | "augment"
+  | "gemini";
 
 export interface IdeConfiguration {
   ide: SupportedIDE;

@@ -5,6 +5,8 @@ sidebar_position: 10
 
 # Vitest Testing Strategy for React & TypeScript
 
+> Note: Some older examples refer to Socket.IO. Archon Beta now uses HTTP polling with ETag caching for live updates. Prefer testing polling flows (200 vs 304 responses) and cache invalidation rather than socket events.
+
 This document outlines Archon's comprehensive frontend testing strategy using Vitest with React and TypeScript, incorporating the latest best practices and our current implementation.
 
 ## 🎯 Testing Philosophy
@@ -16,7 +18,7 @@ Our frontend testing follows these core principles:
 3. **TypeScript Safety**: Leverage TypeScript for type-safe tests
 4. **Fast Feedback**: Vitest's speed enables rapid test-driven development
 5. **Meaningful Coverage**: Focus on critical user paths over coverage numbers
-6. **Socket.IO Safety**: Never create real Socket.IO connections in tests
+6. **Polling Safety**: Prefer testing ETag-aware polling functions over sockets
 
 ## 📁 Current Project Structure
 
@@ -695,7 +697,55 @@ const TestResultsModal = () => {
 }
 ```
 
-## 🛠️ Socket.IO Testing Best Practices
+## 🛠️ Polling Testing Best Practices
+
+### Example: ETag-aware polling + optimistic mutation
+
+```ts
+import { renderHook } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { callAPIWithETag } from 'src/features/projects/shared/apiWithEtag';
+import { usePolling } from 'src/features/ui/hooks';
+
+vi.mock('src/features/projects/shared/apiWithEtag', () => ({
+  callAPIWithETag: vi.fn(),
+}));
+
+const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+const wrapper = ({ children }: any) => (
+  <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+);
+
+it('polls with ETag and returns cached on 304', async () => {
+  vi.mocked(callAPIWithETag).mockResolvedValueOnce({ status: 'ok' });
+  const { result } = renderHook(
+    () => usePolling({ key: ['status'], fetcher: () => callAPIWithETag('/api/status'), baseInterval: 1000 }),
+    { wrapper }
+  );
+  // assert result.current.data after first fetch
+});
+```
+
+### Example: Optimistic update + rollback
+
+```ts
+import { useDatabaseMutation } from 'src/features/ui/hooks/useDatabaseMutation';
+
+const { result } = renderHook(
+  () => useDatabaseMutation<number, number>({
+    mutationFn: async () => { throw new Error('boom'); },
+    optimisticUpdate: (client, value) => {
+      const prev = client.getQueryData<number[]>(['k']);
+      client.setQueryData(['k'], [...(prev ?? []), value]);
+      return () => client.setQueryData(['k'], prev);
+    },
+  }),
+  { wrapper }
+);
+await expect(result.current.mutateAsync(2)).rejects.toThrow('boom');
+```
+
+See the Polling & Caching guide for more examples.
 
 ### ⚠️ Critical Safety Rules
 

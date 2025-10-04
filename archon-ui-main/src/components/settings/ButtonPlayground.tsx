@@ -203,7 +203,7 @@ export const ButtonPlayground: React.FC = () => {
   };
 
   // Helper functions for CSS generation
-  const getSizePadding = () => {
+  const _getSizePadding = () => {
     const sizes = { sm: '12px 6px', md: '16px 8px', lg: '24px 12px', xl: '32px 16px' };
     return sizes['md'];
   };
@@ -262,12 +262,12 @@ export const ButtonPlayground: React.FC = () => {
     return configs[color];
   };
 
-  const getGradient = (color: ColorOption) => {
+  const _getGradient = (color: ColorOption) => {
     if (color === 'none') return 'rgba(255,255,255,0.8), rgba(255,255,255,0.6)';
     return 'rgba(255,255,255,0.7), rgba(255,255,255,0.5)';
   };
 
-  const getBorderColor = (color: ColorOption) => {
+  const _getBorderColor = (color: ColorOption) => {
     const colors = {
       none: 'rgba(229,231,235,0.5)',
       purple: 'rgba(196,181,253,0.6)',

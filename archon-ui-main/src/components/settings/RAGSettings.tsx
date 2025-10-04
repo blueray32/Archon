@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Settings, Check, Save, Loader, ChevronDown, ChevronUp, Zap, Database } from 'lucide-react';
+import { Check, Save, Loader, ChevronDown, ChevronUp, Zap, Database } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';

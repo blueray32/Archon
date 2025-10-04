@@ -234,74 +234,20 @@ curl -X POST "http://localhost:8080/api/knowledge-items/crawl" \
 }
 ```
 
-### Socket.IO Knowledge Stream
+### Knowledge Updates
 
-**Socket.IO Namespace** `/knowledge`
+Use HTTP endpoints with ETag caching to retrieve knowledge items efficiently.
 
-Real-time updates for knowledge items changes.
+### Progress Tracking
 
-#### Connection Example
-
-```javascript
-import { io } from 'socket.io-client';
-
-// Connect to knowledge namespace
-const socket = io('/knowledge');
-
-// Handle source updates
-socket.on('source_added', (data) => {
-  console.log('New source added:', data.source_id);
-});
-
-socket.on('source_updated', (data) => {
-  console.log('Source updated:', data.source_id);
-});
-```
-
-### Socket.IO Progress Tracking
-
-**Socket.IO Namespace** `/crawl`
-
-Real-time progress updates for crawling operations using Socket.IO for improved reliability and automatic reconnection.
-
-#### Connection Example
-
-```javascript
-import { io } from 'socket.io-client';
-
-// Connect to crawl namespace
-const socket = io('/crawl');
-
-// Subscribe to specific progress
-const progressId = '183e2615-fca4-4a71-a051-ab5a0292f9ff';
-socket.emit('subscribe', { progress_id: progressId });
-
-// Handle progress updates
-socket.on('progress_update', (data) => {
-  console.log('Progress:', data.percentage + '%');
-  console.log('Status:', data.status);
-  console.log('Logs:', data.logs);
-});
-
-// Handle completion
-socket.on('progress_complete', (data) => {
-  console.log('Crawl completed!');
-  console.log('Chunks stored:', data.chunksStored);
-  console.log('Word count:', data.wordCount);
-});
-
-// Handle errors
-socket.on('progress_error', (data) => {
-  console.error('Crawl failed:', data.error);
-});
-```
+Poll `/api/progress/{operation_id}` for crawl progress. The endpoint returns `304 Not Modified` when unchanged and `ETag` headers for caching.
 
 #### Progress Message Format
 
 **New Progress Features:**
 - **📊 Smooth Progress**: Linear 0-100% progression across all document batches
 - **📦 Detailed Batch Info**: "Batch 3/9: Processing items 31-45..." with accurate percentages
-- **🔄 Real-Time Updates**: Socket.IO broadcasts for each processing step
+- **🔄 Live Updates**: HTTP polling for each processing step
 - **⏱️ No Progress Jumps**: Progress bar advances smoothly without resetting
 
 ```json
@@ -685,37 +631,9 @@ Save MCP server configuration.
 }
 ```
 
-### MCP Server Logs Stream
+### MCP Status & Config
 
-**Socket.IO Namespace** `/logs`
-
-Real-time MCP server log streaming using Socket.IO.
-
-#### Connection Example
-
-```javascript
-import { io } from 'socket.io-client';
-
-// Connect to logs namespace
-const socket = io('/logs');
-
-// Handle connection
-socket.on('connect', () => {
-  console.log('Connected to log stream');
-});
-
-// Handle log entries
-socket.on('log_entry', (data) => {
-  console.log(`[${data.timestamp}] ${data.level}: ${data.message}`);
-});
-
-// Handle batch logs
-socket.on('log_batch', (logs) => {
-  logs.forEach(log => {
-    console.log(`[${log.timestamp}] ${log.level}: ${log.message}`);
-  });
-});
-```
+Use `/api/mcp/status` and `/api/mcp/config` to retrieve MCP server status and configuration. The UI polls these endpoints periodically; dedicated log streaming is not required.
 
 ### Get MCP Tools
 
@@ -773,7 +691,7 @@ Projects in Archon use JSONB fields for flexible document storage:
 - **ProjectService**: Core CRUD operations for projects
 - **TaskService**: Task management with archiving
 - **ProjectCreationService**: AI-assisted project creation with GitHub integration
-- **ProgressService**: Real-time progress tracking for long-running operations
+- **ProgressService**: Progress tracking via HTTP polling for long-running operations
 - **SourceLinkingService**: Manages relationships between projects and knowledge sources
 </Admonition>
 

@@ -13,7 +13,11 @@ export interface TaskCardProps {
   task: Task;
   index: number;
   projectId: string; // Need this for mutations
-  onTaskReorder: (taskId: string, targetIndex: number, status: Task["status"]) => void;
+  onTaskReorder: (
+    taskId: string,
+    targetIndex: number,
+    status: Task["status"],
+  ) => void;
   onEdit?: (task: Task) => void; // Optional edit handler
   onDelete?: (task: Task) => void; // Optional delete handler
   hoveredTaskId?: string | null;
@@ -81,7 +85,10 @@ export const TaskCard: React.FC<TaskCardProps> = ({
 
   const [, drop] = useDrop({
     accept: ItemTypes.TASK,
-    hover: (draggedItem: { id: string; status: Task["status"]; index: number }, monitor) => {
+    hover: (
+      draggedItem: { id: string; status: Task["status"]; index: number },
+      monitor,
+    ) => {
       if (!monitor.isOver({ shallow: true })) return;
       if (draggedItem.id === task.id) return;
       if (draggedItem.status !== task.status) return;
@@ -123,7 +130,9 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   const transitionStyles = "transition-all duration-200 ease-in-out";
 
   // Subtle highlight effect for related tasks
-  const highlightGlow = isHighlighted ? "border-cyan-400/50 shadow-[0_0_8px_rgba(34,211,238,0.2)]" : "";
+  const highlightGlow = isHighlighted
+    ? "border-cyan-400/50 shadow-[0_0_8px_rgba(34,211,238,0.2)]"
+    : "";
 
   // Selection styling with glassmorphism
   const selectionGlow = isSelected
@@ -216,10 +225,18 @@ export const TaskCard: React.FC<TaskCardProps> = ({
 
           {/* Footer with assignee - glassmorphism styling */}
           <div className="flex items-center justify-between mt-auto pt-2 pl-1.5 pr-3">
-            <TaskAssignee assignee={task.assignee} onAssigneeChange={handleAssigneeChange} isLoading={isUpdating} />
+            <TaskAssignee
+              assignee={task.assignee}
+              onAssigneeChange={handleAssigneeChange}
+              isLoading={isUpdating}
+            />
 
             {/* Priority display (frontend-only for now) */}
-            <TaskPriority priority={localPriority} onPriorityChange={handlePriorityChange} isLoading={false} />
+            <TaskPriority
+              priority={localPriority}
+              onPriorityChange={handlePriorityChange}
+              isLoading={false}
+            />
           </div>
         </div>
       </div>

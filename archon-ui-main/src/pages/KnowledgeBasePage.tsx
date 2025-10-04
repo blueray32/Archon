@@ -1,23 +1,22 @@
-import { useEffect, useState, useRef, useMemo } from 'react';
+import { useEffect, useState, useMemo, lazy, Suspense } from 'react';
 import { Search, Grid, Plus, Filter, BoxIcon, List, BookOpen, CheckSquare, Brain, Database } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { Badge } from '../components/ui/Badge';
 import { useStaggeredEntrance } from '../hooks/useStaggeredEntrance';
 import { useToast } from '../contexts/ToastContext';
 import { knowledgeBaseService, KnowledgeItem, KnowledgeItemMetadata } from '../services/knowledgeBaseService';
 import { CrawlProgressData } from '../types/crawl';
-import { KnowledgeTable } from '../components/knowledge-base/KnowledgeTable';
-import { KnowledgeItemCard } from '../components/knowledge-base/KnowledgeItemCard';
-import { GroupedKnowledgeItemCard } from '../components/knowledge-base/GroupedKnowledgeItemCard';
+const KnowledgeTable = lazy(() => import('../components/knowledge-base/KnowledgeTable').then(m => ({ default: m.KnowledgeTable })));
+const KnowledgeItemCard = lazy(() => import('../components/knowledge-base/KnowledgeItemCard').then(m => ({ default: m.KnowledgeItemCard })));
+const GroupedKnowledgeItemCard = lazy(() => import('../components/knowledge-base/GroupedKnowledgeItemCard').then(m => ({ default: m.GroupedKnowledgeItemCard })));
 import { KnowledgeGridSkeleton, KnowledgeTableSkeleton } from '../components/knowledge-base/KnowledgeItemSkeleton';
-import { GroupCreationModal } from '../components/knowledge-base/GroupCreationModal';
-import { AddKnowledgeModal } from '../components/knowledge-base/AddKnowledgeModal';
-import { CrawlingTab } from '../components/knowledge-base/CrawlingTab';
-import { DocumentBrowser } from '../components/knowledge-base/DocumentBrowser';
+const GroupCreationModal = lazy(() => import('../components/knowledge-base/GroupCreationModal').then(m => ({ default: m.GroupCreationModal })));
+const AddKnowledgeModal = lazy(() => import('../components/knowledge-base/AddKnowledgeModal').then(m => ({ default: m.AddKnowledgeModal })));
+const CrawlingTab = lazy(() => import('../components/knowledge-base/CrawlingTab').then(m => ({ default: m.CrawlingTab })));
+const DocumentBrowser = lazy(() => import('../components/knowledge-base/DocumentBrowser').then(m => ({ default: m.DocumentBrowser })));
 
 interface GroupedKnowledgeItem {
   id: string;
@@ -37,7 +36,7 @@ export const KnowledgeBasePage = () => {
   const [typeFilter, setTypeFilter] = useState<'all' | 'technical' | 'business'>('all');
   const [knowledgeItems, setKnowledgeItems] = useState<KnowledgeItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [totalItems, setTotalItems] = useState(0);
+  const [_totalItems, setTotalItems] = useState(0);
   const [progressItems, setProgressItemsRaw] = useState<CrawlProgressData[]>([]);
   const [showCrawlingTab, setShowCrawlingTab] = useState(false);
   
@@ -240,7 +239,6 @@ export const KnowledgeBasePage = () => {
             items: [item],
             metadata: {
               ...item.metadata,
-              source_type: 'group',
               chunks_count: item.metadata.chunks_count || 0,
               word_count: item.metadata.word_count || 0,
             },
@@ -331,6 +329,7 @@ export const KnowledgeBasePage = () => {
     if (selectedItems.size === 0) return;
     
     const count = selectedItems.size;
+    // eslint-disable-next-line no-alert
     const confirmed = window.confirm(`Are you sure you want to delete ${count} selected item${count > 1 ? 's' : ''}?`);
     
     if (!confirmed) return;
@@ -678,7 +677,7 @@ export const KnowledgeBasePage = () => {
           <Link to="/embeddings">
             <Button 
               variant="secondary"
-              accentColor="emerald"
+              accentColor="green"
               className="ml-2"
             >
               <Database className="w-4 h-4 mr-2 inline" />
@@ -706,7 +705,7 @@ export const KnowledgeBasePage = () => {
                   <Button onClick={selectAll} variant="ghost" size="sm" accentColor="blue">
                     Select All
                   </Button>
-                  <Button onClick={deselectAll} variant="ghost" size="sm" accentColor="gray">
+                  <Button onClick={deselectAll} variant="ghost" size="sm">
                     Clear Selection
                   </Button>
                 </div>
@@ -727,14 +726,16 @@ export const KnowledgeBasePage = () => {
       {/* Active Crawls Tab */}
       {showCrawlingTab && progressItems.length > 0 && (
         <div className="mb-6">
-          <CrawlingTab
-            progressItems={progressItems}
-            onProgressComplete={handleProgressComplete}
-            onProgressError={handleProgressError}
-            onRetryProgress={handleRetryProgress}
-            onStopProgress={handleStopProgress}
-            onDismissProgress={handleDismissProgress}
-          />
+          <Suspense fallback={<div className="text-sm text-zinc-500">Loading progress…</div>}>
+            <CrawlingTab
+              progressItems={progressItems}
+              onProgressComplete={handleProgressComplete}
+              onProgressError={handleProgressError}
+              onRetryProgress={handleRetryProgress}
+              onStopProgress={handleStopProgress}
+              onDismissProgress={handleDismissProgress}
+            />
+          </Suspense>
         </div>
       )}
 
@@ -743,7 +744,9 @@ export const KnowledgeBasePage = () => {
         {loading ? (
           viewMode === 'grid' ? <KnowledgeGridSkeleton /> : <KnowledgeTableSkeleton />
         ) : viewMode === 'table' ? (
-          <KnowledgeTable items={filteredItems} onDelete={handleDeleteItem} />
+          <Suspense fallback={<KnowledgeTableSkeleton />}>
+            <KnowledgeTable items={filteredItems} onDelete={handleDeleteItem} />
+          </Suspense>
         ) : (
           <AnimatePresence mode="wait">
             <motion.div 
@@ -752,39 +755,41 @@ export const KnowledgeBasePage = () => {
               animate="visible" 
               variants={contentContainerVariants}
             >
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {groupedItems.map(groupedItem => (
-                  <motion.div key={groupedItem.id} variants={contentItemVariants}>
-                    <GroupedKnowledgeItemCard 
-                      groupedItem={groupedItem} 
-                      onDelete={handleDeleteItem}
-                      onUpdate={loadKnowledgeItems}
-                      onRefresh={handleRefreshItem}
-                    />
-                  </motion.div>
-                ))}
-                
-                {ungroupedItems.map((item, index) => (
-                  <motion.div key={item.id} variants={contentItemVariants}>
-                    <KnowledgeItemCard 
-                      item={item} 
-                      onDelete={handleDeleteItem} 
-                      onUpdate={loadKnowledgeItems} 
-                      onRefresh={handleRefreshItem}
-                      onBrowseDocuments={handleBrowseDocuments}
-                      isSelectionMode={isSelectionMode}
-                      isSelected={selectedItems.has(item.id)}
-                      onToggleSelection={(e) => toggleItemSelection(item.id, index, e)}
-                    />
-                  </motion.div>
-                ))}
-                
-                {groupedItems.length === 0 && ungroupedItems.length === 0 && (
-                  <div className="col-span-full py-10 text-center text-gray-500 dark:text-zinc-400">
-                    No knowledge items found for the selected filter.
-                  </div>
-                )}
-              </div>
+              <Suspense fallback={<KnowledgeGridSkeleton />}>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {groupedItems.map(groupedItem => (
+                    <motion.div key={groupedItem.id} variants={contentItemVariants}>
+                      <GroupedKnowledgeItemCard 
+                        groupedItem={groupedItem} 
+                        onDelete={handleDeleteItem}
+                        onUpdate={loadKnowledgeItems}
+                        onRefresh={handleRefreshItem}
+                      />
+                    </motion.div>
+                  ))}
+                  
+                  {ungroupedItems.map((item, index) => (
+                    <motion.div key={item.id} variants={contentItemVariants}>
+                      <KnowledgeItemCard 
+                        item={item} 
+                        onDelete={handleDeleteItem} 
+                        onUpdate={loadKnowledgeItems} 
+                        onRefresh={handleRefreshItem}
+                        onBrowseDocuments={handleBrowseDocuments}
+                        isSelectionMode={isSelectionMode}
+                        isSelected={selectedItems.has(item.id)}
+                        onToggleSelection={(e) => toggleItemSelection(item.id, index, e)}
+                      />
+                    </motion.div>
+                  ))}
+                  
+                  {groupedItems.length === 0 && ungroupedItems.length === 0 && (
+                    <div className="col-span-full py-10 text-center text-gray-500 dark:text-zinc-400">
+                      No knowledge items found for the selected filter.
+                    </div>
+                  )}
+                </div>
+              </Suspense>
             </motion.div>
           </AnimatePresence>
         )}
@@ -792,38 +797,44 @@ export const KnowledgeBasePage = () => {
 
       {/* Modals */}
       {isAddModalOpen && (
-        <AddKnowledgeModal 
-          onClose={() => setIsAddModalOpen(false)} 
-          onSuccess={() => {
-            loadKnowledgeItems();
-            setIsAddModalOpen(false);
-          }}
-          onStartCrawl={handleStartCrawl}
-        />
+        <Suspense fallback={<div className="p-4 text-sm text-zinc-500">Loading…</div>}>
+          <AddKnowledgeModal 
+            onClose={() => setIsAddModalOpen(false)} 
+            onSuccess={() => {
+              loadKnowledgeItems();
+              setIsAddModalOpen(false);
+            }}
+            onStartCrawl={handleStartCrawl}
+          />
+        </Suspense>
       )}
       
       {isGroupModalOpen && (
-        <GroupCreationModal
-          selectedItems={knowledgeItems.filter(item => selectedItems.has(item.id))}
-          onClose={() => setIsGroupModalOpen(false)}
-          onSuccess={() => {
-            setIsGroupModalOpen(false);
-            toggleSelectionMode();
-            loadKnowledgeItems();
-          }}
-        />
+        <Suspense fallback={<div className="p-4 text-sm text-zinc-500">Loading…</div>}>
+          <GroupCreationModal
+            selectedItems={knowledgeItems.filter(item => selectedItems.has(item.id))}
+            onClose={() => setIsGroupModalOpen(false)}
+            onSuccess={() => {
+              setIsGroupModalOpen(false);
+              toggleSelectionMode();
+              loadKnowledgeItems();
+            }}
+          />
+        </Suspense>
       )}
       
       {/* Document Browser Modal */}
       {isDocumentBrowserOpen && documentBrowserSourceId && (
-        <DocumentBrowser
-          sourceId={documentBrowserSourceId}
-          isOpen={isDocumentBrowserOpen}
-          onClose={() => {
-            setIsDocumentBrowserOpen(false);
-            setDocumentBrowserSourceId(null);
-          }}
-        />
+        <Suspense fallback={<div className="p-4 text-sm text-zinc-500">Loading documents…</div>}>
+          <DocumentBrowser
+            sourceId={documentBrowserSourceId}
+            isOpen={isDocumentBrowserOpen}
+            onClose={() => {
+              setIsDocumentBrowserOpen(false);
+              setDocumentBrowserSourceId(null);
+            }}
+          />
+        </Suspense>
       )}
     </div>
   );

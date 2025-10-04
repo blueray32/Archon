@@ -1,20 +1,32 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { KnowledgeBasePage } from './pages/KnowledgeBasePage';
-import { SettingsPage } from './pages/SettingsPage';
-import { MCPPage } from './pages/MCPPage';
-import { EmbeddingsPage } from './pages/EmbeddingsPage';
-import { EvalPage } from './pages/EvalPage';
-import { OnboardingPage } from './pages/OnboardingPage';
+const ReactQueryDevtoolsLazy = lazy(() =>
+  import('@tanstack/react-query-devtools').then((m) => ({ default: m.ReactQueryDevtools })),
+);
+const KnowledgeBasePage = lazy(() =>
+  import('./pages/KnowledgeBasePage').then((m) => ({ default: m.KnowledgeBasePage })),
+);
+const SettingsPage = lazy(() =>
+  import('./pages/SettingsPage').then((m) => ({ default: m.SettingsPage })),
+);
+const MCPPage = lazy(() => import('./pages/MCPPage').then((m) => ({ default: m.MCPPage })));
+const EmbeddingsPage = lazy(() =>
+  import('./pages/EmbeddingsPage').then((m) => ({ default: m.EmbeddingsPage })),
+);
+const EvalPage = lazy(() => import('./pages/EvalPage').then((m) => ({ default: m.EvalPage })));
+const OnboardingPage = lazy(() =>
+  import('./pages/OnboardingPage').then((m) => ({ default: m.OnboardingPage })),
+);
 import { MainLayout } from './components/layout/MainLayout';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { ToastProvider as FeaturesToastProvider } from './features/ui/components/ToastProvider';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 import { TooltipProvider } from './features/ui/primitives/tooltip';
-import { ProjectPage } from './pages/ProjectPage';
+const ProjectPage = lazy(() =>
+  import('./pages/ProjectPage').then((m) => ({ default: m.ProjectPage })),
+);
 import { DisconnectScreenOverlay } from './components/DisconnectScreenOverlay';
 import { ErrorBoundaryWithBugReport } from './components/bug-report/ErrorBoundaryWithBugReport';
 import { MigrationBanner } from './components/ui/MigrationBanner';
@@ -43,7 +55,7 @@ const queryClient = new QueryClient({
   },
 });
 
-const AppRoutes = () => {
+const AppRoutes = (): JSX.Element => {
   const { projectsEnabled } = useSettings();
   
   return (
@@ -66,7 +78,7 @@ const AppRoutes = () => {
   );
 };
 
-const AppContent = () => {
+const AppContent = (): JSX.Element => {
   const [disconnectScreenActive, setDisconnectScreenActive] = useState(false);
   const [disconnectScreenDismissed, setDisconnectScreenDismissed] = useState(false);
   const [disconnectScreenSettings, setDisconnectScreenSettings] = useState({
@@ -104,7 +116,7 @@ const AppContent = () => {
     };
   }, [disconnectScreenDismissed]);
 
-  const handleDismissDisconnectScreen = () => {
+  const handleDismissDisconnectScreen = (): void => {
     setDisconnectScreenActive(false);
     setDisconnectScreenDismissed(true);
   };
@@ -121,7 +133,9 @@ const AppContent = () => {
                 onDismiss={() => setMigrationBannerDismissed(true)}
               />
             )}
-            <AppRoutes />
+            <Suspense fallback={<div className="p-4 text-sm text-zinc-500">Loading…</div>}>
+              <AppRoutes />
+            </Suspense>
           </MainLayout>
         </ErrorBoundaryWithBugReport>
       </Router>
@@ -133,7 +147,7 @@ const AppContent = () => {
   );
 };
 
-export function App() {
+export function App(): JSX.Element {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
@@ -148,7 +162,9 @@ export function App() {
         </ToastProvider>
       </ThemeProvider>
       {import.meta.env.VITE_SHOW_DEVTOOLS === 'true' && (
-        <ReactQueryDevtools initialIsOpen={false} />
+        <Suspense fallback={null}>
+          <ReactQueryDevtoolsLazy initialIsOpen={false} />
+        </Suspense>
       )}
     </QueryClientProvider>
   );

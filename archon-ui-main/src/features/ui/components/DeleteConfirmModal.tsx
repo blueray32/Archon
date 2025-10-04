@@ -39,7 +39,10 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
     document: "Delete Document",
   };
 
-  const MESSAGES: Record<DeleteConfirmModalProps["type"], (_n: string) => string> = {
+  const MESSAGES: Record<
+    DeleteConfirmModalProps["type"],
+    (_n: string) => string
+  > = {
     project: (_n) => `Are you sure you want to delete this project?`,
     task: (_n) => `Are you sure you want to delete this task?`,
     client: (_n) => `Are you sure you want to delete this client?`,
@@ -61,7 +64,10 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
   const iconStyles = getIconStyles();
 
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange || ((o) => !o && onCancel())}>
+    <AlertDialog
+      open={open}
+      onOpenChange={onOpenChange || ((o) => !o && onCancel())}
+    >
       <AlertDialogContent
         variant="destructive"
         className={cn(
@@ -71,14 +77,21 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
         )}
       >
         <AlertDialogHeader>
-          <div className={`flex items-center gap-3 ${size === "compact" ? "mb-2" : "mb-3"}`}>
+          <div
+            className={`flex items-center gap-3 ${size === "compact" ? "mb-2" : "mb-3"}`}
+          >
             <div
               className={cn(
                 iconStyles.container,
                 "rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center",
               )}
             >
-              <Trash2 className={cn(iconStyles.icon, "text-red-600 dark:text-red-400")} />
+              <Trash2
+                className={cn(
+                  iconStyles.icon,
+                  "text-red-600 dark:text-red-400",
+                )}
+              />
             </div>
             <div>
               <AlertDialogTitle
@@ -117,7 +130,9 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
             <Button
               onClick={onCancel}
               variant="outline"
-              size={size === "compact" ? "sm" : size === "large" ? "lg" : "default"}
+              size={
+                size === "compact" ? "sm" : size === "large" ? "lg" : "default"
+              }
             >
               Cancel
             </Button>
@@ -126,7 +141,9 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
             <Button
               onClick={onConfirm}
               variant="destructive"
-              size={size === "compact" ? "sm" : size === "large" ? "lg" : "default"}
+              size={
+                size === "compact" ? "sm" : size === "large" ? "lg" : "default"
+              }
             >
               Delete
             </Button>

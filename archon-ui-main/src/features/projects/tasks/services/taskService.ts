@@ -6,8 +6,18 @@
 import { formatZodErrors, ValidationError } from "../../shared/api";
 import { callAPIWithETag, invalidateETagCache } from "../../shared/apiWithEtag";
 
-import { validateCreateTask, validateUpdateTask, validateUpdateTaskStatus } from "../schemas";
-import type { CreateTaskRequest, DatabaseTaskStatus, Task, TaskCounts, UpdateTaskRequest } from "../types";
+import {
+  validateCreateTask,
+  validateUpdateTask,
+  validateUpdateTaskStatus,
+} from "../schemas";
+import type {
+  CreateTaskRequest,
+  DatabaseTaskStatus,
+  Task,
+  TaskCounts,
+  UpdateTaskRequest,
+} from "../types";
 
 export const taskService = {
   /**
@@ -15,7 +25,9 @@ export const taskService = {
    */
   async getTasksByProject(projectId: string): Promise<Task[]> {
     try {
-      const tasks = await callAPIWithETag<Task[]>(`/api/projects/${projectId}/tasks`);
+      const tasks = await callAPIWithETag<Task[]>(
+        `/api/projects/${projectId}/tasks`,
+      );
 
       // Return tasks as-is; UI uses DB status values (todo/doing/review/done)
       return tasks;
@@ -98,7 +110,10 @@ export const taskService = {
   /**
    * Update task status (for drag & drop operations)
    */
-  async updateTaskStatus(taskId: string, status: DatabaseTaskStatus): Promise<Task> {
+  async updateTaskStatus(
+    taskId: string,
+    status: DatabaseTaskStatus,
+  ): Promise<Task> {
     // Validate input
     const validation = validateUpdateTaskStatus({
       task_id: taskId,
@@ -145,7 +160,11 @@ export const taskService = {
   /**
    * Update task order for better drag-and-drop support
    */
-  async updateTaskOrder(taskId: string, newOrder: number, newStatus?: DatabaseTaskStatus): Promise<Task> {
+  async updateTaskOrder(
+    taskId: string,
+    newOrder: number,
+    newStatus?: DatabaseTaskStatus,
+  ): Promise<Task> {
     try {
       const updates: UpdateTaskRequest = {
         task_order: newOrder,
@@ -171,7 +190,9 @@ export const taskService = {
     try {
       // Note: This method requires cross-project access
       // For now, we'll throw an error suggesting to use project-scoped queries
-      throw new Error("getTasksByStatus requires cross-project access. Use getTasksByProject instead.");
+      throw new Error(
+        "getTasksByStatus requires cross-project access. Use getTasksByProject instead.",
+      );
     } catch (error) {
       console.error(`Failed to get tasks by status ${status}:`, error);
       throw error;
@@ -184,7 +205,9 @@ export const taskService = {
    */
   async getTaskCountsForAllProjects(): Promise<Record<string, TaskCounts>> {
     try {
-      const response = await callAPIWithETag<Record<string, TaskCounts>>("/api/projects/task-counts");
+      const response = await callAPIWithETag<Record<string, TaskCounts>>(
+        "/api/projects/task-counts",
+      );
       return response || {};
     } catch (error) {
       console.error("Failed to get task counts for all projects:", error);

@@ -34,7 +34,10 @@ export function useSmartPolling(baseInterval: number = 10000) {
     return () => {
       // Cleanup with same guards
       if (typeof document !== "undefined" && typeof window !== "undefined") {
-        document.removeEventListener("visibilitychange", handleVisibilityChange);
+        document.removeEventListener(
+          "visibilitychange",
+          handleVisibilityChange,
+        );
         window.removeEventListener("focus", handleFocus);
         window.removeEventListener("blur", handleBlur);
       }

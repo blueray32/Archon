@@ -3,7 +3,12 @@ import { Loader, Server } from "lucide-react";
 import type React from "react";
 import { useStaggeredEntrance } from "../../../hooks/useStaggeredEntrance";
 import { McpClientList, McpConfigSection, McpStatusBar } from "../components";
-import { useMcpClients, useMcpConfig, useMcpSessionInfo, useMcpStatus } from "../hooks";
+import {
+  useMcpClients,
+  useMcpConfig,
+  useMcpSessionInfo,
+  useMcpStatus,
+} from "../hooks";
 
 export const McpView: React.FC = () => {
   const { data: status, isLoading: statusLoading } = useMcpStatus();
@@ -88,7 +93,11 @@ export const McpView: React.FC = () => {
 
       {/* Status Bar */}
       <motion.div variants={itemVariants}>
-        <McpStatusBar status={status} sessionInfo={sessionInfo} config={config} />
+        <McpStatusBar
+          status={status}
+          sessionInfo={sessionInfo}
+          config={config}
+        />
       </motion.div>
 
       {/* Connected Clients */}
@@ -102,7 +111,9 @@ export const McpView: React.FC = () => {
 
       {/* IDE Configuration */}
       <motion.div variants={itemVariants}>
-        <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">IDE Configuration</h2>
+        <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">
+          IDE Configuration
+        </h2>
         <McpConfigSection config={config} status={status} />
       </motion.div>
     </motion.div>

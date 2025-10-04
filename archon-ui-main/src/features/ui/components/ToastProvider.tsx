@@ -1,5 +1,9 @@
 import type React from "react";
-import { createToastContext, getToastIcon, ToastContext } from "../hooks/useToast";
+import {
+  createToastContext,
+  getToastIcon,
+  ToastContext,
+} from "../hooks/useToast";
 import {
   ToastProvider as RadixToastProvider,
   Toast,
@@ -19,7 +23,11 @@ interface ToastProviderProps {
  * Wraps the app with Radix ToastProvider and manages toast state
  * Provides the same API as legacy ToastContext for easy migration
  */
-export function ToastProvider({ children, duration = 4000, swipeDirection = "right" }: ToastProviderProps) {
+export function ToastProvider({
+  children,
+  duration = 4000,
+  swipeDirection = "right",
+}: ToastProviderProps) {
   const { toasts, showToast, removeToast } = createToastContext();
 
   return (
@@ -36,7 +44,11 @@ export function ToastProvider({ children, duration = 4000, swipeDirection = "rig
           };
 
           return (
-            <Toast key={toast.id} variant={variantMap[toast.type]} duration={toast.duration || duration}>
+            <Toast
+              key={toast.id}
+              variant={variantMap[toast.type]}
+              duration={toast.duration || duration}
+            >
               <div className="flex items-start gap-3">
                 {Icon && <Icon className="h-5 w-5 flex-shrink-0 mt-0.5" />}
                 <div className="flex-1">

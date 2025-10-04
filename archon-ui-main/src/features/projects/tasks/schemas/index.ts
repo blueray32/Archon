@@ -1,7 +1,12 @@
 import { z } from "zod";
 
 // Base validation schemas
-export const DatabaseTaskStatusSchema = z.enum(["todo", "doing", "review", "done"]);
+export const DatabaseTaskStatusSchema = z.enum([
+  "todo",
+  "doing",
+  "review",
+  "done",
+]);
 export const TaskPrioritySchema = z.enum(["low", "medium", "high", "critical"]);
 
 // Assignee schema - simplified to predefined options
@@ -10,13 +15,25 @@ export const AssigneeSchema = z.enum(["User", "Archon", "AI IDE Agent"]);
 // Task schemas
 export const CreateTaskSchema = z.object({
   project_id: z.string().uuid("Project ID must be a valid UUID"),
-  parent_task_id: z.string().uuid("Parent task ID must be a valid UUID").optional(),
-  title: z.string().min(1, "Task title is required").max(255, "Task title must be less than 255 characters"),
-  description: z.string().max(10000, "Task description must be less than 10000 characters").default(""),
+  parent_task_id: z
+    .string()
+    .uuid("Parent task ID must be a valid UUID")
+    .optional(),
+  title: z
+    .string()
+    .min(1, "Task title is required")
+    .max(255, "Task title must be less than 255 characters"),
+  description: z
+    .string()
+    .max(10000, "Task description must be less than 10000 characters")
+    .default(""),
   status: DatabaseTaskStatusSchema.default("todo"),
   assignee: AssigneeSchema.default("User"),
   task_order: z.number().int().min(0).default(0),
-  feature: z.string().max(100, "Feature name must be less than 100 characters").optional(),
+  feature: z
+    .string()
+    .max(100, "Feature name must be less than 100 characters")
+    .optional(),
   featureColor: z
     .string()
     .regex(/^#[0-9A-F]{6}$/i, "Feature color must be a valid hex color")

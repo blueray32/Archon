@@ -1,4 +1,5 @@
 import { credentialsService } from './credentialsService';
+import { logger } from '../utils/logger';
 
 interface HealthCheckCallback {
   onDisconnected: () => void;
@@ -43,10 +44,10 @@ class ServerHealthService {
         const isHealthy = data.status === 'healthy' || data.status === 'online' || data.status === 'initializing';
         return isHealthy;
       }
-      console.error('🏥 [Health] Response not OK:', response.status);
+      logger.error('🏥 [Health] Response not OK:', response.status);
       return false;
     } catch (error) {
-      console.error('🏥 [Health] Health check failed:', error);
+      logger.error('🏥 [Health] Health check failed:', error);
       // Health check failed
       return false;
     }
@@ -55,7 +56,7 @@ class ServerHealthService {
   startMonitoring(callbacks: HealthCheckCallback) {
     // Guard: Prevent multiple intervals by clearing any existing one
     if (this.healthCheckInterval) {
-      console.warn('🏥 [Health] Health monitoring already active, stopping previous monitor');
+      logger.warn('🏥 [Health] Health monitoring already active, stopping previous monitor');
       this.stopMonitoring();
     }
 
@@ -128,12 +129,12 @@ class ServerHealthService {
    * Used when services detect immediate disconnection (e.g., polling failures, fetch errors)
    */
   handleImmediateDisconnect() {
-    console.log('🏥 [Health] Immediate disconnect triggered');
+    logger.warn('🏥 [Health] Immediate disconnect triggered');
     this.isConnected = false;
     this.missedChecks = this.maxMissedChecks; // Set to max to ensure disconnect screen shows
     
     if (this.disconnectScreenEnabled && this.callbacks) {
-      console.log('🏥 [Health] Triggering disconnect screen immediately');
+      logger.warn('🏥 [Health] Triggering disconnect screen immediately');
       this.callbacks.onDisconnected();
     }
   }
@@ -142,7 +143,7 @@ class ServerHealthService {
    * Handle when connection reconnects - reset state but let health check confirm
    */
   handleConnectionReconnect() {
-    console.log('🏥 [Health] Connection reconnected, resetting missed checks');
+    logger.info('🏥 [Health] Connection reconnected, resetting missed checks');
     this.missedChecks = 0;
     // Don't immediately mark as connected - let health check confirm server is actually healthy
   }

@@ -29,7 +29,7 @@ export interface KnowledgeItem {
   metadata: KnowledgeItemMetadata
   created_at: string
   updated_at: string
-  code_examples?: any[] // Code examples from backend
+  code_examples?: unknown[] // Code examples from backend
 }
 
 export interface KnowledgeItemsResponse {
@@ -72,6 +72,7 @@ export interface SearchOptions {
 
 // Use relative URL to go through Vite proxy
 import { API_BASE_URL } from '../config/api';
+import { logger } from '../utils/logger';
 // const API_BASE_URL = '/api'; // Now imported from config
 
 // Helper function for API requests with timeout
@@ -80,19 +81,19 @@ async function apiRequest<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
-  console.log(`🔍 [KnowledgeBase] Starting API request to: ${url}`);
-  console.log(`🔍 [KnowledgeBase] Request method: ${options.method || 'GET'}`);
-  console.log(`🔍 [KnowledgeBase] API_BASE_URL: "${API_BASE_URL}"`);
+  logger.info(`🔍 [KnowledgeBase] Starting API request to: ${url}`);
+  logger.debug(`🔍 [KnowledgeBase] Request method: ${options.method || 'GET'}`);
+  logger.debug(`🔍 [KnowledgeBase] API_BASE_URL: "${API_BASE_URL}"`);
   
   // Create an AbortController for timeout
   const controller = new AbortController();
   const timeoutId = setTimeout(() => {
-    console.error(`⏰ [KnowledgeBase] Request timeout after 10 seconds for: ${url}`);
+    logger.error(`⏰ [KnowledgeBase] Request timeout after 10 seconds for: ${url}`);
     controller.abort();
   }, 10000); // 10 second timeout
   
   try {
-    console.log(`🚀 [KnowledgeBase] Sending fetch request...`);
+    logger.debug(`🚀 [KnowledgeBase] Sending fetch request...`);
     const response = await fetch(url, {
       headers: {
         'Content-Type': 'application/json',
@@ -103,25 +104,36 @@ async function apiRequest<T>(
     });
     
     clearTimeout(timeoutId);
-    console.log(`✅ [KnowledgeBase] Response received:`, response.status, response.statusText);
-    console.log(`✅ [KnowledgeBase] Response headers:`, response.headers);
+    logger.debug(`✅ [KnowledgeBase] Response received:`, response.status, response.statusText);
+    logger.debug(`✅ [KnowledgeBase] Response headers:`, response.headers);
 
     if (!response.ok) {
-      console.error(`❌ [KnowledgeBase] Response not OK: ${response.status} ${response.statusText}`);
-      const error = await response.json();
-      console.error(`❌ [KnowledgeBase] API error response:`, error);
-      throw new Error(error.error || `HTTP ${response.status}`);
+      logger.error(`❌ [KnowledgeBase] Response not OK: ${response.status} ${response.statusText}`);
+      let message = `HTTP ${response.status}`;
+      try {
+        const error = await response.json();
+        logger.error(`❌ [KnowledgeBase] API error response:`, error);
+        // Try common FastAPI shapes
+        message =
+          (error && (error.error as string)) ||
+          (error && error.detail && (error.detail.error as string)) ||
+          (error && (error.detail as string)) ||
+          message;
+      } catch (e) {
+        logger.error('❌ [KnowledgeBase] Failed to parse error JSON');
+      }
+      throw new Error(message);
     }
 
     const data = await response.json();
-    console.log(`✅ [KnowledgeBase] Response data received, type: ${typeof data}`);
+    logger.debug(`✅ [KnowledgeBase] Response data received, type: ${typeof data}`);
     return data;
   } catch (error) {
     clearTimeout(timeoutId);
-    console.error(`❌ [KnowledgeBase] Request failed:`, error);
-    console.error(`❌ [KnowledgeBase] Error name: ${error instanceof Error ? error.name : 'Unknown'}`);
-    console.error(`❌ [KnowledgeBase] Error message: ${error instanceof Error ? error.message : String(error)}`);
-    console.error(`❌ [KnowledgeBase] Error stack:`, error instanceof Error ? error.stack : 'No stack');
+    logger.error(`❌ [KnowledgeBase] Request failed:`, error);
+    logger.error(`❌ [KnowledgeBase] Error name: ${error instanceof Error ? error.name : 'Unknown'}`);
+    logger.error(`❌ [KnowledgeBase] Error message: ${error instanceof Error ? error.message : String(error)}`);
+    logger.error(`❌ [KnowledgeBase] Error stack:`, error instanceof Error ? error.stack : 'No stack');
     
     // Check if it's a timeout error
     if (error instanceof Error && error.name === 'AbortError') {
@@ -137,7 +149,7 @@ class KnowledgeBaseService {
    * Get knowledge items with optional filtering
    */
   async getKnowledgeItems(filter: KnowledgeItemsFilter = {}): Promise<KnowledgeItemsResponse> {
-    console.log('📋 [KnowledgeBase] Getting knowledge items with filter:', filter);
+    logger.info('📋 [KnowledgeBase] Getting knowledge items with filter:', filter);
     
     const params = new URLSearchParams()
     
@@ -152,24 +164,24 @@ class KnowledgeBaseService {
     if (filter.search) params.append('search', filter.search)
     
     const queryString = params.toString();
-    console.log('📋 [KnowledgeBase] Query string:', queryString);
-    console.log('📋 [KnowledgeBase] Full endpoint:', `/knowledge-items?${queryString}`);
+    logger.debug('📋 [KnowledgeBase] Query string:', queryString);
+    logger.debug('📋 [KnowledgeBase] Full endpoint:', `/knowledge-items?${queryString}`);
     
     const response = await apiRequest<KnowledgeItemsResponse>(`/knowledge-items?${params}`)
     
     // Debug logging to inspect response
-    console.log('📋 [KnowledgeBase] Response received:', response);
-    console.log('📋 [KnowledgeBase] Total items:', response.items?.length);
+    logger.debug('📋 [KnowledgeBase] Response received:', response);
+    logger.debug('📋 [KnowledgeBase] Total items:', response.items?.length);
     
     // Check if any items have code_examples
     const itemsWithCodeExamples = response.items?.filter(item => item.code_examples && item.code_examples.length > 0) || [];
-    console.log('📋 [KnowledgeBase] Items with code examples:', itemsWithCodeExamples.length);
+    logger.debug('📋 [KnowledgeBase] Items with code examples:', itemsWithCodeExamples.length);
     
     // Log details for modelcontextprotocol.io
     const mcpItem = response.items?.find(item => item.source_id === 'modelcontextprotocol.io');
     if (mcpItem) {
-      console.log('📋 [KnowledgeBase] MCP item found:', mcpItem);
-      console.log('📋 [KnowledgeBase] MCP code_examples:', mcpItem.code_examples);
+      logger.debug('📋 [KnowledgeBase] MCP item found:', mcpItem);
+      logger.debug('📋 [KnowledgeBase] MCP code_examples:', mcpItem.code_examples);
     }
     
     return response
@@ -198,7 +210,7 @@ class KnowledgeBaseService {
    * Refresh a knowledge item by re-crawling its URL
    */
   async refreshKnowledgeItem(sourceId: string) {
-    console.log('🔄 [KnowledgeBase] Refreshing knowledge item:', sourceId);
+    logger.info('🔄 [KnowledgeBase] Refreshing knowledge item:', sourceId);
     
     return apiRequest(`/knowledge-items/${sourceId}/refresh`, {
       method: 'POST'
@@ -209,7 +221,7 @@ class KnowledgeBaseService {
    * Get document chunks for a knowledge item with optional domain filtering
    */
   async getKnowledgeItemChunks(sourceId: string, domainFilter?: string) {
-    console.log('📄 [KnowledgeBase] Getting chunks for:', sourceId, 'domainFilter:', domainFilter);
+    logger.info('📄 [KnowledgeBase] Getting chunks for:', sourceId, 'domainFilter:', domainFilter);
     
     const params = new URLSearchParams();
     if (domainFilter) {
@@ -227,7 +239,7 @@ class KnowledgeBaseService {
         id: string;
         source_id: string;
         content: string;
-        metadata?: any;
+        metadata?: Record<string, unknown>;
         url?: string;
       }>;
       count: number;
@@ -266,16 +278,19 @@ class KnowledgeBaseService {
    * Start crawling a URL with metadata
    */
   async crawlUrl(request: CrawlRequest) {
-    console.log('📡 Sending crawl request:', request);
+    logger.info('📡 Sending crawl request:', request);
     
     const response = await apiRequest('/knowledge-items/crawl', {
       method: 'POST',
       body: JSON.stringify(request)
     });
     
-    console.log('📡 Crawl response received:', response);
-    console.log('📡 Response type:', typeof response);
-    console.log('📡 Response has progressId?', 'progressId' in (response as any));
+    logger.debug('📡 Crawl response received:', response);
+    logger.debug('📡 Response type:', typeof response);
+    {
+      const r = response as unknown as Record<string, unknown>;
+      logger.debug('📡 Response has progressId?', 'progressId' in r);
+    }
     
     return response;
   }
@@ -304,7 +319,7 @@ class KnowledgeBaseService {
    * Stop a running crawl task
    */
   async stopCrawl(progressId: string) {
-    console.log('🛑 [KnowledgeBase] Stopping crawl:', progressId);
+    logger.warn('🛑 [KnowledgeBase] Stopping crawl:', progressId);
     
     return apiRequest(`/knowledge-items/stop/${progressId}`, {
       method: 'POST'
@@ -315,14 +330,61 @@ class KnowledgeBaseService {
    * Get code examples for a specific knowledge item
    */
   async getCodeExamples(sourceId: string) {
-    console.log('📚 [KnowledgeBase] Fetching code examples for:', sourceId);
+    logger.info('📚 [KnowledgeBase] Fetching code examples for:', sourceId);
     
     return apiRequest<{
       success: boolean
       source_id: string
-      code_examples: any[]
+      code_examples: unknown[]
       count: number
     }>(`/knowledge-items/${sourceId}/code-examples`);
+  }
+
+  /**
+   * Start server-side export of the knowledge base to the local Obsidian vault
+   */
+  async exportToVault(options?: {
+    targetPath?: string;
+    sourceIds?: string[];
+    tags?: string[];
+    knowledgeType?: 'technical' | 'business';
+    updatedSince?: string; // ISO 8601
+  }): Promise<{ success: boolean; progressId: string; message?: string }>{
+    const body: Record<string, unknown> = {};
+    if (options?.targetPath) body.target = options.targetPath;
+    if (options?.sourceIds && options.sourceIds.length) body.source_ids = options.sourceIds;
+    if (options?.tags && options.tags.length) body.tags = options.tags;
+    if (options?.knowledgeType) body.knowledge_type = options.knowledgeType;
+    if (options?.updatedSince) body.updated_since = options.updatedSince;
+    return apiRequest('/knowledge-items/export-to-vault', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  /** Get progress for a running operation (crawl, upload, export) */
+  async getProgress(progressId: string): Promise<{
+    progressId: string;
+    status: string;
+    progress: number;
+    message?: string;
+    error?: string;
+  }>{
+    return apiRequest(`/crawl-progress/${progressId}`);
+  }
+
+  /** Stop a running operation by progressId (crawl or export) */
+  async stopOperation(progressId: string): Promise<{ success: boolean; message: string; progressId: string }>{
+    return apiRequest(`/knowledge-items/stop/${progressId}`, { method: 'POST' });
+  }
+
+  /** Get the server's default export target (OBSIDIAN_VAULT) */
+  async getExportDefaultTarget(): Promise<{
+    defaultTarget?: string;
+    exists: boolean;
+    isDir: boolean;
+  }>{
+    return apiRequest('/knowledge-items/export-default-target');
   }
 
 }

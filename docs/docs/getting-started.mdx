@@ -164,7 +164,7 @@ When you run `docker compose up -d`, you get core services by default:
 
 ### Microservices Architecture
 - **Frontend** (Port 3737): React dashboard for managing knowledge and tasks
-- **API Service** (Port 8080): FastAPI server with Socket.IO for real-time features
+- **API Service** (Port 8181): FastAPI server with HTTP polling for live updates
 - **MCP Service** (Port 8051): Model Context Protocol server for AI clients
 - **Agents Service** (Port 8052): AI processing service for document analysis
   - Note: start with `--profile agents`
@@ -174,7 +174,7 @@ When you run `docker compose up -d`, you get core services by default:
 - **Smart Web Crawling**: Automatically detects sitemaps, text files, or webpages
 - **Document Processing**: Upload PDFs, Word docs, markdown, and text files
 - **AI Integration**: Connect any MCP-compatible client (Cursor, Windsurf, etc.)
-- **Real-time Updates**: Socket.IO-based live progress tracking
+- **Live Updates**: HTTP polling with ETag-based caching
 - **Task Management**: Organize projects and tasks with AI agent integration
 
 ### Architecture Overview
@@ -201,7 +201,7 @@ When you run `docker compose up -d`, you get core services by default:
 graph TB
     subgraph "🚀 Docker Microservices Stack"
         Frontend["🌐 Frontend Container<br/>React + Vite<br/>archon-frontend<br/>Port 3737"]
-        API["⚡ Server Container<br/>FastAPI + Socket.IO<br/>Archon-Server<br/>Port 8080"]
+        API["⚡ Server Container<br/>FastAPI + HTTP Polling<br/>Archon-Server<br/>Port 8181"]
         MCP["🔧 MCP Server<br/>14 MCP Tools<br/>archon-mcp<br/>Port 8051"]
         Agents["🤖 Agents Service<br/>AI Processing<br/>archon-agents<br/>Port 8052"]
         Docs["📚 Documentation<br/>Docusaurus<br/>archon-docs<br/>Port 3838"]
@@ -254,7 +254,7 @@ To connect Cursor to your Archon MCP server, add this configuration:
         "-e", "HOST=localhost", 
         "-e", "PORT=8051",
         "archon-mcp",
-        "python", "src/mcp_server.py"
+        "python", "-m", "src.mcp_server.mcp_server"
       ]
     }
   }
@@ -292,7 +292,7 @@ Check the **[MCP Overview](./mcp-overview)** for specific connection instruction
 **Pro Tips:**
 - Start with well-structured documentation sites
 - Use sitemap URLs when available (e.g., `sitemap.xml`)
-- Monitor crawl progress via Socket.IO updates
+- Monitor crawl progress via `/api/progress/{id}` polling
 
 </TabItem>
 <TabItem value="upload" label="📄 Document Upload">

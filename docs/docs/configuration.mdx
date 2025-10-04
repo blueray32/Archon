@@ -13,7 +13,7 @@ import Admonition from '@theme/Admonition';
 ## Docker Microservices Architecture
 
 <Admonition type="info" title="Container Communication">
-Archon uses a microservices architecture with three separate services. All services run in Docker containers and communicate via the `archon_app-network` bridge network using service names, not localhost. Real-time features use Socket.IO for reliable real-time communication.
+Archon uses a microservices architecture with three separate services. All services run in Docker containers and communicate via the `archon_app-network` bridge network using service names, not localhost. Live updates use efficient HTTP polling with ETag caching.
 </Admonition>
 
 ```mermaid
@@ -21,7 +21,7 @@ graph TB
     subgraph "Docker Network: archon_app-network"
         subgraph "Archon-Server"
             API[FastAPI<br/>:8080]
-            SIO[Socket.IO<br/>:8080]
+            POLL[HTTP Polling<br/>:8181]
         end
         
         subgraph "archon-mcp"
@@ -56,7 +56,7 @@ graph TB
     IDE -->|8051| MCP
     
     Vite -->|proxy| API
-    Vite -.->|Socket.IO| SIO
+    Vite -.->|HTTP Polling| POLL
     API --> Supabase
     API --> OpenAI
     API --> Agents
@@ -77,7 +77,7 @@ graph TB
 | Service | Container Name | Container Port | Host Port | Purpose |
 |---------|----------------|----------------|-----------|---------|
 | Frontend | archon-frontend | 5173 | 3737 | React UI |
-| Server | Archon-Server | 8080 | 8080 | FastAPI + Socket.IO |
+| Server | Archon-Server | 8181 | 8181 | FastAPI + HTTP polling |
 | MCP Server | archon-mcp | 8051 | 8051 | AI Agent connections |
 | AI Agents | archon-agents | 8052 | 8052 | AI processing service |
 | Documentation | archon-docs | 80 | 3838 | This documentation |

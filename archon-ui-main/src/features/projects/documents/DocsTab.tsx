@@ -1,9 +1,15 @@
 import { FileText, Search } from "lucide-react";
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Input } from "../../ui/primitives";
 import { cn } from "../../ui/primitives/styles";
 import { DocumentCard } from "./components/DocumentCard";
-import { DocumentViewer } from "./components/DocumentViewer";
+
+const DocumentViewer = lazy(() =>
+  import("./components/DocumentViewer").then((m) => ({
+    default: m.DocumentViewer,
+  })),
+);
+
 import { useProjectDocuments } from "./hooks";
 import type { ProjectDocument } from "./types";
 
@@ -27,7 +33,8 @@ export const DocsTab = ({ project }: DocsTabProps) => {
   const { data: documents = [], isLoading } = useProjectDocuments(projectId);
 
   // Document state
-  const [selectedDocument, setSelectedDocument] = useState<ProjectDocument | null>(null);
+  const [selectedDocument, setSelectedDocument] =
+    useState<ProjectDocument | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   // Auto-select first document when documents load
@@ -48,7 +55,9 @@ export const DocsTab = ({ project }: DocsTabProps) => {
   }, [documents, selectedDocument]);
 
   // Filter documents based on search
-  const filteredDocuments = documents.filter((doc) => doc.title.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredDocuments = documents.filter((doc) =>
+    doc.title.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
 
   if (isLoading) {
     return (
@@ -64,7 +73,12 @@ export const DocsTab = ({ project }: DocsTabProps) => {
       <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 px-4 py-3">
         <div className="flex items-start gap-3">
           <div className="text-yellow-600 dark:text-yellow-400">
-            <svg className="w-5 h-5 mt-0.5" fill="currentColor" viewBox="0 0 20 20" aria-label="Warning">
+            <svg
+              className="w-5 h-5 mt-0.5"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+              aria-label="Warning"
+            >
               <title>Warning icon</title>
               <path
                 fillRule="evenodd"
@@ -78,15 +92,17 @@ export const DocsTab = ({ project }: DocsTabProps) => {
               Project Documents Under Migration
             </h3>
             <p className="text-sm text-yellow-700 dark:text-yellow-400 mt-1">
-              Editing and uploading project documents is currently disabled while we migrate to a new storage system.
+              Editing and uploading project documents is currently disabled
+              while we migrate to a new storage system.
               <strong className="font-semibold">
                 {" "}
-                Please backup your existing project documents elsewhere as they will be lost when the migration is
-                complete.
+                Please backup your existing project documents elsewhere as they
+                will be lost when the migration is complete.
               </strong>
             </p>
             <p className="text-xs text-yellow-600 dark:text-yellow-500 mt-1">
-              Note: This only affects project-specific documents. Your knowledge base documents are safe and unaffected.
+              Note: This only affects project-specific documents. Your knowledge
+              base documents are safe and unaffected.
             </p>
           </div>
         </div>
@@ -123,7 +139,8 @@ export const DocsTab = ({ project }: DocsTabProps) => {
 
             {/* Info message */}
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
-              Viewing {documents.length} document{documents.length !== 1 ? "s" : ""}
+              Viewing {documents.length} document
+              {documents.length !== 1 ? "s" : ""}
             </p>
           </div>
 
@@ -132,7 +149,11 @@ export const DocsTab = ({ project }: DocsTabProps) => {
             {filteredDocuments.length === 0 ? (
               <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                 <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                <p className="text-sm">{searchQuery ? "No documents found" : "No documents in this project"}</p>
+                <p className="text-sm">
+                  {searchQuery
+                    ? "No documents found"
+                    : "No documents in this project"}
+                </p>
               </div>
             ) : (
               filteredDocuments.map((doc) => (
@@ -151,13 +172,23 @@ export const DocsTab = ({ project }: DocsTabProps) => {
         {/* Right Content - Document Viewer */}
         <div className="flex-1 bg-white dark:bg-gray-900">
           {selectedDocument ? (
-            <DocumentViewer document={selectedDocument} />
+            <Suspense
+              fallback={
+                <div className="p-6 text-sm text-zinc-500">
+                  Loading document…
+                </div>
+              }
+            >
+              <DocumentViewer document={selectedDocument} />
+            </Suspense>
           ) : (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
                 <FileText className="w-16 h-16 text-gray-300 dark:text-gray-700 mx-auto mb-4" />
                 <p className="text-gray-500 dark:text-gray-400">
-                  {documents.length > 0 ? "Select a document to view" : "No documents available"}
+                  {documents.length > 0
+                    ? "Select a document to view"
+                    : "No documents available"}
                 </p>
               </div>
             </div>

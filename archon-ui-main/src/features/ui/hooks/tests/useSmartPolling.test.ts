@@ -148,15 +148,27 @@ describe("useSmartPolling", () => {
 
   it("should cleanup event listeners on unmount", () => {
     const removeEventListenerSpy = vi.spyOn(document, "removeEventListener");
-    const windowRemoveEventListenerSpy = vi.spyOn(window, "removeEventListener");
+    const windowRemoveEventListenerSpy = vi.spyOn(
+      window,
+      "removeEventListener",
+    );
 
     const { unmount } = renderHook(() => useSmartPolling(5000));
 
     unmount();
 
-    expect(removeEventListenerSpy).toHaveBeenCalledWith("visibilitychange", expect.any(Function));
-    expect(windowRemoveEventListenerSpy).toHaveBeenCalledWith("focus", expect.any(Function));
-    expect(windowRemoveEventListenerSpy).toHaveBeenCalledWith("blur", expect.any(Function));
+    expect(removeEventListenerSpy).toHaveBeenCalledWith(
+      "visibilitychange",
+      expect.any(Function),
+    );
+    expect(windowRemoveEventListenerSpy).toHaveBeenCalledWith(
+      "focus",
+      expect.any(Function),
+    );
+    expect(windowRemoveEventListenerSpy).toHaveBeenCalledWith(
+      "blur",
+      expect.any(Function),
+    );
 
     removeEventListenerSpy.mockRestore();
     windowRemoveEventListenerSpy.mockRestore();

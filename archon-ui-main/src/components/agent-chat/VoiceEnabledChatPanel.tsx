@@ -1,13 +1,14 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { Send, User, WifiOff, RefreshCw, Mic, Volume2, VolumeX, MicOff, SlidersHorizontal, X } from 'lucide-react';
+import { Send, Mic, Volume2, VolumeX, MicOff, SlidersHorizontal, X } from 'lucide-react';
 import * as Popover from '@radix-ui/react-popover';
 import * as Tooltip from '@radix-ui/react-tooltip';
-import { ArchonLoadingSpinner, EdgeLitEffect } from '../animations/Animations';
+import { ArchonLoadingSpinner } from '../animations/Animations';
 import { agentChatService, ChatMessage } from '../../services/agentChatService';
 import { knowledgeBaseService } from '../../services/knowledgeBaseService';
 import { AgentSwitcher } from '../../agents/AgentSwitcher';
 import { useAgentState } from '../../agents/AgentContext';
 import { getAgentTypeFor } from '../../agents/registry';
+import { logger } from '../../utils/logger';
 
 /**
  * Props for the VoiceEnabledChatPanel component
@@ -29,20 +30,21 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [inputValue, setInputValue] = useState('');
-  const [width, setWidth] = useState(416);
-  const [isTyping, setIsTyping] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
+  const [width, _setWidth] = useState(416);
+  const [isTyping, _setIsTyping] = useState(false);
+  const [_isDragging, _setIsDragging] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
-  const [streamingMessage, setStreamingMessage] = useState<string>('');
-  const [isStreaming, setIsStreaming] = useState(false);
+  const [streamingMessage, _setStreamingMessage] = useState<string>('');
+  const [_isStreaming, _setIsStreaming] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'online' | 'offline' | 'connecting'>('connecting');
-  const [isReconnecting, setIsReconnecting] = useState(false);
+  const [_isReconnecting, _setIsReconnecting] = useState(false);
 
   // Voice-specific state
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(false);
+  const [hasAudioInput, setHasAudioInput] = useState<boolean>(true);
   const [voiceError, setVoiceError] = useState<string | null>(null);
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [selectedVoiceName, setSelectedVoiceName] = useState<string | null>(null);
@@ -52,12 +54,12 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
   // Continuous dictation (beta) and silence timeout
   const [continuousDictation, setContinuousDictation] = useState<boolean>(() => {
     const saved = localStorage.getItem('archonASRContinuous');
-    return saved === 'true';
+    return saved ? saved === 'true' : true; // default to continuous for better multi-word capture
   });
   const [silenceTimeoutMs, setSilenceTimeoutMs] = useState<number>(() => {
     const saved = localStorage.getItem('archonASRSilenceMs');
-    const val = saved ? parseInt(saved, 10) : 900;
-    return Number.isFinite(val) ? Math.min(3000, Math.max(300, val)) : 900;
+    const val = saved ? parseInt(saved, 10) : 1500;
+    return Number.isFinite(val) ? Math.min(3000, Math.max(300, val)) : 1500;
   });
   useEffect(() => {
     localStorage.setItem('archonASRContinuous', String(continuousDictation));
@@ -79,7 +81,7 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
 
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const dragHandleRef = useRef<HTMLDivElement>(null);
+  const _dragHandleRef = useRef<HTMLDivElement>(null);
   const chatPanelRef = useRef<HTMLDivElement>(null);
   const sessionIdRef = useRef<string | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
@@ -90,13 +92,92 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
   // Track the last spoken message to avoid duplicates
   const lastSpokenIdRef = useRef<string | null>(null);
   const ensuredPydanticKBRef = useRef<boolean>(false);
+  // Track if we paused recognition due to TTS speaking
+  const pausedForTTSRef = useRef<boolean>(false);
+  // VAD monitoring for barge-in & natural flow
+  const micStreamRef = useRef<MediaStream | null>(null);
+  const monitorAudioContextRef = useRef<AudioContext | null>(null);
+  const monitorAnalyserRef = useRef<AnalyserNode | null>(null);
+  const monitorRAFRef = useRef<number | null>(null);
+  const vadThresholdRef = useRef<number>(0.08); // ~8% average
+
+  // Helper: compute recognition language based on mode and context
+  const getRecognitionLang = useCallback((): string => {
+    if (recognitionMode !== 'auto') return recognitionMode;
+    // Auto: prefer Spanish if environment or selected voice suggests Spanish, else English
+    const prefs = (navigator.languages || [navigator.language]).map(l => l.toLowerCase());
+    const voiceIsSpanish = (() => {
+      const voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
+      const selected = selectedVoiceName ? voices.find(v => v.name === selectedVoiceName) : undefined;
+      const lang = (selected?.lang || '').toLowerCase();
+      return lang.startsWith('es');
+    })();
+    if (voiceIsSpanish || prefs.some(l => l.startsWith('es'))) return 'es-MX';
+    return 'en-US';
+  }, [recognitionMode, selectedVoiceName]);
+
+  // Handle sending messages (defined early to avoid TDZ in effects)
+  const handleSendMessage = React.useCallback(async (messageText?: string) => {
+    const textToSend = messageText || inputValue.trim();
+    if (!textToSend || !sessionId) return;
+
+    try {
+      // Add context including voice information; tailor for selected agent
+      const base = {
+        input_method: messageText ? 'voice' : 'text',
+        voice_enabled: isVoiceEnabled,
+      } as Record<string, unknown>;
+      const context = (() => {
+        if (selectedAgentId === 'profesora-maria') {
+          return {
+            ...base,
+            student_level: 'intermediate',
+            conversation_mode: 'casual',
+            response_style: 'minimal',
+            include_translation: true,
+            include_corrections: true,
+            include_grammar_notes: false,
+            include_vocabulary: true,
+            include_cultural_notes: false,
+            include_encouragement: true,
+            include_next_topic: true,
+            max_reply_sentences: 1,
+            reading_mode: true,
+          };
+        }
+        if (selectedAgentId === 'pydantic-ai') {
+          return {
+            ...base,
+            domain: 'pydantic-ai',
+            knowledge_source: 'llmstxt',
+            dataset_hint: 'Pydantic Documentation - Llms-Full.Txt',
+            source_filter: 'pydantic|ai.pydantic.dev|llms-full|ai-agent-mastery',
+          };
+        }
+        return base;
+      })();
+
+      await agentChatService.sendMessage(sessionId, {
+        message: textToSend,
+        context,
+        agentId: selectedAgentId,
+      });
+
+      if (!messageText) {
+        setInputValue('');
+      }
+    } catch (error) {
+      logger.error('Failed to send message:', error);
+      setConnectionError('Failed to send message. Please try again.');
+    }
+  }, [inputValue, sessionId, selectedAgentId, isVoiceEnabled]);
 
   // Check for Web Speech API support
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const speechSynthesis = window.speechSynthesis;
 
-    console.log('Checking voice support:', { SpeechRecognition: !!SpeechRecognition, speechSynthesis: !!speechSynthesis });
+    logger.debug('Checking voice support:', { SpeechRecognition: !!SpeechRecognition, speechSynthesis: !!speechSynthesis });
 
     if (SpeechRecognition && speechSynthesis) {
       setVoiceSupported(true);
@@ -113,7 +194,7 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
       recognition.maxAlternatives = 5;
 
       recognition.onstart = () => {
-        console.log('Speech recognition started');
+        logger.debug('Speech recognition started');
         setIsListening(true);
         setVoiceError(null);
       };
@@ -129,7 +210,7 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
             const usedLang = recognitionRef.current?.lang || getRecognitionLang();
             recentVoiceSendsRef.current.unshift({ content: finalText, lang: usedLang, ts: Date.now() });
             recentVoiceSendsRef.current = recentVoiceSendsRef.current.slice(0, 6);
-            console.log('ASR silence commit:', { finalText, usedLang });
+            logger.debug('ASR silence commit:', { finalText, usedLang });
             handleSendMessage(finalText);
             recognizedAccumRef.current = '';
             setInputValue('');
@@ -137,14 +218,19 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
         }, silenceTimeoutMs) as unknown as number;
       };
 
-      recognition.onresult = (event) => {
-        console.log('Speech recognition result event:', event);
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
+        // Ignore ASR results while TTS is speaking to avoid echoing agent speech
+        if (isSpeaking) {
+          logger.debug('Ignoring ASR result during TTS speaking');
+          return;
+        }
+        logger.debug('Speech recognition result event:', event);
 
         // Build running final + interim transcript
         let interimText = '';
         try {
           // Iterate from the reported resultIndex to end for better accumulation
-          const startIndex = (event as any).resultIndex ?? Math.max(0, event.results.length - 1);
+          const startIndex = event.resultIndex ?? Math.max(0, event.results.length - 1);
           for (let i = startIndex; i < event.results.length; i++) {
             const res = event.results[i];
             if (res.isFinal) {
@@ -162,7 +248,7 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
               ) {
                 const currentLang = recognitionRef.current.lang || 'en-US';
                 const fallbackLang = altLangFor(currentLang);
-                console.warn('Low-confidence ASR segment. Scheduling fallback:', {
+                logger.warn('Low-confidence ASR segment. Scheduling fallback:', {
                   segPreview: seg.slice(0, 40) + '...',
                   confidence: conf,
                   from: currentLang,
@@ -178,7 +264,7 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
             }
           }
         } catch (e) {
-          console.warn('ASR accumulation failed; falling back to last result only', e);
+          logger.warn('ASR accumulation failed; falling back to last result only', e);
           const lastResult = event.results[event.results.length - 1];
           if (lastResult) {
             if (lastResult.isFinal) {
@@ -192,7 +278,7 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
 
         const composed = `${recognizedAccumRef.current}${interimText ? ' ' + interimText : ''}`.trim();
         if (composed) {
-          console.log('ASR composed input:', composed);
+          logger.debug('ASR composed input:', composed);
           setInputValue(composed);
         }
         // In continuous mode, schedule a commit after silence
@@ -201,8 +287,29 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
         }
       };
 
-      recognition.onerror = (event) => {
-        console.error('Speech recognition error:', event.error, event);
+      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+        // Ignore expected aborts triggered by programmatic stop/restarts
+        if (event.error === 'aborted') {
+          logger.debug('Speech recognition aborted (expected during restart/cleanup)');
+          setIsListening(!!continuousDictation);
+          return;
+        }
+        if (event.error === 'no-speech') {
+          logger.debug('No speech detected; restarting while listening');
+          // Attempt a silent restart if still listening
+          try {
+            if (isVoiceEnabled && continuousDictation) {
+              recognition.lang = getRecognitionLang();
+              recognition.continuous = true;
+              recognition.start();
+              setIsListening(true);
+              return;
+            }
+          } catch (e) {
+            logger.warn('Restart after no-speech failed:', e);
+          }
+        }
+        logger.error('Speech recognition error:', event.error, event);
         let errorMessage = `Voice error: ${event.error}`;
 
         // Provide more helpful error messages
@@ -226,7 +333,8 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
       };
 
       recognition.onend = () => {
-        console.log('Speech recognition ended');
+        logger.debug('Speech recognition ended');
+        // Update listening state based on mode
         setIsListening(false);
         // If a fallback is pending, restart with the alternate language
         if (fallbackPendingRef.current) {
@@ -234,10 +342,10 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
           fallbackPendingRef.current = null;
           try {
             recognition.lang = lang;
-            console.log('Restarting recognition for fallback with lang:', lang);
+            logger.debug('Restarting recognition for fallback with lang:', lang);
             recognition.start();
           } catch (e) {
-            console.error('Failed to restart recognition for fallback:', e);
+            logger.error('Failed to restart recognition for fallback:', e);
             triedFallbackRef.current = false;
           }
         } else {
@@ -248,22 +356,24 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
               const usedLang = recognitionRef.current?.lang || getRecognitionLang();
               recentVoiceSendsRef.current.unshift({ content: finalText, lang: usedLang, ts: Date.now() });
               recentVoiceSendsRef.current = recentVoiceSendsRef.current.slice(0, 6);
-              console.log('Final voice input (accumulated):', finalText);
+              logger.debug('Final voice input (accumulated):', finalText);
               handleSendMessage(finalText);
             }
             // Reset for next session
             recognizedAccumRef.current = '';
             triedFallbackRef.current = false;
             fallbackPendingRef.current = null;
+            // Do not auto-restart in single-shot mode
           } else if (isVoiceEnabled) {
             // Continuous mode: auto-restart to keep listening
             try {
               recognition.lang = getRecognitionLang();
               recognition.continuous = true;
-              console.log('Continuous mode: restarting recognition');
+              logger.debug('Continuous mode: restarting recognition');
               recognition.start();
+              setIsListening(true);
             } catch (e) {
-              console.warn('Continuous restart failed:', e);
+              logger.warn('Continuous restart failed:', e);
             }
           }
         }
@@ -272,7 +382,7 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
       recognitionRef.current = recognition;
     } else {
       setVoiceSupported(false);
-      console.warn('Web Speech API not supported in this browser');
+      logger.warn('Web Speech API not supported in this browser');
       setVoiceError('Voice features not supported in this browser. Use Chrome, Edge, or Safari.');
     }
 
@@ -281,7 +391,116 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
         recognitionRef.current.abort();
       }
     };
+  }, [continuousDictation, confidenceThreshold, getRecognitionLang, recognitionMode, silenceTimeoutMs, isVoiceEnabled, handleSendMessage]);
+
+  // Detect available audio input devices and update UI accordingly
+  useEffect(() => {
+    let mounted = true;
+    const checkDevices = async () => {
+      try {
+        if (!navigator.mediaDevices?.enumerateDevices) return;
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const hasMic = devices.some((d) => d.kind === 'audioinput');
+        if (!mounted) return;
+        setHasAudioInput(hasMic);
+        if (!hasMic) {
+          setVoiceError('No microphone found. Please connect a microphone and try again.');
+        }
+      } catch {
+        // ignore
+      }
+    };
+    checkDevices();
+    const handler = () => { void checkDevices(); };
+    try { navigator.mediaDevices?.addEventListener?.('devicechange', handler); } catch {}
+    return () => {
+      mounted = false;
+      try { navigator.mediaDevices?.removeEventListener?.('devicechange', handler); } catch {}
+    };
   }, []);
+
+  // Microphone VAD monitor: detects user speech to barge-in (stop TTS) and auto-start ASR
+  useEffect(() => {
+    const startMonitor = async () => {
+      try {
+        if (!navigator.mediaDevices?.getUserMedia) return;
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+        });
+        micStreamRef.current = stream;
+        const ac = new (window.AudioContext || (window as any).webkitAudioContext)();
+        monitorAudioContextRef.current = ac;
+        const source = ac.createMediaStreamSource(stream);
+        const analyser = ac.createAnalyser();
+        analyser.fftSize = 256;
+        source.connect(analyser);
+        monitorAnalyserRef.current = analyser;
+        const data = new Uint8Array(analyser.frequencyBinCount);
+        const loop = () => {
+          if (!monitorAnalyserRef.current) return;
+          monitorAnalyserRef.current.getByteTimeDomainData(data);
+          // Compute simple normalized amplitude
+          let sum = 0;
+          for (let i = 0; i < data.length; i++) {
+            const v = (data[i] - 128) / 128; // [-1,1]
+            sum += Math.abs(v);
+          }
+          const avg = sum / data.length; // 0..1
+          // If TTS is speaking and user starts talking (avg above threshold), barge-in
+          if (isSpeaking && avg > vadThresholdRef.current) {
+            try {
+              window.speechSynthesis.cancel();
+              // Resume ASR immediately in continuous mode
+              if (isVoiceEnabled && recognitionRef.current) {
+                const lang = getRecognitionLang();
+                recognitionRef.current.lang = lang;
+                recognitionRef.current.continuous = continuousDictation;
+                try { recognitionRef.current.start(); } catch {}
+                setIsListening(true);
+              }
+            } catch {}
+          }
+          // If continuous dictation is ON, ensure ASR is running when user speaks
+          if (!isSpeaking && !isListening && isVoiceEnabled && continuousDictation && avg > vadThresholdRef.current) {
+            try {
+              const lang = getRecognitionLang();
+              if (recognitionRef.current) {
+                recognitionRef.current.lang = lang;
+                recognitionRef.current.continuous = true;
+                recognitionRef.current.start();
+                setIsListening(true);
+              }
+            } catch {}
+          }
+          monitorRAFRef.current = requestAnimationFrame(loop);
+        };
+        monitorRAFRef.current = requestAnimationFrame(loop);
+      } catch (e) {
+        // VAD is a progressive enhancement; ignore failures
+        logger.warn('VAD monitor failed to start:', e);
+      }
+    };
+
+    const stopMonitor = () => {
+      if (monitorRAFRef.current) cancelAnimationFrame(monitorRAFRef.current);
+      monitorRAFRef.current = null;
+      if (monitorAudioContextRef.current) {
+        try { monitorAudioContextRef.current.close(); } catch {}
+        monitorAudioContextRef.current = null;
+      }
+      if (micStreamRef.current) {
+        micStreamRef.current.getTracks().forEach(t => t.stop());
+        micStreamRef.current = null;
+      }
+    };
+
+    if (isVoiceEnabled) {
+      startMonitor();
+    } else {
+      stopMonitor();
+    }
+    return stopMonitor;
+  }, [isVoiceEnabled, isListening, isSpeaking, continuousDictation, getRecognitionLang, logger]);
 
   // Load voices and determine default selection (preferring es-MX female if available)
   useEffect(() => {
@@ -332,20 +551,20 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
   }, []);
 
   // Voice input handler
-  const handleVoiceInput = useCallback((transcript: string) => {
-    console.log('Processing voice input:', transcript);
+  const _handleVoiceInput = useCallback((transcript: string) => {
+    logger.debug('Processing voice input:', transcript);
     setInputValue(transcript);
     // Automatically send voice messages after a short delay
     setTimeout(() => {
-      console.log('Auto-sending voice message:', transcript);
+      logger.debug('Auto-sending voice message:', transcript);
       handleSendMessage(transcript);
     }, 100);
-  }, [sessionId]); // Add sessionId as dependency
+  }, [handleSendMessage]);
 
   // Speak text using Text-to-Speech
   const speakText = useCallback((text: string) => {
     if (!window.speechSynthesis || !isVoiceEnabled) {
-      console.log('TTS not available:', { speechSynthesis: !!window.speechSynthesis, isVoiceEnabled });
+      logger.warn('TTS not available:', { speechSynthesis: !!window.speechSynthesis, isVoiceEnabled });
       return;
     }
 
@@ -355,14 +574,14 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
       const cleaned = lines.map(l =>
         l
           // Remove leading bullets or numeric list markers
-          .replace(/^\s*(?:[-*•]+|\d+[\.\)]\s*)\s*/, '')
+          .replace(/^\s*(?:[-*•]+|\d+[.)]\s*)\s*/, '')
           // Remove markdown bold/italic markers
           .replace(/\*\*(.*?)\*\*/g, '$1')
           .replace(/\*(.*?)\*/g, '$1')
           // Remove bracketed phonetics/asides
           .replace(/\[[^\]]+\]/g, '')
           // Remove stray bullet symbols
-          .replace(/[•▪︎◦·●]/g, '')
+          .replace(/[•◦·●]|▪︎/g, '')
           // Collapse whitespace
           .replace(/\s{2,}/g, ' ')
           .trim()
@@ -372,7 +591,7 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
 
     const safeText = sanitizeForTTS(text);
 
-    console.log('Starting TTS for text:', safeText);
+    logger.debug('Starting TTS for text:', safeText);
 
     // Cancel any ongoing speech
     window.speechSynthesis.cancel();
@@ -380,9 +599,9 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
     const utterance = new SpeechSynthesisUtterance(safeText);
 
     // Function to set voice after voices are loaded
-    const setVoiceAndSpeak = () => {
-      const voices = window.speechSynthesis.getVoices();
-      console.log('Available voices:', voices.map(v => ({ name: v.name, lang: v.lang })));
+      const setVoiceAndSpeak = () => {
+        const voices = window.speechSynthesis.getVoices();
+      logger.debug('Available voices:', voices.map(v => ({ name: v.name, lang: v.lang })));
 
       // Prefer user-selected voice if available
       let selectedVoice = selectedVoiceName ? voices.find(v => v.name === selectedVoiceName) : undefined;
@@ -421,11 +640,11 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
 
       if (selectedVoice) {
         utterance.voice = selectedVoice;
-        console.log('Selected voice:', selectedVoice.name, selectedVoice.lang);
+        logger.debug('Selected voice:', selectedVoice.name, selectedVoice.lang);
         // Match language to selected voice to avoid mismatch
         utterance.lang = selectedVoice.lang || 'es-ES';
       } else {
-        console.log('No voice selected, using system default');
+        logger.debug('No voice selected, using system default');
         utterance.lang = 'es-ES';
       }
 
@@ -436,21 +655,51 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
       utterance.volume = 1.0; // Full volume
 
       utterance.onstart = () => {
-        console.log('TTS started speaking');
+        logger.debug('TTS started speaking');
         setIsSpeaking(true);
+        // Pause recognition while agent is speaking to avoid capturing TTS output
+        try {
+          if (recognitionRef.current && isListening) {
+            recognitionRef.current.stop();
+            pausedForTTSRef.current = true;
+            logger.debug('Paused ASR for TTS');
+          } else {
+            pausedForTTSRef.current = false;
+          }
+        } catch (e) {
+          logger.warn('Failed to pause ASR for TTS:', e);
+          pausedForTTSRef.current = false;
+        }
       };
 
       utterance.onend = () => {
-        console.log('TTS finished speaking');
+        logger.debug('TTS finished speaking');
         setIsSpeaking(false);
+        // Resume recognition if we paused it for TTS and user wants continuous dictation
+        if (pausedForTTSRef.current && isVoiceEnabled) {
+          try {
+            const lang = getRecognitionLang();
+            if (recognitionRef.current) {
+              recognitionRef.current.lang = lang;
+              recognitionRef.current.continuous = continuousDictation;
+              recognitionRef.current.start();
+              setIsListening(true);
+              logger.debug('Resumed ASR after TTS');
+            }
+          } catch (e) {
+            logger.warn('Failed to resume ASR after TTS:', e);
+          } finally {
+            pausedForTTSRef.current = false;
+          }
+        }
       };
 
       utterance.onerror = (event) => {
-        console.error('TTS error:', event.error);
+        logger.error('TTS error:', event.error);
         setIsSpeaking(false);
       };
 
-      console.log('Speaking with TTS...');
+      logger.debug('Speaking with TTS...');
       window.speechSynthesis.speak(utterance);
     };
 
@@ -460,48 +709,47 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
       setVoiceAndSpeak();
     } else {
       // Wait for voices to load
-      console.log('Waiting for voices to load...');
+      logger.debug('Waiting for voices to load...');
       window.speechSynthesis.onvoiceschanged = () => {
-        console.log('Voices loaded, setting up TTS');
+        logger.debug('Voices loaded, setting up TTS');
         setVoiceAndSpeak();
         window.speechSynthesis.onvoiceschanged = null; // Remove listener
       };
     }
   }, [isVoiceEnabled, selectedVoiceName]);
 
-  // Helper: compute recognition language based on mode and context
-  const getRecognitionLang = useCallback((): string => {
-    if (recognitionMode !== 'auto') return recognitionMode;
-    // Auto: prefer Spanish if environment or selected voice suggests Spanish, else English
-    const prefs = (navigator.languages || [navigator.language]).map(l => l.toLowerCase());
-    const voiceIsSpanish = (() => {
-      const voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
-      const selected = selectedVoiceName ? voices.find(v => v.name === selectedVoiceName) : undefined;
-      const lang = (selected?.lang || '').toLowerCase();
-      return lang.startsWith('es');
-    })();
-    if (voiceIsSpanish || prefs.some(l => l.startsWith('es'))) return 'es-MX';
-    return 'en-US';
-  }, [recognitionMode, selectedVoiceName]);
+  
 
   // Start voice recognition
   const startListening = useCallback(async () => {
     if (!voiceSupported || !recognitionRef.current || !isVoiceEnabled) {
-      console.log('Cannot start listening:', { voiceSupported, hasRecognition: !!recognitionRef.current, isVoiceEnabled });
-      return;
+      if (!voiceSupported) {
+        logger.warn('Cannot start listening: voice not supported');
+        return;
+      }
+      // If recognition not yet initialized, wait briefly for the effect to set it up
+      if (!recognitionRef.current) {
+        logger.debug('Recognition not ready; waiting a tick to initialize');
+        await new Promise((r) => setTimeout(r, 60));
+      }
+      if (!recognitionRef.current || !isVoiceEnabled) {
+        setVoiceError('Voice initializing… please try again');
+        return;
+      }
     }
 
     try {
       // Check microphone permissions first
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        console.log('Requesting microphone permissions...');
+        logger.debug('Requesting microphone permissions...');
         await navigator.mediaDevices.getUserMedia({ audio: true });
-        console.log('Microphone permissions granted');
+        logger.debug('Microphone permissions granted');
       }
 
       // Ensure language is set per current mode and reset fallback tracking
       const lang = getRecognitionLang();
       recognitionRef.current.lang = lang;
+      // Set continuous mode based on user toggle
       recognitionRef.current.continuous = continuousDictation;
       triedFallbackRef.current = false;
       fallbackPendingRef.current = null;
@@ -510,11 +758,13 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
         window.clearTimeout(commitTimerRef.current);
         commitTimerRef.current = null;
       }
-      console.log('Starting speech recognition with lang:', lang);
+      // Optimistic UI: show listening state immediately
+      setIsListening(true);
+      logger.info('Starting speech recognition with lang:', lang);
       setVoiceError(null);
       recognitionRef.current.start();
     } catch (error) {
-      console.error('Failed to start speech recognition:', error);
+      logger.error('Failed to start speech recognition:', error);
       if (error instanceof Error) {
         if (error.name === 'NotAllowedError') {
           setVoiceError('Microphone access denied. Please allow microphone permissions and try again.');
@@ -526,8 +776,9 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
       } else {
         setVoiceError('Failed to start voice recognition. Please try again.');
       }
+      setIsListening(false);
     }
-  }, [voiceSupported, isVoiceEnabled, getRecognitionLang, confidenceThreshold, continuousDictation, silenceTimeoutMs]);
+  }, [voiceSupported, isVoiceEnabled, getRecognitionLang, continuousDictation]);
 
   // Stop voice recognition
   const stopListening = useCallback(() => {
@@ -539,7 +790,7 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
         const usedLang = recognitionRef.current?.lang || getRecognitionLang();
         recentVoiceSendsRef.current.unshift({ content: finalText, lang: usedLang, ts: Date.now() });
         recentVoiceSendsRef.current = recentVoiceSendsRef.current.slice(0, 6);
-        console.log('Manual stop: committing voice input', finalText);
+        logger.debug('Manual stop: committing voice input', finalText);
         handleSendMessage(finalText);
         recognizedAccumRef.current = '';
         setInputValue('');
@@ -549,7 +800,7 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
         commitTimerRef.current = null;
       }
     }
-  }, [isListening]);
+  }, [isListening, getRecognitionLang, handleSendMessage]);
 
   // Initialize chat session (same as original)
   const initializeChat = React.useCallback(async () => {
@@ -560,9 +811,9 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
 
       try {
         const agentType = getAgentTypeFor(selectedAgentId);
-        console.log(`[CHAT PANEL] Creating session with agentType: "${agentType}" for agentId: ${selectedAgentId}`);
+        logger.info(`[CHAT PANEL] Creating session with agentType: "${agentType}" for agentId: ${selectedAgentId}`);
         const { session_id } = await agentChatService.createSession(agentType);
-        console.log(`[CHAT PANEL] Session created with ID: ${session_id}`);
+        logger.info(`[CHAT PANEL] Session created with ID: ${session_id}`);
         setSessionId(session_id);
         sessionIdRef.current = session_id;
 
@@ -581,16 +832,16 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
               });
             }
           } catch (e) {
-            console.warn('Pydantic KB ensure failed (non-fatal):', e);
+            logger.warn('Pydantic KB ensure failed (non-fatal):', e);
           }
         }
 
         try {
           const history = await agentChatService.getChatHistory(session_id);
-          console.log(`[CHAT PANEL] Loaded chat history:`, history);
+          logger.debug(`[CHAT PANEL] Loaded chat history:`, history);
           setMessages(history || []);
         } catch (error) {
-          console.error('Failed to load chat history:', error);
+          logger.error('Failed to load chat history:', error);
           setMessages([]);
         }
 
@@ -610,13 +861,13 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
               setConnectionStatus('online');
             },
             (error: Error) => {
-              console.error('Message streaming error:', error);
+              logger.error('Message streaming error:', error);
               setConnectionStatus('offline');
               setConnectionError('Chat service is offline. Messages will not be received.');
             }
           );
         } catch (error) {
-          console.error('Failed to start message streaming:', error);
+          logger.error('Failed to start message streaming:', error);
         }
 
         setIsInitialized(true);
@@ -624,35 +875,33 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
         setConnectionError(null);
 
       } catch (error) {
-        console.error('Failed to create session:', error);
+        logger.error('Failed to create session:', error);
         setConnectionError('Unable to start chat session. Please try again.');
         setConnectionStatus('offline');
       }
     } catch (error) {
-      console.error('Chat initialization failed:', error);
+      logger.error('Chat initialization failed:', error);
       setConnectionError('Chat initialization failed. Please refresh the page.');
       setConnectionStatus('offline');
     }
-  }, [isVoiceEnabled, speakText, selectedAgentId]);
+  }, [selectedAgentId]);
 
   // Speak when new agent messages arrive, using current isVoiceEnabled
   useEffect(() => {
     if (!isVoiceEnabled || !messages?.length) return;
 
     const last = messages[messages.length - 1];
-    const sender = String((last as any)?.sender || (last as any)?.role || '').toLowerCase();
+    const lastObj = (last as unknown) as Record<string, unknown>;
+    const sender = (typeof lastObj.sender === 'string' ? lastObj.sender : typeof lastObj.role === 'string' ? (lastObj.role as string) : '').toLowerCase();
     // Stricter detection: treat only known assistant-like senders as agent
     const agentAliases = ['agent', 'assistant', 'archon'];
     const isAgentMsg = agentAliases.includes(sender);
 
-    const msgId = (last as any).id ?? `${(last as any).timestamp ?? Date.now()}-${messages.length}`;
-    if (isAgentMsg && (last as any).content && lastSpokenIdRef.current !== msgId) {
-      console.log('[TTS] Speaking agent message:', {
-        id: msgId,
-        sender,
-        text: String((last as any).content).slice(0, 80) + '...'
-      });
-      speakText(String((last as any).content));
+    const msgId = typeof lastObj.id === 'string' ? lastObj.id : `${(lastObj.timestamp as string | number | Date | undefined) ?? Date.now()}-${messages.length}`;
+    const content = typeof lastObj.content === 'string' ? lastObj.content : '';
+    if (isAgentMsg && content && lastSpokenIdRef.current !== msgId) {
+      logger.debug('[TTS] Speaking agent message:', { id: msgId, sender, text: content.slice(0, 80) + '...' });
+      speakText(content);
       lastSpokenIdRef.current = msgId;
     }
   }, [messages, isVoiceEnabled, speakText]);
@@ -666,67 +915,12 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
       window.speechSynthesis.speak(u);
     } catch (e) {
       // Intentionally no-op: warm-up failures should not crash UI
-      console.warn('TTS warm-up failed:', e);
+      logger.warn('TTS warm-up failed:', e);
     }
   }, [isVoiceEnabled]);
 
   // Handle sending messages (enhanced for voice)
-  const handleSendMessage = async (messageText?: string) => {
-    const textToSend = messageText || inputValue.trim();
-    if (!textToSend || !sessionId) return;
-
-    try {
-      // Add context including voice information; tailor for selected agent
-      const base = {
-        input_method: messageText ? 'voice' : 'text',
-        voice_enabled: isVoiceEnabled
-      } as Record<string, any>;
-      const context = (() => {
-        if (selectedAgentId === 'profesora-maria') {
-          return {
-            ...base,
-            student_level: 'intermediate',
-            conversation_mode: 'casual',
-            // Prefer concise bilingual read-out
-            response_style: 'minimal',
-            include_translation: true,
-            include_corrections: true,
-            include_grammar_notes: false,
-            include_vocabulary: true,
-            include_cultural_notes: false,
-            include_encouragement: true,
-            include_next_topic: true,
-            max_reply_sentences: 1,
-            reading_mode: true,
-          };
-        }
-        if (selectedAgentId === 'pydantic-ai') {
-          return {
-            ...base,
-            domain: 'pydantic-ai',
-            knowledge_source: 'llmstxt',
-            dataset_hint: 'Pydantic Documentation - Llms-Full.Txt',
-            source_filter: 'pydantic|ai.pydantic.dev|llms-full|ai-agent-mastery',
-          };
-        }
-        return base;
-      })();
-
-      await agentChatService.sendMessage(sessionId, {
-        message: textToSend,
-        context,
-        agentId: selectedAgentId,
-      });
-
-      if (!messageText) {
-        setInputValue('');
-      }
-
-    } catch (error) {
-      console.error('Failed to send message:', error);
-      setConnectionError('Failed to send message. Please try again.');
-    }
-  };
+  // (moved earlier to prevent TDZ when used in effects)
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -793,10 +987,22 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
           {/* Voice toggle */}
           {voiceSupported && (
             <button
-              onClick={() => {
+              type="button"
+              onClick={async () => {
                 const newVoiceState = !isVoiceEnabled;
-                console.log('Voice toggle clicked. Changing from', isVoiceEnabled, 'to', newVoiceState);
+                logger.debug('Voice toggle clicked. Changing from', isVoiceEnabled, 'to', newVoiceState);
                 setIsVoiceEnabled(newVoiceState);
+                if (newVoiceState) {
+                  try {
+                    // Proactively request mic permission on enable
+                    await navigator.mediaDevices.getUserMedia({ audio: true });
+                    setVoiceError(null);
+                    logger.debug('Microphone permission confirmed on toggle');
+                  } catch (e) {
+                    logger.error('Microphone permission request failed on toggle:', e);
+                    setVoiceError('Microphone access denied or unavailable. Check browser permissions.');
+                  }
+                }
               }}
               className={`p-2 rounded-full transition-colors ${
                 isVoiceEnabled
@@ -980,17 +1186,18 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
               <Tooltip.Root>
                 <Tooltip.Trigger asChild>
                   <button
+                    type="button"
                     onClick={() => {
-                      console.log('Voice button clicked. Currently listening:', isListening);
+                      logger.debug('Voice button clicked. Currently listening:', isListening);
                       if (isListening) {
-                        console.log('Stopping voice recognition...');
+                        logger.debug('Stopping voice recognition...');
                         stopListening();
                       } else {
-                        console.log('Starting voice recognition...');
+                        logger.debug('Starting voice recognition...');
                         startListening();
                       }
                     }}
-                    disabled={connectionStatus !== 'online'}
+                    disabled={!voiceSupported || !hasAudioInput}
                     className={`p-2 rounded-full transition-all duration-200 ${
                       isListening
                         ? 'bg-red-500 text-white animate-pulse'

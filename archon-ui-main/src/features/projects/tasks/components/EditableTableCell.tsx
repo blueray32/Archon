@@ -1,6 +1,13 @@
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
-import { Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../ui/primitives";
+import {
+  Input,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../../ui/primitives";
 import { cn } from "../../../ui/primitives/styles";
 
 interface EditableTableCellProps {
@@ -81,7 +88,12 @@ export const EditableTableCell = ({
   };
 
   // Get the appropriate options based on type
-  const selectOptions = type === "status" ? STATUS_OPTIONS : type === "assignee" ? ASSIGNEE_OPTIONS : options || [];
+  const selectOptions =
+    type === "status"
+      ? STATUS_OPTIONS
+      : type === "assignee"
+        ? ASSIGNEE_OPTIONS
+        : options || [];
 
   if (!isEditing) {
     return (
@@ -106,7 +118,9 @@ export const EditableTableCell = ({
         )}
         title={value || placeholder}
       >
-        <span className={cn(!value && "text-gray-400 italic")}>{value || placeholder}</span>
+        <span className={cn(!value && "text-gray-400 italic")}>
+          {value || placeholder}
+        </span>
       </div>
     );
   }

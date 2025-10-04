@@ -336,7 +336,7 @@ ENV MCP_PORT=8051
 EXPOSE 8051
 
 # Run the MCP server
-CMD ["python", "src/mcp_server.py"]
+CMD ["python", "-m", "src.mcp_server.mcp_server"]
 ```
 
 #### Agents Service Dockerfile

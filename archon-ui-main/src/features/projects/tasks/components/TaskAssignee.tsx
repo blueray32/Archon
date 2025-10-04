@@ -1,6 +1,11 @@
 import { Bot, User } from "lucide-react";
 import type React from "react";
-import { Select, SelectContent, SelectItem, SelectTrigger } from "../../../ui/primitives";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "../../../ui/primitives";
 import { cn } from "../../../ui/primitives/styles";
 import type { Assignee } from "../types";
 
@@ -58,7 +63,11 @@ const getAssigneeStyles = (assigneeName: Assignee) => {
   }
 };
 
-export const TaskAssignee: React.FC<TaskAssigneeProps> = ({ assignee, onAssigneeChange, isLoading = false }) => {
+export const TaskAssignee: React.FC<TaskAssigneeProps> = ({
+  assignee,
+  onAssigneeChange,
+  isLoading = false,
+}) => {
   const styles = getAssigneeStyles(assignee);
 
   // If no change handler, just show a static display
@@ -76,13 +85,18 @@ export const TaskAssignee: React.FC<TaskAssigneeProps> = ({ assignee, onAssignee
         >
           {getAssigneeIcon(assignee, "md")}
         </div>
-        <span className="text-gray-600 dark:text-gray-400 text-xs">{assignee}</span>
+        <span className="text-gray-600 dark:text-gray-400 text-xs">
+          {assignee}
+        </span>
       </div>
     );
   }
 
   return (
-    <Select value={assignee} onValueChange={(value) => onAssigneeChange(value as Assignee)}>
+    <Select
+      value={assignee}
+      onValueChange={(value) => onAssigneeChange(value as Assignee)}
+    >
       <SelectTrigger
         disabled={isLoading}
         className={cn(
@@ -130,7 +144,9 @@ export const TaskAssignee: React.FC<TaskAssigneeProps> = ({ assignee, onAssignee
                 >
                   {getAssigneeIcon(option, "md")}
                 </div>
-                <span className={cn("text-sm", optionStyles.color)}>{option}</span>
+                <span className={cn("text-sm", optionStyles.color)}>
+                  {option}
+                </span>
               </div>
             </SelectItem>
           );

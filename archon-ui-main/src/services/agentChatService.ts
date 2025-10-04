@@ -4,6 +4,7 @@
  */
 
 import { serverHealthService } from './serverHealthService';
+import { logger } from '../utils/logger';
 
 export interface ChatMessage {
   id: string;
@@ -24,7 +25,7 @@ interface ChatSession {
 interface ChatRequest {
   message: string;
   project_id?: string;
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
   agentId?: string;
 }
 
@@ -72,7 +73,7 @@ class AgentChatService {
         return 'offline';
       }
     } catch (error) {
-      console.error('Failed to check chat server status:', error);
+      logger.error('Failed to check chat server status:', error);
       this.serverStatus = 'offline';
       return 'offline';
     }
@@ -92,7 +93,7 @@ class AgentChatService {
 
       return response.ok;
     } catch (error) {
-      console.error('Failed to validate session:', error);
+      logger.error('Failed to validate session:', error);
       return false;
     }
   }
@@ -116,7 +117,7 @@ class AgentChatService {
       if (!response.ok) {
         // If we get a 404, the agent service is not running
         if (response.status === 404) {
-          console.log('Agent chat service not available - service may be disabled');
+          logger.warn('Agent chat service not available - service may be disabled');
           throw new Error('Agent chat service is not available. The service may be disabled.');
         }
         throw new Error(`Failed to create session: ${response.statusText}`);
@@ -127,7 +128,7 @@ class AgentChatService {
     } catch (error) {
       // Don't log fetch errors for disabled service
       if (error instanceof Error && !error.message.includes('not available')) {
-        console.error('Failed to create chat session:', error);
+        logger.error('Failed to create chat session:', error);
       }
       throw error;
     }
@@ -153,7 +154,7 @@ class AgentChatService {
       const message = await response.json();
       return message;
     } catch (error) {
-      console.error('Failed to send message:', error);
+      logger.error('Failed to send message:', error);
       throw error;
     }
   }
@@ -187,7 +188,7 @@ class AgentChatService {
         if (!response.ok) {
           // If we get a 404, the service is not available - stop polling
           if (response.status === 404) {
-            console.log('Agent chat service not available (404) - stopping polling');
+            logger.warn('Agent chat service not available (404) - stopping polling');
             clearInterval(pollInterval);
             this.pollingIntervals.delete(sessionId);
             const errorHandler = this.errorHandlers.get(sessionId);
@@ -217,7 +218,7 @@ class AgentChatService {
       } catch (error) {
         // Only log non-404 errors (404s are handled above)
         if (error instanceof Error && !error.message.includes('404')) {
-          console.error('Failed to poll messages:', error);
+          logger.error('Failed to poll messages:', error);
         }
         const errorHandler = this.errorHandlers.get(sessionId);
         if (errorHandler) {
@@ -255,7 +256,7 @@ class AgentChatService {
       const messages = await response.json();
       return messages;
     } catch (error) {
-      console.error('Failed to get chat history:', error);
+      logger.error('Failed to get chat history:', error);
       throw error;
     }
   }
@@ -279,7 +280,7 @@ class AgentChatService {
         throw new Error(`Failed to delete session: ${response.statusText}`);
       }
     } catch (error) {
-      console.error('Failed to delete chat session:', error);
+      logger.error('Failed to delete chat session:', error);
       throw error;
     }
   }

@@ -1,11 +1,16 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, lazy, Suspense } from 'react';
 import { Link as LinkIcon, Upload, Trash2, RefreshCw, Code, FileText, Brain, BoxIcon, Globe, ChevronRight, Pencil } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { KnowledgeItem, KnowledgeItemMetadata } from '../../services/knowledgeBaseService';
 import { useCardTilt } from '../../hooks/useCardTilt';
-import { CodeViewerModal, CodeExample } from '../code/CodeViewerModal';
-import { EditKnowledgeItemModal } from './EditKnowledgeItemModal';
+import type { CodeExample } from '../code/CodeViewerModal';
+const CodeViewerModal = lazy(() =>
+  import('../code/CodeViewerModal').then((m) => ({ default: m.CodeViewerModal })),
+);
+const EditKnowledgeItemModal = lazy(() =>
+  import('./EditKnowledgeItemModal').then((m) => ({ default: m.EditKnowledgeItemModal })),
+);
 import '../../styles/card-animations.css';
 
 // Define GroupedKnowledgeItem interface locally
@@ -192,9 +197,9 @@ export const GroupedKnowledgeItemCard = ({
   };
   
   // Use active item for icons
-  const TypeIcon = activeItem.metadata.knowledge_type === 'technical' ? BoxIcon : Brain;
-  const sourceIconColor = getSourceIconColor(activeItem);
-  const typeIconColor = getTypeIconColor(activeItem);
+  const _TypeIcon = activeItem.metadata.knowledge_type === 'technical' ? BoxIcon : Brain;
+  const _sourceIconColor = getSourceIconColor(activeItem);
+  const _typeIconColor = getTypeIconColor(activeItem);
   
   const statusColorMap = {
     active: 'green',
@@ -228,40 +233,26 @@ export const GroupedKnowledgeItemCard = ({
   };
 
   // Calculate total word count
-  const totalWordCount = groupedItem.metadata.word_count || groupedItem.items.reduce(
+  const _totalWordCount = groupedItem.metadata.word_count || groupedItem.items.reduce(
     (sum, item) => sum + (item.metadata.word_count || 0), 0
   );
 
-  // Calculate total code examples count from metadata
-  const totalCodeExamples = useMemo(() => {
+  // Calculate total code examples count from items
+  const _totalCodeExamples = useMemo(() => {
     return groupedItem.items.reduce(
-      (sum, item) => sum + (item.metadata.code_examples_count || 0),
+      (sum, item) => sum + (item.code_examples?.length ?? 0),
       0,
     );
   }, [groupedItem.items]);
 
-  // Calculate active item's code examples count from metadata
-  const activeCodeExamples = activeItem.metadata.code_examples_count || 0;
+  // Calculate active item's code examples count from item
+  const activeCodeExamples = activeItem.code_examples?.length ?? 0;
   
   // Calculate active item's word count
   const activeWordCount = activeItem.metadata.word_count || 0;
 
-  // Get code examples from all items in the group
-  const allCodeExamples = useMemo(() => {
-    return groupedItem.items.reduce(
-      (examples, item) => {
-        const itemExamples = item.code_examples || [];
-        return [...examples, ...itemExamples.map((ex: any, idx: number) => ({
-          title: ex.metadata?.example_name || ex.metadata?.title || ex.summary?.split('\n')[0] || 'Code Example',
-          description: ex.summary || '',
-        }))];
-      },
-      [] as Array<{
-        title: string;
-        description: string;
-      }>,
-    );
-  }, [groupedItem.items]);
+  // Get code examples from all items in the group (not used in UI)
+  // Removed to avoid unused variable errors and dead code.
 
   // Format code examples for the modal with additional safety checks
   const formattedCodeExamples = useMemo(() => {
@@ -630,10 +621,12 @@ export const GroupedKnowledgeItemCard = ({
       
       {/* Code Examples Modal */}
       {showCodeModal && formattedCodeExamples.length > 0 && (
-        <CodeViewerModal
-          examples={formattedCodeExamples}
-          onClose={() => setShowCodeModal(false)}
-        />
+        <Suspense fallback={<div className="p-2 text-xs text-zinc-500">Loading code…</div>}>
+          <CodeViewerModal
+            examples={formattedCodeExamples}
+            onClose={() => setShowCodeModal(false)}
+          />
+        </Suspense>
       )}
       
       {/* Delete Confirm Modal */}
@@ -652,13 +645,15 @@ export const GroupedKnowledgeItemCard = ({
       
       {/* Edit Modal - edits the active item */}
       {showEditModal && activeItem && (
-        <EditKnowledgeItemModal
-          item={activeItem}
-          onClose={() => setShowEditModal(false)}
-          onUpdate={() => {
-            if (onUpdate) onUpdate();
-          }}
-        />
+        <Suspense fallback={<div className="p-2 text-xs text-zinc-500">Loading editor…</div>}>
+          <EditKnowledgeItemModal
+            item={activeItem}
+            onClose={() => setShowEditModal(false)}
+            onUpdate={() => {
+              if (onUpdate) onUpdate();
+            }}
+          />
+        </Suspense>
       )}
     </div>
   );

@@ -26,7 +26,10 @@ export const AgentProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     try {
       localStorage.setItem(KEY, selectedAgentId);
-    } catch {}
+    } catch {
+      // non-critical: ignore storage write failures (e.g., private mode)
+      void 0;
+    }
   }, [selectedAgentId]);
 
 

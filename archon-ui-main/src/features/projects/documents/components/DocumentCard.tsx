@@ -62,48 +62,54 @@ const getTypeColor = (type?: DocumentType) => {
   }
 };
 
-export const DocumentCard = memo(({ document, isActive, onSelect, onDelete }: DocumentCardProps) => {
-  const [showDelete, setShowDelete] = useState(false);
-  const [isCopied, setIsCopied] = useState(false);
+export const DocumentCard = memo(
+  ({ document, isActive, onSelect, onDelete }: DocumentCardProps) => {
+    const [showDelete, setShowDelete] = useState(false);
+    const [isCopied, setIsCopied] = useState(false);
 
-  // Defensive normalization for potentially missing fields from backend
-  const docId: string | null = typeof document?.id === "string" && document.id.length > 0 ? document.id : null;
+    // Defensive normalization for potentially missing fields from backend
+    const docId: string | null =
+      typeof document?.id === "string" && document.id.length > 0
+        ? document.id
+        : null;
 
-  const handleCopyId = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-      if (!docId) {
-        // Prefer visible error during beta, but don’t crash UI
-        console.warn("DocumentCard: Missing document.id, copy aborted", { document });
-        return;
-      }
-      navigator.clipboard.writeText(docId);
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 2000);
-    },
-    [docId, document],
-  );
-
-  const handleDelete = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-      onDelete(document);
-    },
-    [document, onDelete],
-  );
-
-  return (
-    // biome-ignore lint/a11y/useSemanticElements: Complex card with nested interactive elements - semantic button would break layout
-    <div
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onSelect(document);
+    const handleCopyId = useCallback(
+      (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!docId) {
+          // Prefer visible error during beta, but don’t crash UI
+          console.warn("DocumentCard: Missing document.id, copy aborted", {
+            document,
+          });
+          return;
         }
-      }}
-      className={`
+        navigator.clipboard.writeText(docId);
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+      },
+      [docId, document],
+    );
+
+    const handleDelete = useCallback(
+      (e: React.MouseEvent) => {
+        e.stopPropagation();
+        onDelete(document);
+      },
+      [document, onDelete],
+    );
+
+    return (
+      // biome-ignore lint/a11y/useSemanticElements: Complex card with nested interactive elements - semantic button would break layout
+      <div
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onSelect(document);
+          }
+        }}
+        className={`
         relative flex-shrink-0 w-48 p-4 rounded-lg cursor-pointer
         transition-all duration-200 group
         ${
@@ -112,68 +118,76 @@ export const DocumentCard = memo(({ document, isActive, onSelect, onDelete }: Do
             : "bg-white/50 dark:bg-black/30 border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-md"
         }
       `}
-      onClick={() => onSelect(document)}
-      onMouseEnter={() => setShowDelete(true)}
-      onMouseLeave={() => setShowDelete(false)}
-    >
-      {/* Document Type Badge */}
-      <div
-        className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium mb-2 border ${getTypeColor(
-          document.document_type as DocumentType,
-        )}`}
+        onClick={() => onSelect(document)}
+        onMouseEnter={() => setShowDelete(true)}
+        onMouseLeave={() => setShowDelete(false)}
       >
-        {getDocumentIcon(document.document_type as DocumentType)}
-        <span>{document.document_type || "document"}</span>
-      </div>
-
-      {/* Title */}
-      <h4 className="font-medium text-gray-900 dark:text-white text-sm line-clamp-2 mb-1">{document.title}</h4>
-
-      {/* Metadata */}
-      <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-        {new Date(document.updated_at || document.created_at || Date.now()).toLocaleDateString()}
-      </p>
-
-      {/* ID Display Section - Always visible for active, hover for others */}
-      <div
-        className={`flex items-center justify-between mt-2 ${
-          isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-        } transition-opacity duration-200`}
-      >
-        <span className="text-xs text-gray-400 dark:text-gray-500 truncate max-w-[120px]" title={docId || ""}>
-          {docId ? docId.slice(0, 8) : "unknown"}...
-        </span>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleCopyId}
-          className="p-1 h-auto min-h-0"
-          title="Copy Document ID to clipboard"
-          aria-label="Copy Document ID to clipboard"
+        {/* Document Type Badge */}
+        <div
+          className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium mb-2 border ${getTypeColor(
+            document.document_type as DocumentType,
+          )}`}
         >
-          {isCopied ? (
-            <span className="text-green-500 text-xs">✓</span>
-          ) : (
-            <Clipboard className="w-3 h-3" aria-hidden="true" />
-          )}
-        </Button>
-      </div>
+          {getDocumentIcon(document.document_type as DocumentType)}
+          <span>{document.document_type || "document"}</span>
+        </div>
 
-      {/* Delete Button */}
-      {showDelete && !isActive && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleDelete}
-          className="absolute top-2 right-2 p-1 h-auto min-h-0 text-red-600 dark:text-red-400 hover:bg-red-500/20"
-          aria-label={`Delete ${document.title}`}
-          title="Delete document"
+        {/* Title */}
+        <h4 className="font-medium text-gray-900 dark:text-white text-sm line-clamp-2 mb-1">
+          {document.title}
+        </h4>
+
+        {/* Metadata */}
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+          {new Date(
+            document.updated_at || document.created_at || Date.now(),
+          ).toLocaleDateString()}
+        </p>
+
+        {/* ID Display Section - Always visible for active, hover for others */}
+        <div
+          className={`flex items-center justify-between mt-2 ${
+            isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+          } transition-opacity duration-200`}
         >
-          <X className="w-4 h-4" aria-hidden="true" />
-        </Button>
-      )}
-    </div>
-  );
-});
+          <span
+            className="text-xs text-gray-400 dark:text-gray-500 truncate max-w-[120px]"
+            title={docId || ""}
+          >
+            {docId ? docId.slice(0, 8) : "unknown"}...
+          </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleCopyId}
+            className="p-1 h-auto min-h-0"
+            title="Copy Document ID to clipboard"
+            aria-label="Copy Document ID to clipboard"
+          >
+            {isCopied ? (
+              <span className="text-green-500 text-xs">✓</span>
+            ) : (
+              <Clipboard className="w-3 h-3" aria-hidden="true" />
+            )}
+          </Button>
+        </div>
+
+        {/* Delete Button */}
+        {showDelete && !isActive && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleDelete}
+            className="absolute top-2 right-2 p-1 h-auto min-h-0 text-red-600 dark:text-red-400 hover:bg-red-500/20"
+            aria-label={`Delete ${document.title}`}
+            title="Delete document"
+          >
+            <X className="w-4 h-4" aria-hidden="true" />
+          </Button>
+        )}
+      </div>
+    );
+  },
+);
 
 DocumentCard.displayName = "DocumentCard";

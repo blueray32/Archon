@@ -10,7 +10,12 @@ export const TabsList = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.List>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>
 >(({ className, ...props }, ref) => (
-  <TabsPrimitive.List ref={ref} className={cn("relative", className)} role="tablist" {...props}>
+  <TabsPrimitive.List
+    ref={ref}
+    className={cn("relative", className)}
+    role="tablist"
+    {...props}
+  >
     {/* Subtle neon glow effect */}
     <div className="absolute inset-0 rounded-lg opacity-30 blur-[1px] bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 pointer-events-none" />
     {props.children}

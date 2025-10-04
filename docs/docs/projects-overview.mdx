@@ -629,9 +629,9 @@ The React frontend (`ProjectPage.tsx` - 593 lines) provides intuitive task manag
 - **Status Updates**: Drag-and-drop status changes
 - **Task Grouping**: Organize tasks by feature or category
 
-### Real-time Updates
+### Live Updates
 
-The frontend receives real-time updates via Socket.IO connections when:
+The frontend receives updates via HTTP polling with ETag caching when:
 - Tasks are created or updated by AI agents
 - Project status changes
 - Documents are added or modified
@@ -643,7 +643,7 @@ Archon provides built-in progress tracking:
 - **Project completion percentage** based on completed tasks
 - **Task velocity** showing development pace over time  
 - **Status distribution** showing work distribution across todo/doing/review/done
-- **Real-time updates** via Socket.IO when AI agents or users update tasks
+- **Live updates** via HTTP polling when AI agents or users update tasks
 
 ## 🔍 Best Practices
 

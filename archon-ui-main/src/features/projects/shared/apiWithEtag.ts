@@ -26,10 +26,15 @@ function getCacheKey(endpoint: string, options: RequestInit = {}): string {
  * ETag-aware API call function
  * Handles 304 Not Modified responses by returning cached data
  */
-export async function callAPIWithETag<T = unknown>(endpoint: string, options: RequestInit = {}): Promise<T> {
+export async function callAPIWithETag<T = unknown>(
+  endpoint: string,
+  options: RequestInit = {},
+): Promise<T> {
   try {
     // Clean endpoint
-    const cleanEndpoint = endpoint.startsWith("/api") ? endpoint.substring(4) : endpoint;
+    const cleanEndpoint = endpoint.startsWith("/api")
+      ? endpoint.substring(4)
+      : endpoint;
     const fullUrl = `${API_BASE_URL}${cleanEndpoint}`;
     const cacheKey = getCacheKey(fullUrl, options);
     const method = (options.method || "GET").toUpperCase();
@@ -60,13 +65,18 @@ export async function callAPIWithETag<T = unknown>(endpoint: string, options: Re
       if (cachedData) {
         // Console log for debugging
         if (ETAG_DEBUG) {
-          console.log(`%c[ETag] Cache hit (304) for ${cleanEndpoint}`, "color: #10b981; font-weight: bold");
+          console.log(
+            `%c[ETag] Cache hit (304) for ${cleanEndpoint}`,
+            "color: #10b981; font-weight: bold",
+          );
         }
         return cachedData as T;
       }
       // Cache miss on 304 - this shouldn't happen but handle gracefully
       if (ETAG_DEBUG) {
-        console.error(`[ETag] 304 received but no cached data for ${cleanEndpoint}`);
+        console.error(
+          `[ETag] 304 received but no cached data for ${cleanEndpoint}`,
+        );
       }
       // Clear the stale ETag to prevent this from happening again
       etagCache.delete(cacheKey);
@@ -89,7 +99,11 @@ export async function callAPIWithETag<T = unknown>(endpoint: string, options: Re
       } catch (_e) {
         // Ignore parse errors
       }
-      throw new ProjectServiceError(errorMessage, "HTTP_ERROR", response.status);
+      throw new ProjectServiceError(
+        errorMessage,
+        "HTTP_ERROR",
+        response.status,
+      );
     }
 
     // Handle 204 No Content (DELETE operations)
@@ -153,7 +167,9 @@ export function clearETagCache(): void {
  * Useful after mutations that affect specific resources
  */
 export function invalidateETagCache(endpoint: string, method = "GET"): void {
-  const cleanEndpoint = endpoint.startsWith("/api") ? endpoint.substring(4) : endpoint;
+  const cleanEndpoint = endpoint.startsWith("/api")
+    ? endpoint.substring(4)
+    : endpoint;
   const fullUrl = `${API_BASE_URL}${cleanEndpoint}`;
   const normalizedMethod = method.toUpperCase();
   const cacheKey = `${normalizedMethod}:${fullUrl}`;

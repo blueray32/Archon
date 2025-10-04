@@ -6,7 +6,11 @@ interface BoardViewProps {
   tasks: Task[];
   projectId: string;
   onTaskMove: (taskId: string, newStatus: Task["status"]) => void;
-  onTaskReorder: (taskId: string, targetIndex: number, status: Task["status"]) => void;
+  onTaskReorder: (
+    taskId: string,
+    targetIndex: number,
+    status: Task["status"],
+  ) => void;
   onTaskEdit?: (task: Task) => void;
   onTaskDelete?: (task: Task) => void;
 }
@@ -23,7 +27,9 @@ export const BoardView = ({
 
   // Simple task filtering for board view
   const getTasksByStatus = (status: Task["status"]) => {
-    return tasks.filter((task) => task.status === status).sort((a, b) => a.task_order - b.task_order);
+    return tasks
+      .filter((task) => task.status === status)
+      .sort((a, b) => a.task_order - b.task_order);
   };
 
   // Column configuration

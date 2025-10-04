@@ -31,7 +31,7 @@ export function Navigation({ className }: NavigationProps) {
   // Fetch embeddings health periodically to surface missing count as a badge
   useEffect(() => {
     let active = true;
-    let timer: number | undefined;
+    // Periodic refresh timer
 
     const fetchHealth = async () => {
       try {
@@ -48,11 +48,11 @@ export function Navigation({ className }: NavigationProps) {
 
     fetchHealth();
     // Refresh every 60s
-    timer = window.setInterval(fetchHealth, 60000);
+    const timer = window.setInterval(fetchHealth, 60000);
 
     return () => {
       active = false;
-      if (timer) window.clearInterval(timer);
+      window.clearInterval(timer);
     };
   }, []);
 

@@ -44,10 +44,13 @@ archon-ui-main/
 │   │   ├── Crawl.tsx       # Web crawling interface
 │   │   ├── KnowledgeBase.tsx # Knowledge management
 │   │   └── Chat.tsx        # RAG chat interface
-│   ├── services/           # API and service layers
+│   ├── services/           # API and service layers (legacy)
 │   │   ├── api.ts          # Base API configuration
-│   │   ├── mcpService.ts   # MCP server communication
 │   │   └── chatService.ts  # Chat/RAG service
+│   ├── features/           # Vertical-slice features
+│   │   └── mcp/
+│   │       └── services/
+│   │           └── mcpApi.ts # MCP server communication
 │   ├── contexts/           # React contexts
 │   │   └── ToastContext.tsx # Toast notifications
 │   ├── hooks/              # Custom React hooks
@@ -200,13 +203,12 @@ Wraps pages with smooth fade/slide animations:
 
 ## 🔌 Services
 
-### mcpService
-Handles all MCP server communication:
-- `startServer()`: Start the MCP server
-- `stopServer()`: Stop the MCP server
+### mcpApi
+Handles all MCP server communication (HTTP polling):
 - `getStatus()`: Get current server status
-- `streamLogs()`: WebSocket log streaming
-- `getAvailableTools()`: Fetch MCP tools
+- `getConfig()`: Get server configuration
+- `getSessionInfo()`: Get session/uptime information
+- `getClients()`: List connected MCP clients
 
 ### api
 Base API configuration with:

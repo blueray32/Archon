@@ -1,7 +1,13 @@
 import { Check, Edit, Tag, Trash2 } from "lucide-react";
 import React, { useState } from "react";
 import { useDrag, useDrop } from "react-dnd";
-import { Button, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../../ui/primitives";
+import {
+  Button,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../../../ui/primitives";
 import { cn } from "../../../ui/primitives/styles";
 import { EditableTableCell } from "../components/EditableTableCell";
 import { TaskAssignee } from "../components/TaskAssignee";
@@ -15,7 +21,11 @@ interface TableViewProps {
   onTaskView?: (task: Task) => void;
   onTaskComplete?: (taskId: string) => void;
   onTaskDelete?: (task: Task) => void;
-  onTaskReorder: (taskId: string, newOrder: number, status: Task["status"]) => void;
+  onTaskReorder: (
+    taskId: string,
+    newOrder: number,
+    status: Task["status"],
+  ) => void;
   onTaskUpdate?: (taskId: string, updates: Partial<Task>) => Promise<void>;
 }
 
@@ -26,7 +36,11 @@ interface DraggableRowProps {
   onTaskView?: (task: Task) => void;
   onTaskComplete?: (taskId: string) => void;
   onTaskDelete?: (task: Task) => void;
-  onTaskReorder: (taskId: string, newOrder: number, status: Task["status"]) => void;
+  onTaskReorder: (
+    taskId: string,
+    newOrder: number,
+    status: Task["status"],
+  ) => void;
 }
 
 const DraggableRow = ({
@@ -53,7 +67,10 @@ const DraggableRow = ({
 
   const [{ isOver }, drop] = useDrop({
     accept: ItemTypes.TASK,
-    hover: (draggedItem: { id: string; index: number; status: Task["status"] }, monitor) => {
+    hover: (
+      draggedItem: { id: string; index: number; status: Task["status"] },
+      monitor,
+    ) => {
       if (!monitor.isOver({ shallow: true })) return;
       if (draggedItem.id === task.id) return;
       if (draggedItem.status !== task.status) return;
@@ -115,7 +132,9 @@ const DraggableRow = ({
       ref={(node) => drag(drop(node))}
       className={cn(
         "group transition-all duration-200 cursor-move",
-        index % 2 === 0 ? "bg-white/50 dark:bg-black/50" : "bg-gray-50/80 dark:bg-gray-900/30",
+        index % 2 === 0
+          ? "bg-white/50 dark:bg-black/50"
+          : "bg-gray-50/80 dark:bg-gray-900/30",
         "hover:bg-gradient-to-r hover:from-cyan-50/70 hover:to-purple-50/70",
         "dark:hover:from-cyan-900/20 dark:hover:to-purple-900/20",
         "border-b border-gray-200 dark:border-gray-800",
@@ -125,7 +144,13 @@ const DraggableRow = ({
     >
       {/* Priority/Order Indicator */}
       <td className="w-1 p-0">
-        <div className={cn("w-1 h-full", getOrderColor(task.task_order), getOrderGlow(task.task_order))} />
+        <div
+          className={cn(
+            "w-1 h-full",
+            getOrderColor(task.task_order),
+            getOrderGlow(task.task_order),
+          )}
+        />
       </td>
 
       {/* Title */}
@@ -152,7 +177,9 @@ const DraggableRow = ({
       {/* Feature */}
       <td className="px-4 py-2 w-40">
         <div className="flex items-center gap-1">
-          {task.feature && <Tag className="w-3 h-3 text-gray-500 dark:text-gray-400" />}
+          {task.feature && (
+            <Tag className="w-3 h-3 text-gray-500 dark:text-gray-400" />
+          )}
           <EditableTableCell
             value={task.feature || ""}
             onSave={(value) => handleUpdateField("feature", value)}
@@ -178,7 +205,12 @@ const DraggableRow = ({
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="xs" onClick={handleEdit} className="h-7 w-7 p-0">
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  onClick={handleEdit}
+                  className="h-7 w-7 p-0"
+                >
                   <Edit className="w-3 h-3" />
                 </Button>
               </TooltipTrigger>
@@ -243,7 +275,9 @@ export const TableView = ({
 
     // Sort each group by task_order
     Object.keys(groups).forEach((status) => {
-      groups[status as Task["status"]].sort((a, b) => a.task_order - b.task_order);
+      groups[status as Task["status"]].sort(
+        (a, b) => a.task_order - b.task_order,
+      );
     });
 
     return groups;
@@ -257,11 +291,21 @@ export const TableView = ({
         <thead>
           <tr className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 border-b-2 border-gray-200 dark:border-gray-700">
             <th className="w-1"></th>
-            <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">Title</th>
-            <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300 w-32">Status</th>
-            <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300 w-40">Feature</th>
-            <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300 w-36">Assignee</th>
-            <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300 w-28">Actions</th>
+            <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">
+              Title
+            </th>
+            <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300 w-32">
+              Status
+            </th>
+            <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300 w-40">
+              Feature
+            </th>
+            <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300 w-36">
+              Assignee
+            </th>
+            <th className="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300 w-28">
+              Actions
+            </th>
           </tr>
         </thead>
         <tbody>

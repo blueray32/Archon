@@ -1,4 +1,9 @@
-import { type QueryKey, type UseQueryOptions, type UseQueryResult, useQuery } from "@tanstack/react-query";
+import {
+  type QueryKey,
+  type UseQueryOptions,
+  type UseQueryResult,
+  useQuery,
+} from "@tanstack/react-query";
 import { useSmartPolling } from "./useSmartPolling";
 
 /**

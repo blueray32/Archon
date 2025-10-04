@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Database } from 'lucide-react';
 import { MainLayout } from '../components/layout/MainLayout';
 import { backfillEmbeddings, getEmbeddingsHealth, type EmbeddingsBackfillRequest } from '../services/api';
 import { useToast } from '../features/ui/hooks/useToast';
+import { useDatabaseMutation } from '../features/ui/hooks/useDatabaseMutation';
 
 export function EmbeddingsPage() {
   const { data, isLoading, refetch, isFetching, error } = useQuery({
@@ -28,20 +29,24 @@ export function EmbeddingsPage() {
         const parsed = JSON.parse(raw);
         setForm((f) => ({ ...f, ...parsed }));
       }
-    } catch {}
+    } catch {
+      void 0;
+    }
   }, []);
 
   // Persist preferences whenever form changes
   useEffect(() => {
     try {
       localStorage.setItem('embeddings_backfill_prefs', JSON.stringify(form));
-    } catch {}
+    } catch {
+      void 0;
+    }
   }, [form]);
 
   const { showToast } = useToast();
 
-  const mutation = useMutation({
-    mutationFn: (body: EmbeddingsBackfillRequest) => backfillEmbeddings(body),
+  const mutation = useDatabaseMutation<any, EmbeddingsBackfillRequest>({
+    mutationFn: (body) => backfillEmbeddings(body),
     onSuccess: async (res) => {
       await refetch();
       // Build a compact summary toast
@@ -64,7 +69,9 @@ export function EmbeddingsPage() {
             response: res,
           };
           localStorage.setItem('embeddings_backfill_last_run', JSON.stringify(payload));
-        } catch {}
+        } catch {
+          void 0;
+        }
       } catch {
         showToast('Backfill completed', 'success');
       }
@@ -72,7 +79,8 @@ export function EmbeddingsPage() {
     onError: (err: any) => {
       const msg = (err && err.message) ? err.message : 'Backfill failed';
       showToast(msg, 'error');
-    }
+    },
+    cancelQueryKeys: [],
   });
 
   const totalMissing = useMemo(() => data?.summary?.missing ?? 0, [data]);
@@ -82,7 +90,9 @@ export function EmbeddingsPage() {
     try {
       const raw = localStorage.getItem('embeddings_backfill_last_run');
       if (raw) setLastRun(JSON.parse(raw));
-    } catch {}
+    } catch {
+      void 0;
+    }
   }, []);
 
   return (
@@ -169,6 +179,7 @@ export function EmbeddingsPage() {
                     const req = lastRun.request;
                     if (!req.dry_run) {
                       const scope = Array.isArray(req.tables) ? req.tables.join(',') : (req.tables || 'all');
+                      // eslint-disable-next-line no-alert
                       const ok = window.confirm(`Re-run live backfill for: ${scope}?`);
                       if (!ok) return;
                     }
@@ -180,7 +191,8 @@ export function EmbeddingsPage() {
                 <button
                   className="px-3 py-1.5 rounded-lg border border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100/50 dark:hover:bg-emerald-800/30"
                   onClick={() => {
-                    try { localStorage.removeItem('embeddings_backfill_last_run'); } catch {}
+                    try { localStorage.removeItem('embeddings_backfill_last_run'); }
+                    catch (e) { console.warn('Failed to clear last run from localStorage', e); }
                     setLastRun(null);
                   }}
                 >
@@ -285,6 +297,7 @@ export function EmbeddingsPage() {
               onClick={() => {
                 if (!form.dry_run) {
                   const scope = Array.isArray(form.tables) ? form.tables.join(',') : (form.tables || 'all');
+                  // eslint-disable-next-line no-alert
                   const ok = window.confirm(`Run live backfill for: ${scope}? This will write embeddings to the database.`);
                   if (!ok) return;
                 }
