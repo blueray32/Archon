@@ -308,6 +308,25 @@ async def send_message(session_id: str, request: dict):
         sessions[session_id]["messages"].append(fallback_msg)
 
     return {"status": "sent"}
+@router.get("/personas")
+async def list_personas():
+    """List available PRP agent personas."""
+    try:
+        from ..utils import get_supabase_client
+        from ..services.prp_service import PRPService
+        import os
+
+        client = get_supabase_client()
+        openai_key = os.getenv("OPENAI_API_KEY")
+        prp_service = PRPService(supabase_client=client, openai_api_key=openai_key)
+
+        personas = await prp_service.list_personas(active_only=True)
+        return {"success": True, "personas": personas}
+    except Exception as e:
+        logger.error(f"Failed to list personas: {e}")
+        return {"success": False, "personas": [], "error": str(e)}
+
+
 @router.get("/status")
 async def agent_chat_status():
     """Lightweight status check for the Agents service used by the UI."""

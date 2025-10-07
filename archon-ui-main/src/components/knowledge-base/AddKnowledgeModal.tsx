@@ -25,12 +25,13 @@ export const AddKnowledgeModal = ({
   onSuccess,
   onStartCrawl
 }: AddKnowledgeModalProps) => {
-  const [method, setMethod] = useState<'url' | 'file'>('url');
+  const [method, setMethod] = useState<'url' | 'file' | 'folder'>('url');
   const [url, setUrl] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
   const [knowledgeType, setKnowledgeType] = useState<'technical' | 'business'>('technical');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const [crawlDepth, setCrawlDepth] = useState(2);
   const [showDepthTooltip, setShowDepthTooltip] = useState(false);
@@ -144,17 +145,17 @@ export const AddKnowledgeModal = ({
           showToast((result as any).message || 'Crawling started', 'success');
           onSuccess();
         }
-      } else {
+      } else if (method === 'file') {
         if (!selectedFile) {
           showToast('Please select a file', 'error');
           return;
         }
-        
+
         const result = await knowledgeBaseService.uploadDocument(selectedFile, {
           knowledge_type: knowledgeType,
           tags
         });
-        
+
         if (result.success && result.progressId) {
           onStartCrawl(result.progressId, {
             currentUrl: `file://${selectedFile.name}`,
@@ -169,11 +170,43 @@ export const AddKnowledgeModal = ({
               tags
             }
           });
-          
+
           showToast('Document upload started', 'success');
           onClose();
         } else {
           showToast(result.message || 'Document uploaded', 'success');
+          onSuccess();
+        }
+      } else if (method === 'folder') {
+        if (selectedFiles.length === 0) {
+          showToast('Please select files from a folder', 'error');
+          return;
+        }
+
+        const result = await knowledgeBaseService.uploadFolder(selectedFiles, {
+          knowledge_type: knowledgeType,
+          tags
+        });
+
+        if (result.success && result.progressId) {
+          onStartCrawl(result.progressId, {
+            currentUrl: `folder://${selectedFiles.length} files`,
+            progress: 0,
+            status: 'starting',
+            uploadType: 'folder',
+            totalFiles: selectedFiles.length,
+            processedFiles: 0,
+            originalUploadParams: {
+              files: selectedFiles,
+              knowledge_type: knowledgeType,
+              tags
+            }
+          });
+
+          showToast(`Folder upload started (${selectedFiles.length} files)`, 'success');
+          onClose();
+        } else {
+          showToast(result.message || 'Folder uploaded', 'success');
           onSuccess();
         }
       }
@@ -244,25 +277,35 @@ export const AddKnowledgeModal = ({
 
         {/* Source Type Selection */}
         <div className="flex gap-4 mb-6">
-          <button 
-            onClick={() => setMethod('url')} 
+          <button
+            onClick={() => setMethod('url')}
             className={`flex-1 p-4 rounded-md border transition flex items-center justify-center gap-2
-              ${method === 'url' 
-                ? 'border-blue-500 text-blue-600 dark:text-blue-500 bg-blue-50 dark:bg-blue-500/5' 
+              ${method === 'url'
+                ? 'border-blue-500 text-blue-600 dark:text-blue-500 bg-blue-50 dark:bg-blue-500/5'
                 : 'border-gray-200 dark:border-zinc-900 text-gray-500 dark:text-zinc-400 hover:border-blue-300 dark:hover:border-blue-500/30'}`}
           >
             <LinkIcon className="w-4 h-4" />
             <span>URL / Website</span>
           </button>
-          <button 
-            onClick={() => setMethod('file')} 
+          <button
+            onClick={() => setMethod('file')}
             className={`flex-1 p-4 rounded-md border transition flex items-center justify-center gap-2
-              ${method === 'file' 
-                ? 'border-pink-500 text-pink-600 dark:text-pink-500 bg-pink-50 dark:bg-pink-500/5' 
+              ${method === 'file'
+                ? 'border-pink-500 text-pink-600 dark:text-pink-500 bg-pink-50 dark:bg-pink-500/5'
                 : 'border-gray-200 dark:border-zinc-900 text-gray-500 dark:text-zinc-400 hover:border-pink-300 dark:hover:border-pink-500/30'}`}
           >
             <Upload className="w-4 h-4" />
             <span>Upload File</span>
+          </button>
+          <button
+            onClick={() => setMethod('folder')}
+            className={`flex-1 p-4 rounded-md border transition flex items-center justify-center gap-2
+              ${method === 'folder'
+                ? 'border-purple-500 text-purple-600 dark:text-purple-500 bg-purple-50 dark:bg-purple-500/5'
+                : 'border-gray-200 dark:border-zinc-900 text-gray-500 dark:text-zinc-400 hover:border-purple-300 dark:hover:border-purple-500/30'}`}
+          >
+            <BoxIcon className="w-4 h-4" />
+            <span>Upload Folder</span>
           </button>
         </div>
 
@@ -323,6 +366,54 @@ export const AddKnowledgeModal = ({
             </div>
             <p className="text-gray-500 dark:text-zinc-600 text-sm mt-2">
               Supports PDF, MD, DOC up to 10MB
+            </p>
+          </div>
+        )}
+
+        {/* Folder Upload */}
+        {method === 'folder' && (
+          <div className="mb-6">
+            <label className="block text-gray-600 dark:text-zinc-400 text-sm mb-2">
+              Upload Folder
+            </label>
+            <div className="relative">
+              <input
+                id="folder-upload"
+                type="file"
+                /* @ts-ignore - webkitdirectory is not in TS types but widely supported */
+                webkitdirectory=""
+                directory=""
+                multiple
+                onChange={(e) => {
+                  const files = Array.from(e.target.files || []);
+                  setSelectedFiles(files);
+                }}
+                className="sr-only"
+              />
+              <label
+                htmlFor="folder-upload"
+                className="flex items-center justify-center gap-3 w-full p-6 rounded-md border-2 border-dashed cursor-pointer transition-all duration-300
+                  bg-purple-500/10 hover:bg-purple-500/20
+                  border-purple-500/30 hover:border-purple-500/50
+                  text-purple-600 dark:text-purple-400
+                  hover:shadow-[0_0_15px_rgba(168,85,247,0.3)]
+                  backdrop-blur-sm"
+              >
+                <BoxIcon className="w-6 h-6" />
+                <div className="text-center">
+                  <div className="font-medium">
+                    {selectedFiles.length > 0 ? `${selectedFiles.length} files selected` : 'Choose Folder'}
+                  </div>
+                  <div className="text-sm opacity-75 mt-1">
+                    {selectedFiles.length > 0
+                      ? `Total: ${(selectedFiles.reduce((sum, f) => sum + f.size, 0) / 1024 / 1024).toFixed(2)} MB`
+                      : 'Click to browse for a folder'}
+                  </div>
+                </div>
+              </label>
+            </div>
+            <p className="text-gray-500 dark:text-zinc-600 text-sm mt-2">
+              All files in the folder will be processed (PDF, MD, DOC, TXT)
             </p>
           </div>
         )}

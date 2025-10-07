@@ -88,9 +88,9 @@ async function apiRequest<T>(
   // Create an AbortController for timeout
   const controller = new AbortController();
   const timeoutId = setTimeout(() => {
-    logger.error(`⏰ [KnowledgeBase] Request timeout after 10 seconds for: ${url}`);
+    logger.error(`⏰ [KnowledgeBase] Request timeout after 60 seconds for: ${url}`);
     controller.abort();
-  }, 10000); // 10 second timeout
+  }, 60000); // 60 second timeout (server may be processing heavy operations)
   
   try {
     logger.debug(`🚀 [KnowledgeBase] Sending fetch request...`);
@@ -137,7 +137,7 @@ async function apiRequest<T>(
     
     // Check if it's a timeout error
     if (error instanceof Error && error.name === 'AbortError') {
-      throw new Error('Request timed out after 10 seconds');
+      throw new Error('Request timed out after 60 seconds');
     }
     
     throw error;
@@ -200,9 +200,26 @@ class KnowledgeBaseService {
    * Update knowledge item metadata
    */
   async updateKnowledgeItem(sourceId: string, updates: Partial<KnowledgeItemMetadata>) {
-    return apiRequest(`/knowledge-items/${sourceId}`, {
-      method: 'PUT',
-      body: JSON.stringify(updates)
+    // Use POST endpoint with source_id in body to avoid 414 errors with long source_ids
+    return apiRequest('/knowledge-items/update', {
+      method: 'POST',
+      body: JSON.stringify({
+        source_id: sourceId,
+        updates: updates
+      })
+    })
+  }
+
+  /**
+   * Get knowledge items by group name (avoids URL length limits)
+   */
+  async getKnowledgeItemsByGroup(groupName: string, perPage: number = 1000): Promise<KnowledgeItemsResponse> {
+    return apiRequest('/knowledge-items/by-group', {
+      method: 'POST',
+      body: JSON.stringify({
+        group_name: groupName,
+        per_page: perPage
+      })
     })
   }
 
@@ -252,7 +269,7 @@ class KnowledgeBaseService {
   async uploadDocument(file: File, metadata: UploadMetadata = {}) {
     const formData = new FormData()
     formData.append('file', file)
-    
+
     // Send fields as expected by backend API
     if (metadata.knowledge_type) {
       formData.append('knowledge_type', metadata.knowledge_type)
@@ -260,8 +277,40 @@ class KnowledgeBaseService {
     if (metadata.tags && metadata.tags.length > 0) {
       formData.append('tags', JSON.stringify(metadata.tags))
     }
-    
+
     const response = await fetch(`${API_BASE_URL}/documents/upload`, {
+      method: 'POST',
+      body: formData
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || `HTTP ${response.status}`)
+    }
+
+    return response.json()
+  }
+
+  /**
+   * Upload multiple documents from a folder to the knowledge base with progress tracking
+   */
+  async uploadFolder(files: File[], metadata: UploadMetadata = {}) {
+    const formData = new FormData()
+
+    // Append all files
+    for (const file of files) {
+      formData.append('files', file)
+    }
+
+    // Send fields as expected by backend API
+    if (metadata.knowledge_type) {
+      formData.append('knowledge_type', metadata.knowledge_type)
+    }
+    if (metadata.tags && metadata.tags.length > 0) {
+      formData.append('tags', JSON.stringify(metadata.tags))
+    }
+
+    const response = await fetch(`${API_BASE_URL}/documents/upload-folder`, {
       method: 'POST',
       body: formData
     })

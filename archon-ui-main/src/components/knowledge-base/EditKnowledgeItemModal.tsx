@@ -78,20 +78,18 @@ export const EditKnowledgeItemModal: React.FC<EditKnowledgeItemModalProps> = ({
 
   const handleRemoveFromGroup = async () => {
     if (!isInGroup) return;
-    
+
     setIsRemovingFromGroup(true);
-    
+
     try {
       const currentGroupName = item.metadata?.group_name;
       if (!currentGroupName) {
         throw new Error('No group name found');
       }
 
-      // Get all knowledge items to find other items in the same group
-      const allItemsResponse = await knowledgeBaseService.getKnowledgeItems({ per_page: 1000 });
-      const itemsInGroup = allItemsResponse.items.filter(
-        knowledgeItem => knowledgeItem.metadata?.group_name === currentGroupName
-      );
+      // Get all knowledge items in this group (uses POST to avoid URL length limits)
+      const groupItemsResponse = await knowledgeBaseService.getKnowledgeItemsByGroup(currentGroupName);
+      const itemsInGroup = groupItemsResponse.items;
 
       console.log(`Found ${itemsInGroup.length} items in group "${currentGroupName}"`);
 
@@ -120,7 +118,12 @@ export const EditKnowledgeItemModal: React.FC<EditKnowledgeItemModalProps> = ({
       onClose();
     } catch (error) {
       console.error('Failed to remove from group:', error);
-      showToast(`Failed to remove from group: ${(error as any)?.message || 'Unknown error'}`, 'error');
+      // Extract meaningful error message
+      let errorMsg = 'Unknown error';
+      if (error instanceof Error) {
+        errorMsg = error.message;
+      }
+      showToast(`Failed to remove from group: ${errorMsg}`, 'error');
     } finally {
       setIsRemovingFromGroup(false);
     }

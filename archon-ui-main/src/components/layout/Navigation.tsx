@@ -1,4 +1,4 @@
-import { BookOpen, Settings, Database, BarChart2 } from "lucide-react";
+import { BookOpen, Settings, Database, BarChart2, FileText, Tags } from "lucide-react";
 import type React from "react";
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
@@ -88,6 +88,18 @@ export function Navigation({ className }: NavigationProps) {
       path: "/embeddings",
       icon: <Database className="h-5 w-5" />,
       label: "Embeddings",
+      enabled: true,
+    },
+    {
+      path: "/obsidian",
+      icon: <FileText className="h-5 w-5" />,
+      label: "Obsidian",
+      enabled: true,
+    },
+    {
+      path: "/tags",
+      icon: <Tags className="h-5 w-5" />,
+      label: "Tags",
       enabled: true,
     },
     {

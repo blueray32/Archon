@@ -29,6 +29,7 @@ class KnowledgeItemService:
         per_page: int = 20,
         knowledge_type: str | None = None,
         search: str | None = None,
+        tags: list[str] | None = None,
     ) -> dict[str, Any]:
         """
         List knowledge items with pagination and filtering.
@@ -38,6 +39,7 @@ class KnowledgeItemService:
             per_page: Items per page
             knowledge_type: Filter by knowledge type
             search: Search term for filtering
+            tags: List of tags to filter by (items must contain at least one tag)
 
         Returns:
             Dict containing items, pagination info, and total count
@@ -57,32 +59,32 @@ class KnowledgeItemService:
                     f"title.ilike.{search_pattern},summary.ilike.{search_pattern},source_id.ilike.{search_pattern}"
                 )
 
-            # Get total count before pagination
-            # Clone the query for counting
-            count_query = self.supabase.from_("archon_sources").select(
-                "*", count="exact", head=True
-            )
+            # Execute query first, then filter tags in Python for simplicity
+            # Get all items matching other filters
+            all_query_sources = query.execute()
+            all_sources = all_query_sources.data if all_query_sources.data else []
 
-            # Apply same filters to count query
-            if knowledge_type:
-                count_query = count_query.eq("metadata->>knowledge_type", knowledge_type)
+            # Apply tag filter in Python if provided
+            if tags and len(tags) > 0:
+                # Filter sources that have at least one matching tag
+                filtered_sources = []
+                for source in all_sources:
+                    source_tags = source.get("metadata", {}).get("tags", [])
+                    # Check if any tag in the filter list is in the source's tags
+                    if any(tag in source_tags for tag in tags):
+                        filtered_sources.append(source)
 
-            if search:
-                search_pattern = f"%{search}%"
-                count_query = count_query.or_(
-                    f"title.ilike.{search_pattern},summary.ilike.{search_pattern},source_id.ilike.{search_pattern}"
-                )
+                sources = filtered_sources
+            else:
+                sources = all_sources
 
-            count_result = count_query.execute()
-            total = count_result.count if hasattr(count_result, "count") else 0
+            # Get total count after filtering
+            total = len(sources)
 
-            # Apply pagination at database level
+            # Apply pagination in Python
             start_idx = (page - 1) * per_page
-            query = query.range(start_idx, start_idx + per_page - 1)
-
-            # Execute query
-            result = query.execute()
-            sources = result.data if result.data else []
+            end_idx = start_idx + per_page
+            sources = sources[start_idx:end_idx]
 
             # Get source IDs for batch queries
             source_ids = [source["source_id"] for source in sources]

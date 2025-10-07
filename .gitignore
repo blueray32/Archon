@@ -35,3 +35,4 @@ python/.venv/
 
 # binaries & misc
 *.so
+.env.backup.*

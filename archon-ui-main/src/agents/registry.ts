@@ -20,6 +20,9 @@ const AGENT_TYPE_MAP: Record<string, string> = {
   'pydantic-ai': 'pydantic_ai',
   'reviewer': 'rag',
   'researcher': 'rag',
+  // PRP personas (chat_gpt_like, bim_specialist, etc.) all use 'prp' agent type
+  'chat_gpt_like': 'prp',
+  'bim_specialist': 'prp',
 };
 
 export function getAgentTypeFor(agentId: string | undefined | null): string {

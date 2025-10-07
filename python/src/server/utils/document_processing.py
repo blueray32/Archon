@@ -2,31 +2,34 @@
 Document Processing Utilities
 
 This module provides utilities for extracting text from various document formats
-including PDF, Word documents, and plain text files.
+including PDF, Word documents, and plain text files using Docling for superior extraction.
 """
 
 import io
 
-# Removed direct logging import - using unified config
-
 # Import document processing libraries with availability checks
 try:
-    import PyPDF2
+    from docling.document_converter import DocumentConverter
+    from docling.datamodel.base_models import InputFormat
+    from docling.datamodel.pipeline_options import PdfPipelineOptions
+    DOCLING_AVAILABLE = True
+except ImportError:
+    DOCLING_AVAILABLE = False
 
+try:
+    import PyPDF2
     PYPDF2_AVAILABLE = True
 except ImportError:
     PYPDF2_AVAILABLE = False
 
 try:
     import pdfplumber
-
     PDFPLUMBER_AVAILABLE = True
 except ImportError:
     PDFPLUMBER_AVAILABLE = False
 
 try:
     from docx import Document as DocxDocument
-
     DOCX_AVAILABLE = True
 except ImportError:
     DOCX_AVAILABLE = False
@@ -35,10 +38,41 @@ from ..config.logfire_config import get_logger, logfire
 
 logger = get_logger(__name__)
 
+# Initialize Docling converter once for reuse (thread-safe)
+_docling_converter = None
+
+def get_docling_converter():
+    """Get or create a Docling document converter instance."""
+    global _docling_converter
+    if _docling_converter is None and DOCLING_AVAILABLE:
+        try:
+            from docling.document_converter import PdfFormatOption
+            import os
+
+            # Disable OCR by default for performance - OCR is extremely slow
+            # Set DOCLING_ENABLE_OCR=true in environment to enable OCR
+            enable_ocr = os.getenv("DOCLING_ENABLE_OCR", "false").lower() == "true"
+
+            # Configure PDF options with optional OCR and table extraction
+            pdf_options = PdfFormatOption(pipeline_options=PdfPipelineOptions(
+                do_ocr=enable_ocr,
+                do_table_structure=True
+            ))
+
+            _docling_converter = DocumentConverter(
+                allowed_formats=[InputFormat.PDF, InputFormat.DOCX, InputFormat.HTML, InputFormat.PPTX],
+                format_options={InputFormat.PDF: pdf_options}
+            )
+            logger.info(f"Docling converter initialized successfully (OCR: {enable_ocr})")
+        except Exception as e:
+            logger.error(f"Failed to initialize Docling converter: {e}")
+            _docling_converter = None
+    return _docling_converter
+
 
 def extract_text_from_document(file_content: bytes, filename: str, content_type: str) -> str:
     """
-    Extract text from various document formats.
+    Extract text from various document formats using Docling with fallback to legacy extractors.
 
     Args:
         file_content: Raw file bytes
@@ -53,25 +87,39 @@ def extract_text_from_document(file_content: bytes, filename: str, content_type:
         Exception: If extraction fails
     """
     try:
-        # PDF files
-        if content_type == "application/pdf" or filename.lower().endswith(".pdf"):
-            return extract_text_from_pdf(file_content)
-
-        # Word documents
-        elif content_type in [
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            "application/msword",
-        ] or filename.lower().endswith((".docx", ".doc")):
-            return extract_text_from_docx(file_content)
-
-        # Text files (markdown, txt, etc.)
-        elif content_type.startswith("text/") or filename.lower().endswith((
+        # Text files (markdown, txt, etc.) - handle directly without Docling
+        if content_type.startswith("text/") or filename.lower().endswith((
             ".txt",
             ".md",
             ".markdown",
             ".rst",
         )):
             return file_content.decode("utf-8", errors="ignore")
+
+        # Try Docling first for PDF and DOCX (superior extraction with OCR and table support)
+        if DOCLING_AVAILABLE:
+            is_pdf = content_type == "application/pdf" or filename.lower().endswith(".pdf")
+            is_docx = content_type in [
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                "application/msword",
+            ] or filename.lower().endswith((".docx", ".doc"))
+
+            if is_pdf or is_docx:
+                try:
+                    return extract_text_with_docling(file_content, filename)
+                except Exception as e:
+                    logger.warning(f"Docling extraction failed for {filename}: {e}, falling back to legacy extractors")
+                    # Fall through to legacy extractors
+
+        # Fallback to legacy extractors
+        if content_type == "application/pdf" or filename.lower().endswith(".pdf"):
+            return extract_text_from_pdf(file_content)
+
+        elif content_type in [
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/msword",
+        ] or filename.lower().endswith((".docx", ".doc")):
+            return extract_text_from_docx(file_content)
 
         else:
             raise ValueError(f"Unsupported file format: {content_type} ({filename})")
@@ -84,6 +132,70 @@ def extract_text_from_document(file_content: bytes, filename: str, content_type:
             error=str(e),
         )
         raise Exception(f"Failed to extract text from {filename}: {str(e)}")
+
+
+def extract_text_with_docling(file_content: bytes, filename: str) -> str:
+    """
+    Extract text from documents using Docling with advanced features (table extraction, optional OCR).
+
+    Args:
+        file_content: Raw file bytes
+        filename: Name of the file
+
+    Returns:
+        Extracted text content with preserved structure
+
+    Raises:
+        Exception: If Docling extraction fails
+    """
+    if not DOCLING_AVAILABLE:
+        raise Exception("Docling not available")
+
+    converter = get_docling_converter()
+    if converter is None:
+        raise Exception("Failed to initialize Docling converter")
+
+    try:
+        import tempfile
+        import os
+
+        # Docling requires file path, so write to temp file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(filename)[1]) as tmp_file:
+            tmp_file.write(file_content)
+            tmp_path = tmp_file.name
+
+        try:
+            logger.info(f"Starting Docling extraction for {filename} ({len(file_content)} bytes)")
+
+            # Convert document with timeout handling
+            import asyncio
+            import concurrent.futures
+
+            # Run conversion in thread pool to allow timeout
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(converter.convert, tmp_path)
+                try:
+                    # 60 second timeout for conversion
+                    result = future.result(timeout=60)
+                except concurrent.futures.TimeoutError:
+                    raise Exception(f"Docling conversion timed out after 60s for {filename}")
+
+            # Extract markdown representation (preserves structure, tables, headings)
+            text_content = result.document.export_to_markdown()
+
+            if not text_content or len(text_content.strip()) < 10:
+                raise Exception("Docling extracted insufficient content")
+
+            logger.info(f"Docling successfully extracted {len(text_content)} characters from {filename}")
+            return text_content
+
+        finally:
+            # Clean up temp file
+            if os.path.exists(tmp_path):
+                os.unlink(tmp_path)
+
+    except Exception as e:
+        raise Exception(f"Docling extraction failed: {str(e)}")
 
 
 def extract_text_from_pdf(file_content: bytes) -> str:

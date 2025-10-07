@@ -187,14 +187,22 @@ async def get_knowledge_sources():
 
 @router.get("/knowledge-items")
 async def get_knowledge_items(
-    page: int = 1, per_page: int = 20, knowledge_type: str | None = None, search: str | None = None
+    page: int = 1,
+    per_page: int = 20,
+    knowledge_type: str | None = None,
+    search: str | None = None,
+    tags: str | None = None,  # Comma-separated list of tags
 ):
     """Get knowledge items with pagination and filtering."""
     try:
         # Use KnowledgeItemService
         service = KnowledgeItemService(get_supabase_client())
         result = await service.list_items(
-            page=page, per_page=per_page, knowledge_type=knowledge_type, search=search
+            page=page,
+            per_page=per_page,
+            knowledge_type=knowledge_type,
+            search=search,
+            tags=tags.split(",") if tags else None,
         )
         return result
 
@@ -205,9 +213,19 @@ async def get_knowledge_items(
         raise HTTPException(status_code=500, detail={"error": str(e)})
 
 
+class UpdateKnowledgeItemRequest(BaseModel):
+    source_id: str
+    updates: dict
+
+
+class GetItemsByGroupRequest(BaseModel):
+    group_name: str
+    per_page: int = 1000
+
+
 @router.put("/knowledge-items/{source_id}")
 async def update_knowledge_item(source_id: str, updates: dict):
-    """Update a knowledge item's metadata."""
+    """Update a knowledge item's metadata (legacy endpoint - use POST /knowledge-items/update for long source_ids)."""
     try:
         # Use KnowledgeItemService
         service = KnowledgeItemService(get_supabase_client())
@@ -226,6 +244,72 @@ async def update_knowledge_item(source_id: str, updates: dict):
     except Exception as e:
         safe_logfire_error(
             f"Failed to update knowledge item | error={str(e)} | source_id={source_id}"
+        )
+        raise HTTPException(status_code=500, detail={"error": str(e)})
+
+
+@router.post("/knowledge-items/update")
+async def update_knowledge_item_by_body(request: UpdateKnowledgeItemRequest):
+    """Update a knowledge item's metadata (accepts source_id in body to avoid URL length limits)."""
+    try:
+        # Use KnowledgeItemService
+        service = KnowledgeItemService(get_supabase_client())
+        success, result = await service.update_item(request.source_id, request.updates)
+
+        if success:
+            return result
+        else:
+            if "not found" in result.get("error", "").lower():
+                raise HTTPException(status_code=404, detail={"error": result.get("error")})
+            else:
+                raise HTTPException(status_code=500, detail={"error": result.get("error")})
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        safe_logfire_error(
+            f"Failed to update knowledge item | error={str(e)} | source_id={request.source_id}"
+        )
+        raise HTTPException(status_code=500, detail={"error": str(e)})
+
+
+@router.post("/knowledge-items/by-group")
+async def get_knowledge_items_by_group(request: GetItemsByGroupRequest):
+    """Get all knowledge items that belong to a specific group (avoids URL length limits)."""
+    try:
+        supabase = get_supabase_client()
+
+        # Query archon_sources table for items with matching group_name
+        response = supabase.table("archon_sources").select("*").eq(
+            "metadata->>group_name", request.group_name
+        ).limit(request.per_page).execute()
+
+        items = []
+        for row in response.data:
+            source_id = row["source_id"]
+            source_metadata = row.get("metadata", {})
+
+            # Transform to match KnowledgeItem format (simplified version of KnowledgeItemService)
+            items.append({
+                "id": source_id,  # Use source_id as id
+                "source_id": source_id,
+                "url": row.get("url", f"source://{source_id}"),
+                "title": row.get("title", row.get("summary", "Untitled")),
+                "metadata": source_metadata,
+                "created_at": row.get("created_at", ""),
+                "updated_at": row.get("updated_at", "")
+            })
+
+        return {
+            "items": items,
+            "total": len(items),
+            "page": 1,
+            "per_page": request.per_page
+        }
+
+    except Exception as e:
+        safe_logfire_error(
+            f"Failed to get items by group | error={str(e)} | group_name={request.group_name}"
         )
         raise HTTPException(status_code=500, detail={"error": str(e)})
 
@@ -761,6 +845,81 @@ async def export_knowledge_to_vault(request: ExportRequest):
         raise HTTPException(status_code=500, detail={"error": str(e)})
 
 
+@router.post("/documents/upload-folder")
+async def upload_folder(
+    files: list[UploadFile] = File(...),
+    tags: str | None = Form(None),
+    knowledge_type: str = Form("technical"),
+):
+    """Upload and process multiple documents from a folder with progress tracking."""
+    try:
+        safe_logfire_info(
+            f"📁 FOLDER UPLOAD: Starting folder upload | file_count={len(files)} | knowledge_type={knowledge_type}"
+        )
+
+        # Generate unique progress ID for the entire folder upload
+        progress_id = str(uuid.uuid4())
+
+        # Parse tags
+        try:
+            tag_list = json.loads(tags) if tags else []
+            if tag_list is None:
+                tag_list = []
+            if not isinstance(tag_list, list):
+                raise HTTPException(status_code=422, detail={"error": "tags must be a JSON array of strings"})
+            if not all(isinstance(tag, str) for tag in tag_list):
+                raise HTTPException(status_code=422, detail={"error": "tags must be a JSON array of strings"})
+        except json.JSONDecodeError as ex:
+            raise HTTPException(status_code=422, detail={"error": f"Invalid tags JSON: {str(ex)}"})
+
+        # Read all file contents immediately to avoid closed file issues
+        file_data_list = []
+        for file in files:
+            file_content = await file.read()
+            file_data_list.append({
+                "content": file_content,
+                "filename": file.filename,
+                "content_type": file.content_type,
+                "size": len(file_content),
+            })
+
+        # Initialize progress tracker
+        from ..utils.progress.progress_tracker import ProgressTracker
+        tracker = ProgressTracker(progress_id, operation_type="folder_upload")
+        await tracker.start({
+            "status": "initializing",
+            "progress": 0,
+            "log": f"Starting folder upload ({len(file_data_list)} files)",
+            "totalFiles": len(file_data_list),
+            "processedFiles": 0,
+        })
+
+        # Start background task for processing all files
+        task = asyncio.create_task(
+            _perform_folder_upload_with_progress(
+                progress_id, file_data_list, tag_list, knowledge_type, tracker
+            )
+        )
+        active_crawl_tasks[progress_id] = task
+
+        safe_logfire_info(
+            f"Folder upload started successfully | progress_id={progress_id} | file_count={len(file_data_list)}"
+        )
+
+        return {
+            "success": True,
+            "progressId": progress_id,
+            "message": f"Folder upload started ({len(file_data_list)} files)",
+            "fileCount": len(file_data_list),
+        }
+
+    except Exception as e:
+        safe_logfire_error(
+            f"Failed to start folder upload | error={str(e)} | file_count={len(files)} | error_type={type(e).__name__}"
+        )
+        raise HTTPException(status_code=500, detail={"error": str(e)})
+
+
 @router.post("/documents/upload")
 async def upload_document(
     file: UploadFile = File(...),
@@ -830,6 +989,111 @@ async def upload_document(
             f"Failed to start document upload | error={str(e)} | filename={file.filename} | error_type={type(e).__name__}"
         )
         raise HTTPException(status_code=500, detail={"error": str(e)})
+
+
+async def _perform_folder_upload_with_progress(
+    progress_id: str,
+    file_data_list: list[dict],
+    tag_list: list[str],
+    knowledge_type: str,
+    tracker: "ProgressTracker",
+):
+    """Perform folder upload with progress tracking for multiple files."""
+    from ..services.crawling.progress_mapper import ProgressMapper
+    progress_mapper = ProgressMapper()
+
+    try:
+        total_files = len(file_data_list)
+        processed_files = 0
+        successful_files = 0
+        failed_files = []
+
+        safe_logfire_info(
+            f"Starting folder upload processing | progress_id={progress_id} | total_files={total_files}"
+        )
+
+        # Process each file
+        for idx, file_data in enumerate(file_data_list):
+            filename = file_data["filename"]
+            content_type = file_data["content_type"]
+            file_content = file_data["content"]
+
+            try:
+                # Update progress for current file
+                file_progress = int((idx / total_files) * 100)
+                await tracker.update(
+                    status="processing",
+                    progress=file_progress,
+                    log=f"Processing file {idx + 1}/{total_files}: {filename}",
+                    totalFiles=total_files,
+                    processedFiles=processed_files,
+                    currentFile=filename,
+                )
+
+                # Extract text from document
+                extracted_text = extract_text_from_document(file_content, filename, content_type)
+                safe_logfire_info(
+                    f"Text extracted from folder file | filename={filename} | length={len(extracted_text)}"
+                )
+
+                # Use DocumentStorageService to handle the upload
+                doc_storage_service = DocumentStorageService(get_supabase_client())
+
+                # Generate source_id from filename with UUID
+                source_id = f"folder_{filename.replace(' ', '_').replace('.', '_')}_{uuid.uuid4().hex[:8]}"
+
+                # Store document without progress callback (batch operation)
+                success, result = await doc_storage_service.upload_document(
+                    file_content=extracted_text,
+                    filename=filename,
+                    source_id=source_id,
+                    knowledge_type=knowledge_type,
+                    tags=tag_list,
+                    progress_callback=None,  # Skip per-file progress
+                    cancellation_check=None,
+                )
+
+                if success:
+                    successful_files += 1
+                    safe_logfire_info(
+                        f"Folder file uploaded successfully | filename={filename} | chunks={result.get('chunks_stored')}"
+                    )
+                else:
+                    failed_files.append({"filename": filename, "error": result.get("error", "Unknown error")})
+                    safe_logfire_error(f"Folder file upload failed | filename={filename} | error={result.get('error')}")
+
+            except Exception as e:
+                failed_files.append({"filename": filename, "error": str(e)})
+                safe_logfire_error(f"Failed to process folder file | filename={filename} | error={str(e)}")
+
+            processed_files += 1
+
+        # Complete the folder upload
+        await tracker.complete({
+            "log": f"Folder upload complete: {successful_files}/{total_files} files uploaded successfully",
+            "totalFiles": total_files,
+            "processedFiles": processed_files,
+            "successfulFiles": successful_files,
+            "failedFiles": len(failed_files),
+            "failures": failed_files if failed_files else None,
+        })
+
+        safe_logfire_info(
+            f"Folder upload completed | progress_id={progress_id} | successful={successful_files} | failed={len(failed_files)}"
+        )
+
+    except Exception as e:
+        error_msg = f"Folder upload failed: {str(e)}"
+        await tracker.error(error_msg)
+        logger.error(f"Folder upload failed: {e}", exc_info=True)
+        safe_logfire_error(
+            f"Folder upload failed | progress_id={progress_id} | error={str(e)}"
+        )
+    finally:
+        # Clean up task from registry
+        if progress_id in active_crawl_tasks:
+            del active_crawl_tasks[progress_id]
+            safe_logfire_info(f"Cleaned up folder upload task from registry | progress_id={progress_id}")
 
 
 async def _perform_upload_with_progress(

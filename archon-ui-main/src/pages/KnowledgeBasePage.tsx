@@ -66,7 +66,9 @@ export const KnowledgeBasePage = () => {
       setLoading(true);
       const response = await knowledgeBaseService.getKnowledgeItems({
         page: 1,
-        per_page: 100
+        per_page: 100,
+        search: searchQuery || undefined, // Pass search to API
+        knowledge_type: typeFilter !== 'all' ? typeFilter : undefined
       });
       setKnowledgeItems(response.items);
       setTotalItems(response.total);
@@ -79,14 +81,14 @@ export const KnowledgeBasePage = () => {
     }
   };
 
-  // Initialize on mount
+  // Initialize on mount and reload when search/filter changes
   useEffect(() => {
     const timer = setTimeout(() => {
       loadKnowledgeItems();
-    }, 100);
-    
+    }, searchQuery ? 300 : 100); // Debounce search queries
+
     return () => clearTimeout(timer);
-  }, []);
+  }, [searchQuery, typeFilter]);
 
   // Check for active progress on mount
   useEffect(() => {
@@ -205,19 +207,10 @@ export const KnowledgeBasePage = () => {
   // Note: Completion refresh is now handled immediately in handleProgressComplete
 
   // Filtered items
+  // Items are already filtered by API, no need for client-side filtering
   const filteredItems = useMemo(() => {
-    return knowledgeItems.filter(item => {
-      const typeMatch = typeFilter === 'all' || item.metadata.knowledge_type === typeFilter;
-      const searchLower = searchQuery.toLowerCase();
-      const searchMatch = !searchQuery || 
-        item.title.toLowerCase().includes(searchLower) ||
-        item.metadata.description?.toLowerCase().includes(searchLower) ||
-        item.metadata.tags?.some(tag => tag.toLowerCase().includes(searchLower)) ||
-        item.source_id.toLowerCase().includes(searchLower);
-      
-      return typeMatch && searchMatch;
-    });
-  }, [knowledgeItems, typeFilter, searchQuery]);
+    return knowledgeItems;
+  }, [knowledgeItems]);
 
   // Grouped items
   const groupedItems = useMemo(() => {

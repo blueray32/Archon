@@ -19,6 +19,11 @@ router = APIRouter(prefix="/api/embeddings", tags=["embeddings"])
 
 logger = get_logger(__name__)
 
+# Cache for health check results (refreshed every 5 minutes)
+_health_cache: dict[str, Any] = {}
+_health_cache_timestamp: float = 0
+HEALTH_CACHE_TTL = 300  # 5 minutes
+
 
 @dataclass
 class TableHealth:
@@ -29,17 +34,29 @@ class TableHealth:
 
 
 def _count(client, table: str, null_only: bool = False) -> int:
-    sel = client.table(table).select("id", count="exact", head=True)
-    if null_only:
-        # Use PostgREST 'is.null' filter via supabase-py
-        sel = sel.filter("embedding", "is", "null")
-    res = sel.execute()
-    return int(res.count or 0)
+    try:
+        sel = client.table(table).select("id", count="exact", head=True)
+        if null_only:
+            # Use PostgREST 'is.null' filter via supabase-py
+            sel = sel.filter("embedding", "is", "null")
+        res = sel.execute()
+        return int(res.count or 0)
+    except Exception as e:
+        logger.warning(f"Count query failed for {table} (null_only={null_only}): {e}")
+        return 0
 
 
 @router.get("/health")
 async def embeddings_health():
-    """Return counts of total rows and missing embeddings per table."""
+    """Return counts of total rows and missing embeddings per table (cached for 5 minutes)."""
+    global _health_cache, _health_cache_timestamp
+
+    # Return cached result if still valid
+    current_time = time()
+    if _health_cache and (current_time - _health_cache_timestamp) < HEALTH_CACHE_TTL:
+        logger.debug(f"Returning cached health data (age: {current_time - _health_cache_timestamp:.1f}s)")
+        return _health_cache
+
     with safe_span("embeddings_health"):
         try:
             client = get_supabase_client()
@@ -61,7 +78,7 @@ async def embeddings_health():
                 with_embedding=max(code_total - code_missing, 0),
             ).__dict__
 
-            return {
+            result = {
                 "pages": pages,
                 "code_examples": code,
                 "summary": {
@@ -69,10 +86,25 @@ async def embeddings_health():
                     "missing": pages_missing + code_missing,
                     "with_embedding": (pages_total - pages_missing) + (code_total - code_missing),
                 },
+                "cached": False,
+                "cache_age_seconds": 0,
             }
+
+            # Update cache
+            _health_cache = result
+            _health_cache_timestamp = current_time
+            logger.info("Health check completed and cached")
+
+            return result
         except Exception as e:
-            logger.error("Embedding health check failed", exc_info=True)
-            raise HTTPException(status_code=500, detail={"error": str(e)})
+            logger.warning("Embedding health check failed, returning partial data", exc_info=True)
+            return {
+                "pages": {"table": "archon_crawled_pages", "total": 0, "missing": 0, "with_embedding": 0},
+                "code_examples": {"table": "archon_code_examples", "total": 0, "missing": 0, "with_embedding": 0},
+                "summary": {"total": 0, "missing": 0, "with_embedding": 0},
+                "error": str(e),
+                "cached": False,
+            }
 
 
 @router.post("/backfill")

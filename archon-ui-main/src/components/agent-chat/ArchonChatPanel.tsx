@@ -241,6 +241,13 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
     try {
       // Build context based on selected agent
       const context = (() => {
+        // PRP personas need persona_name in context
+        if (['chat_gpt_like', 'bim_specialist'].includes(selectedAgentId)) {
+          return {
+            persona_name: selectedAgentId,
+            session_id: sessionId,
+          };
+        }
         if (selectedAgentId === 'profesora-maria') {
           return {
             student_level: 'intermediate',

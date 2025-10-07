@@ -15,6 +15,12 @@ const EmbeddingsPage = lazy(() =>
   import('./pages/EmbeddingsPage').then((m) => ({ default: m.EmbeddingsPage })),
 );
 const EvalPage = lazy(() => import('./pages/EvalPage').then((m) => ({ default: m.EvalPage })));
+const ObsidianSyncPage = lazy(() =>
+  import('./pages/ObsidianSyncPage').then((m) => ({ default: m.ObsidianSyncPage })),
+);
+const TagsPage = lazy(() =>
+  import('./pages/TagsPage').then((m) => ({ default: m.TagsPage })),
+);
 const OnboardingPage = lazy(() =>
   import('./pages/OnboardingPage').then((m) => ({ default: m.OnboardingPage })),
 );
@@ -65,6 +71,8 @@ const AppRoutes = (): JSX.Element => {
       <Route path="/settings" element={<SettingsPage />} />
       <Route path="/mcp" element={<MCPPage />} />
       <Route path="/embeddings" element={<EmbeddingsPage />} />
+      <Route path="/obsidian" element={<ObsidianSyncPage />} />
+      <Route path="/tags" element={<TagsPage />} />
       <Route path="/eval" element={<EvalPage />} />
       {projectsEnabled ? (
         <>

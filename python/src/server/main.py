@@ -25,8 +25,10 @@ from .api_routes.internal_api import router as internal_router
 from .api_routes.knowledge_api import router as knowledge_router
 from .api_routes.mcp_api import router as mcp_router
 from .api_routes.embeddings_api import router as embeddings_router
+from .api_routes.obsidian_api import router as obsidian_router
 from .api_routes.progress_api import router as progress_router
 from .api_routes.projects_api import router as projects_router
+from .api_routes.tagging_api import router as tagging_router
 
 # Import modular API routers
 from .api_routes.settings_api import router as settings_router
@@ -236,12 +238,14 @@ app.include_router(settings_router)
 app.include_router(mcp_router)
 # app.include_router(mcp_client_router)  # Removed - not part of new architecture
 app.include_router(knowledge_router)
+app.include_router(obsidian_router)
 app.include_router(projects_router)
 app.include_router(progress_router)
 app.include_router(agent_chat_router)
 app.include_router(internal_router)
 app.include_router(bug_report_router)
 app.include_router(embeddings_router)
+app.include_router(tagging_router)
 
 
 # Root endpoint

@@ -241,6 +241,13 @@ MCP_INSTRUCTIONS = """
 - **Source discovery**: `get_available_sources()`
 - Keep match_count around 3-5 for focused results
 
+## 📚 Obsidian Vault Integration
+- `get_obsidian_status()` - Check vault configuration and sync status
+- `get_obsidian_vault_info()` - Get vault statistics (file count, size)
+- `index_obsidian_vault(knowledge_type="technical", max_files=None)` - Index vault files
+- `start_obsidian_watching(knowledge_type="technical")` - Enable auto-sync
+- `stop_obsidian_watching()` - Disable auto-sync
+
 ## 📊 Task Status Flow
 `todo` → `doing` → `review` → `done`
 - Only ONE task in 'doing' status at a time
@@ -480,6 +487,23 @@ def register_modules():
         raise
     except Exception as e:
         logger.error(f"✗ Failed to register feature tools: {e}")
+        logger.error(traceback.format_exc())
+
+    # Obsidian Vault Tools
+    try:
+        from src.mcp_server.features.obsidian_tools import register_obsidian_tools
+
+        register_obsidian_tools(mcp)
+        modules_registered += 1
+        logger.info("✓ Obsidian vault tools registered")
+    except ImportError as e:
+        logger.warning(f"⚠ Obsidian tools module not available (optional): {e}")
+    except (SyntaxError, NameError, AttributeError) as e:
+        logger.error(f"✗ Code error in Obsidian tools - MUST FIX: {e}")
+        logger.error(traceback.format_exc())
+        raise
+    except Exception as e:
+        logger.error(f"✗ Failed to register Obsidian tools: {e}")
         logger.error(traceback.format_exc())
 
     logger.info(f"📦 Total modules registered: {modules_registered}")

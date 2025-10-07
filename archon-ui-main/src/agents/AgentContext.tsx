@@ -13,7 +13,28 @@ const AgentCtx = createContext<AgentState | null>(null);
 const DEFAULT_ID = AGENTS[0]?.id ?? "profesora-maria";
 const KEY = "archon.selectedAgentId";
 
+// Fetch PRP personas from API
+async function fetchPersonas(): Promise<Agent[]> {
+  try {
+    const response = await fetch('/api/agent-chat/personas');
+    const data = await response.json();
+
+    if (data.success && Array.isArray(data.personas)) {
+      return data.personas.map((p: any) => ({
+        id: p.name,
+        label: p.display_name,
+        description: p.description,
+        model: 'prp', // All personas use PRP agent
+      }));
+    }
+  } catch (error) {
+    console.error('Failed to fetch personas:', error);
+  }
+  return [];
+}
+
 export const AgentProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [personas, setPersonas] = useState<Agent[]>([]);
   const [selectedAgentId, setSelectedAgentId] = useState<string>(() => {
     try {
       return localStorage.getItem(KEY) ?? DEFAULT_ID;
@@ -22,6 +43,17 @@ export const AgentProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   });
 
+  // Fetch personas on mount
+  useEffect(() => {
+    fetchPersonas().then(setPersonas);
+  }, []);
+
+  // Combine static agents with dynamic personas
+  const allAgents = useMemo(() => {
+    // Filter out the generic "prp" agent since we have specific personas now
+    const staticAgents = AGENTS.filter(a => a.id !== 'prp');
+    return [...personas, ...staticAgents];
+  }, [personas]);
 
   useEffect(() => {
     try {
@@ -34,18 +66,18 @@ export const AgentProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
 
   const selectedAgent = useMemo(
-    () => AGENTS.find(a => a.id === selectedAgentId) ?? AGENTS[0] ?? { id: DEFAULT_ID, label: "Default" },
-    [selectedAgentId]
+    () => allAgents.find(a => a.id === selectedAgentId) ?? allAgents[0] ?? { id: DEFAULT_ID, label: "Default" },
+    [selectedAgentId, allAgents]
   );
 
   const value = useMemo<AgentState>(
     () => ({
-      agents: AGENTS,
+      agents: allAgents,
       selectedAgentId,
       setSelectedAgentId,
       selectedAgent,
     }),
-    [selectedAgentId, selectedAgent]
+    [allAgents, selectedAgentId, selectedAgent]
   );
 
   return <AgentCtx.Provider value={value}>{children}</AgentCtx.Provider>;
