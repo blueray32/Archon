@@ -1,40 +1,85 @@
-# Make targets for PRP/R‑D flow
-.PHONY: review verify-prp context-bundle story dev qa ingest-vault export-summaries export-kb
+PY=uv run python
+ROOT:=$(CURDIR)
+VAULT?=$(ROOT)/vault
+GOLDEN=$(ROOT)/python/golden_set_archon.json
+PRED=$(ROOT)/artifacts/predictions_golden.json
+API?=http://127.0.0.1:5050
 
-review:
-	@bash scripts/project_review.sh || echo "review script optional; skip if absent"
+.PHONY: help preflight preds unlabeled label label-auto label-csv merge-labels qa qa-seeded playwright api-start api-stop rag
 
-verify-prp:
-	@python3 .github/scripts/verify_prp.py
+help:
+	@echo "Targets:"
+	@echo "  preflight      - check paths & files"
+	@echo "  preds          - resume predictions for golden"
+	@echo "  unlabeled      - list count/first 50 unlabeled notes in golden"
+	@echo "  label          - interactive CLI to apply labels"
+	@echo "  label-auto     - auto-fill labels from predictions for unlabeled notes"
+	@echo "  label-csv      - write artifacts/golden_label_todo.csv (with suggestions)"
+	@echo "  merge-labels   - merge CSV labels back into $(GOLDEN)"
+	@echo "  qa             - run QA against REAL golden"
+	@echo "  qa-seeded      - sanity QA using predictions-seeded copy"
+	@echo "  playwright     - install chromium for crawler"
+	@echo "  api-start      - start API (uvicorn) on 127.0.0.1:5050"
+	@echo "  api-stop       - stop API"
+	@echo "  rag Q='query'  - run a RAG query (default top_k=25, pass K=... to change)"
 
-context-bundle:
-	@bash scripts/context_bundle.sh
+preflight:
+	@test -f $(GOLDEN) && echo "✓ golden: $(GOLDEN)" || echo "✗ missing golden"
+	@test -f $(PRED)   && echo "✓ predictions: $(PRED)" || echo "✗ missing predictions"
+	@if [ -d "$(VAULT)" ]; then echo "✓ vault: $(VAULT)"; else echo "✗ missing vault (set VAULT=/path/to/vault)"; fi
 
-# Agent mode helpers (wired via Archon buttons)
-story:
-	@bash scripts/story.sh $(ANALYST) $(ARCH) $(SM) $(F)
+preds:
+	@test -d "$(VAULT)" || { echo "✗ missing vault at $(VAULT) (override with VAULT=/path/to/vault)"; exit 1; }
+	cd $(ROOT)/python && $(PY) src/scripts/predict_for_golden.py \
+	  --vault $(VAULT) --golden $(GOLDEN) --resume --save-every 8 --concurrency 4 \
+	  --out $(PRED)
+	@echo -n "pred count: "; jq 'length' $(PRED)
 
-dev:
-	@bash scripts/dev.sh $(STORY)
+unlabeled:
+	cd $(ROOT)/python && $(PY) -m src.scripts.golden_tools unlabeled
+
+label:
+	cd $(ROOT)/python && $(PY) -m src.scripts.golden_tools label
+
+label-auto:
+	cd $(ROOT)/python && $(PY) -m src.scripts.golden_tools label-auto
+
+label-csv:
+	cd $(ROOT)/python && $(PY) -m src.scripts.golden_tools label-csv
+	@echo "→ Fill area/service/status columns, then: make merge-labels"
+
+merge-labels:
+	cd $(ROOT)/python && $(PY) -m src.scripts.golden_tools merge-labels
 
 qa:
-	@bash scripts/qa.sh $(STORY)
+	cd $(ROOT)/python && $(PY) src/scripts/qa_harness.py \
+	  --golden $(ROOT)/python/golden_set_archon.json --predictions $(PRED) --threshold 0.90 || true
 
-ingest-vault:
-	@bash scripts/ingest_vault.sh
+qa-seeded:
+	cd $(ROOT)/python && $(PY) -m src.scripts.golden_tools seed-golden
+	cd $(ROOT)/python && $(PY) src/scripts/qa_harness.py \
+	  --golden $(ROOT)/python/golden_seeded.json --predictions $(PRED) --threshold 0.90 || true
 
-export-summaries:
-	@bash scripts/export_summaries.sh
+playwright:
+	cd $(ROOT)/python && $(PY) -m playwright install chromium || true
 
-publish:
-	@OBSIDIAN_VAULT="$$OBSIDIAN_VAULT" bash scripts/publish_to_obsidian.sh
+api-start:
+	@if ! pgrep -f "uvicorn .*src.server.main:app" >/dev/null; then \
+		cd $(ROOT)/python && nohup uv run uvicorn src.server.main:app --host 127.0.0.1 --port 5050 > ../artifacts/uvicorn_5050.log 2>&1 & \
+		echo "API starting on 127.0.0.1:5050 (log: artifacts/uvicorn_5050.log)"; \
+	fi
 
-# Export knowledge base (sources, pages, code examples) to your Obsidian vault
-export-kb:
-	@OBSIDIAN_VAULT="$$OBSIDIAN_VAULT" uv run python -m src.scripts.export_kb_to_vault
+api-stop:
+	-pkill -f "uvicorn .*src.server.main:app" || true
+	@echo "API stopped (if it was running)."
 
-spec:
-	@bash scripts/speckit.sh $(NAME)
-
-check-bmad:
-	@grep -Rqs "BMAD" ai_docs/PRPs || echo "(warn) add 'BMAD' facet line to PRPs"
+# Usage: make rag Q="your query" K=25
+Q ?= Obsidian vault sync
+K ?= 25
+rag: api-start
+	@SESSION=$$(curl -fsS -X POST $(API)/api/agent-chat/sessions \
+	  -H 'Content-Type: application/json' -d '{"agent_type":"rag"}' | jq -r .session_id); \
+	echo "SESSION=$$SESSION"; \
+	curl -fsS -X POST $(API)/api/rag/query \
+	  -H 'Content-Type: application/json' -H "X-Session-Id: $$SESSION" \
+	  -d "$$(jq -nc --arg q '$(Q)' --argjson k $(K) '{query:$$q, top_k:$$k}')" | jq .

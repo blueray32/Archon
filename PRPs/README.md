@@ -128,6 +128,10 @@ PRP system settings (in `archon_settings` table):
 - `PRP_MAX_CONTEXT_CHARS` - Max context length (default: 60000)
 - `PRP_EMBEDDING_MODEL` - Embedding model (default: text-embedding-3-small)
 
+Embedding sync script settings (env):
+
+- `PRP_EMBED_TRUNCATE_CHARS` - Max characters to embed per file during sync (default: 120000)
+
 ## Database Tables
 
 PRPs are stored in these tables:
@@ -200,6 +204,7 @@ Inconsistent error responses make debugging difficult.
 - Ensure `OPENAI_API_KEY` is set in environment
 - Check embedding sync logs for errors
 - Verify file is valid UTF-8 encoded
+- If files are very large, reduce size or set `PRP_EMBED_TRUNCATE_CHARS` to a safe limit
 
 **Old content still appearing:**
 - Re-run embedding sync after editing

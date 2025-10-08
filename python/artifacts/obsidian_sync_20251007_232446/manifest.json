@@ -1,0 +1,51 @@
+{
+  "run_id": "20251007_232446",
+  "vault_path": "/Users/ciarancox/Obsidian/YourVault",
+  "config": {
+    "auto_tag": false,
+    "create_embeddings": false,
+    "concurrency": 5,
+    "shard_size": 2000,
+    "dry_run": false
+  },
+  "results": {
+    "notes_scanned": 1741,
+    "notes_processed": 0,
+    "notes_skipped_unchanged": 0,
+    "notes_skipped_rules": 0,
+    "notes_failed": 0,
+    "tags_applied": 0
+  },
+  "artifacts": {
+    "vault_index": "artifacts/obsidian_sync_20251007_232446/vault_index.json",
+    "tag_suggestions": null,
+    "changes_log": null,
+    "metrics": "artifacts/obsidian_sync_20251007_232446/metrics.json",
+    "index_note": null
+  },
+  "metrics": {
+    "start_time": "2025-10-07T23:24:46.631574",
+    "end_time": "2025-10-07T23:24:48.715176",
+    "duration_s": 2.083602,
+    "notes_scanned": 1741,
+    "notes_processed": 0,
+    "notes_skipped_unchanged": 0,
+    "notes_skipped_rules": 0,
+    "notes_failed": 0,
+    "tags_applied": 0,
+    "durations": {
+      "scan": 1.017661
+    },
+    "errors": []
+  },
+  "archon_sync": {
+    "vault_path": "/Users/ciarancox/Obsidian/YourVault",
+    "synced_at": "2025-10-07T23:24:48.714212",
+    "total_notes": 1741,
+    "synced_notes": 0,
+    "failed_notes": 1741,
+    "created_embeddings": 0,
+    "tags_count": 704,
+    "areas_count": 0
+  }
+}

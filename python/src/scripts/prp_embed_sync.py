@@ -50,10 +50,22 @@ async def index_files(prp_service: PRPService, pattern: str, kind: str, base_pat
     files = glob.glob(os.path.join(base_path, pattern), recursive=True)
     count = 0
 
+    # Truncation limit to avoid overlong embedding requests
+    max_chars = int(os.getenv("PRP_EMBED_TRUNCATE_CHARS", "120000"))
+
     for file_path in files:
         try:
             with open(file_path, encoding="utf-8") as f:
                 content = f.read()
+
+            if len(content) > max_chars:
+                logger.warning(
+                    "Truncating %s from %d to %d chars for embedding",
+                    file_path,
+                    len(content),
+                    max_chars,
+                )
+                content = content[:max_chars]
 
             # Extract title from filename
             title = Path(file_path).stem.replace("_", " ").replace("-", " ").title()

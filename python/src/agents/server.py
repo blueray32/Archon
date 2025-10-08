@@ -23,6 +23,7 @@ import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+from openai import AsyncOpenAI
 
 # Import our PydanticAI agents
 from .document_agent import DocumentAgent
@@ -75,39 +76,69 @@ async def fetch_credentials_from_server():
     max_retries = 30  # Try for up to 5 minutes (30 * 10 seconds)
     retry_delay = 10  # seconds
 
+    server_port = os.getenv("ARCHON_SERVER_PORT", "8181")
+    candidate_bases: list[str] = []
+
+    api_service_url = os.getenv("API_SERVICE_URL")
+    if api_service_url:
+        candidate_bases.append(api_service_url)
+
+    # Docker compose expects the archon-server hostname
+    candidate_bases.append(f"http://archon-server:{server_port}")
+
+    # Local development fallback
+    candidate_bases.append(f"http://127.0.0.1:{server_port}")
+
+    total_attempts = max_retries * len(candidate_bases)
+    attempt_counter = 0
+
     for attempt in range(max_retries):
         try:
             async with httpx.AsyncClient() as client:
-                # Call the server's internal credentials endpoint
-                server_port = os.getenv("ARCHON_SERVER_PORT")
-                if not server_port:
-                    raise ValueError(
-                        "ARCHON_SERVER_PORT environment variable is required. "
-                        "Please set it in your .env file or environment."
-                    )
-                response = await client.get(
-                    f"http://archon-server:{server_port}/internal/credentials/agents", timeout=10.0
-                )
-                response.raise_for_status()
-                credentials = response.json()
+                last_error: Exception | None = None
 
-                # Set credentials as environment variables
-                for key, value in credentials.items():
-                    if value is not None:
-                        os.environ[key] = str(value)
-                        logger.info(f"Set credential: {key}")
+                for base_url in candidate_bases:
+                    attempt_counter += 1
 
-                # Store credentials globally for agent initialization
-                global AGENT_CREDENTIALS
-                AGENT_CREDENTIALS = credentials
+                    url = f"{base_url.rstrip('/')}/internal/credentials/agents"
+                    try:
+                        response = await client.get(url, timeout=10.0)
+                        response.raise_for_status()
+                        credentials = response.json()
 
-                logger.info(f"Successfully fetched {len(credentials)} credentials from server")
-                return credentials
+                        # Set credentials as environment variables
+                        for key, value in credentials.items():
+                            if value is not None:
+                                os.environ[key] = str(value)
+                                logger.info(f"Set credential: {key}")
+
+                        global AGENT_CREDENTIALS
+                        AGENT_CREDENTIALS = credentials
+
+                        logger.info(
+                            "Successfully fetched %s credentials from server using base %s",
+                            len(credentials),
+                            base_url,
+                        )
+                        return credentials
+
+                    except (httpx.HTTPError, httpx.RequestError) as inner_exc:
+                        last_error = inner_exc
+                        logger.warning(
+                            "Credentials fetch failed via %s (attempt %s/%s): %s",
+                            base_url,
+                            attempt_counter,
+                            total_attempts,
+                            inner_exc,
+                        )
+
+                if last_error:
+                    raise last_error
 
         except (httpx.HTTPError, httpx.RequestError) as e:
             if attempt < max_retries - 1:
                 logger.warning(
-                    f"Failed to fetch credentials (attempt {attempt + 1}/{max_retries}): {e}"
+                    f"Failed to fetch credentials (pass {attempt + 1}/{max_retries}): {e}"
                 )
                 logger.info(f"Retrying in {retry_delay} seconds...")
                 await asyncio.sleep(retry_delay)
@@ -215,13 +246,75 @@ async def run_agent(request: AgentRequest):
     The agent will use MCP tools for any data operations.
     """
     try:
+        # If the request includes file content, short‑circuit to a local summarizer
+        try:
+            if request.context and isinstance(request.context, dict):
+                fc = request.context.get("file_content")
+                if isinstance(fc, str) and fc.strip():
+                    snippet = fc.strip()
+                    if len(snippet) > 16000:
+                        snippet = snippet[:16000] + "\n[Content truncated]"
+                    # Use OpenAI directly for a tool‑free summary
+                    model = os.getenv("RAG_AGENT_MODEL", "gpt-4o-mini")
+                    # allow either plain model or provider:model
+                    if ":" in model:
+                        model = model.split(":", 1)[1]
+                    client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+                    prompt = (
+                        "Summarize the following note. Return only a concise bullet list of actionable next steps. "
+                        "Do not search or use any external information.\n\n[NOTE]\n"
+                        + snippet
+                        + "\n[/NOTE]\n\nUser request: "
+                        + (request.prompt or "")
+                    )
+                    resp = await client.chat.completions.create(
+                        model=model,
+                        messages=[
+                            {"role": "system", "content": "You are a precise summarizer."},
+                            {"role": "user", "content": prompt},
+                        ],
+                        temperature=0.2,
+                    )
+                    text = resp.choices[0].message.content or ""
+                    return AgentResponse(
+                        success=True,
+                        result={"output": text, "raw": {"output": text}},
+                        metadata={"agent_type": request.agent_type, "model": model},
+                    )
+        except Exception as e:
+            logger.error(f"File-content summarization failed, falling back to agent: {e}")
+
         # Get the requested agent
         if request.agent_type not in app.state.agents:
             raise HTTPException(status_code=400, detail=f"Unknown agent type: {request.agent_type}")
 
         agent = app.state.agents[request.agent_type]
 
+        # If file_content is provided in context, prepend it to the prompt so agents can operate on note content.
+        # This makes HTTP provider useful for note-level tasks even without local tools.
+        try:
+            if request.context and isinstance(request.context, dict):
+                fc = request.context.get("file_content")
+                if isinstance(fc, str) and fc.strip():
+                    snippet = fc.strip()
+                    # Cap length to keep requests efficient
+                    if len(snippet) > 12000:
+                        snippet = snippet[:12000] + "\n[Content truncated]"
+                    request.prompt = (
+                        "You are summarizing an Obsidian note. "
+                        "Answer strictly using the note content; do not perform external search, retrieval, or tool calls. "
+                        "Return a concise bullet list of key actions.\n\n"
+                        "[BEGIN_NOTE]\n" + snippet + "\n[END_NOTE]\n\n" + request.prompt
+                    )
+        except Exception:
+            # Non-fatal if context formatting fails
+            pass
+
         # Prepare dependencies based on agent type
+        try:
+            logger.info(f"[Agents] Running {request.agent_type} with prompt prefix: {request.prompt[:80]!r}")
+        except Exception:
+            pass
         if request.agent_type in ("rag", "pydantic_ai"):
             from .rag_agent import RagDependencies
 
@@ -518,7 +611,68 @@ async def stream_agent(agent_type: str, request: AgentRequest):
     if agent_type not in app.state.agents:
         raise HTTPException(status_code=400, detail=f"Unknown agent type: {agent_type}")
 
+    # If file_content provided, stream a direct summary (no tools) to honor user's request
+    try:
+        if request.context and isinstance(request.context, dict):
+            fc = request.context.get("file_content")
+            if isinstance(fc, str) and fc.strip():
+                snippet = fc.strip()
+                if len(snippet) > 16000:
+                    snippet = snippet[:16000] + "\n[Content truncated]"
+                model = os.getenv("RAG_AGENT_MODEL", "gpt-4o-mini")
+                if ":" in model:
+                    model = model.split(":", 1)[1]
+                client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+                prompt = (
+                    "Summarize the following note. Return only a concise bullet list of actionable next steps. "
+                    "Do not search or use any external information.\n\n[NOTE]\n"
+                    + snippet
+                    + "\n[/NOTE]\n\nUser request: "
+                    + (request.prompt or "")
+                )
+
+                async def generate_one():
+                    try:
+                        resp = await client.chat.completions.create(
+                            model=model,
+                            messages=[
+                                {"role": "system", "content": "You are a precise summarizer."},
+                                {"role": "user", "content": prompt},
+                            ],
+                            temperature=0.2,
+                        )
+                        text = resp.choices[0].message.content or ""
+                        yield f"data: {{\"type\": \"stream_chunk\", \"content\": {json.dumps(text)} }}\n\n"
+                        yield f"data: {{\"type\": \"stream_complete\", \"content\": {json.dumps(text)} }}\n\n"
+                    except Exception as e:
+                        yield f"data: {{\"type\": \"error\", \"error\": {json.dumps(str(e))} }}\n\n"
+
+                return StreamingResponse(
+                    generate_one(),
+                    media_type="text/event-stream",
+                    headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+                )
+    except Exception as e:
+        logger.error(f"Streaming file-content summary failed; falling back to agent: {e}")
+
     agent = app.state.agents[agent_type]
+
+    # If file_content provided, inject into prompt (same as /agents/run)
+    try:
+        if request.context and isinstance(request.context, dict):
+            fc = request.context.get("file_content")
+            if isinstance(fc, str) and fc.strip():
+                snippet = fc.strip()
+                if len(snippet) > 12000:
+                    snippet = snippet[:12000] + "\n[Content truncated]"
+                request.prompt = (
+                    "You are summarizing an Obsidian note. "
+                    "Answer strictly using the note content; do not perform external search, retrieval, or tool calls. "
+                    "Return a concise bullet list of key actions.\n\n"
+                    "[BEGIN_NOTE]\n" + snippet + "\n[END_NOTE]\n\n" + request.prompt
+                )
+    except Exception:
+        pass
 
     async def generate() -> AsyncGenerator[str, None]:
         try:

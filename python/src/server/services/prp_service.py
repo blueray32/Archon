@@ -85,52 +85,86 @@ class PRPService:
             if not embedding:
                 return {"context": "", "sources": []}
 
-            # Retrieve recent PRPs (always include latest PRPs)
-            prp_results = (
-                self.supabase.table("prp_docs")
-                .select("content, path, title")
-                .eq("kind", "prp")
-                .order("created_at", desc=True)
-                .limit(min(k, 3))  # Get top 3 recent PRPs
-                .execute()
-            )
+            context_parts: list[str] = []
+            sources: list[dict[str, Any]] = []
 
-            # Retrieve recent messages from this session
-            message_results = (
-                self.supabase.table("prp_messages")
-                .select("content, role")
-                .eq("session_id", session_id)
-                .order("created_at", desc=True)
-                .limit(min(k * 2, 20))  # Get recent conversation
-                .execute()
-            )
+            # Vector similarity over PRP docs (most relevant first)
+            try:
+                prp_sim = self.supabase.rpc(
+                    "search_prp_docs",
+                    {
+                        "query_embedding": embedding,
+                        "kind_filter": "prp",
+                        "match_count": min(k, 6),
+                        "similarity_threshold": 0.6,
+                    },
+                ).execute()
+            except Exception as e:  # noqa: BLE001
+                logger.error(f"PRP doc similarity search failed: {e}")
+                prp_sim = type("obj", (), {"data": []})()  # empty-like
 
-            # Build context string
-            context_parts = []
-            sources = []
-
-            # Add PRPs
-            if prp_results.data:
+            if getattr(prp_sim, "data", None):
                 prp_context = []
-                for doc in prp_results.data:
-                    title = doc.get("title") or doc.get("path", "Unnamed PRP")
-                    prp_context.append(f"## {title}\n{doc['content']}")
-                    sources.append({"type": "prp", "path": doc.get("path"), "title": title})
-
+                for row in prp_sim.data:
+                    title = row.get("title") or row.get("path", "Unnamed PRP")
+                    prp_context.append(f"## {title}\n{row.get('content','')}")
+                    sources.append(
+                        {
+                            "type": "prp",
+                            "path": row.get("path"),
+                            "title": title,
+                            "similarity": row.get("similarity"),
+                        }
+                    )
                 if prp_context:
-                    context_parts.append("=== Product Requirement Prompts (PRPs) ===\n" + "\n\n".join(prp_context))
+                    context_parts.append(
+                        "=== Relevant Product Requirement Prompts (PRPs) ===\n" + "\n\n".join(prp_context)
+                    )
 
-            # Add recent conversation
-            if message_results.data:
+            # Vector similarity over prior messages in this session
+            try:
+                msg_sim = self.supabase.rpc(
+                    "search_prp_messages",
+                    {
+                        "query_embedding": embedding,
+                        "session_filter": session_id,
+                        "match_count": min(k * 2, 20),
+                        "similarity_threshold": 0.6,
+                    },
+                ).execute()
+            except Exception as e:  # noqa: BLE001
+                logger.error(f"PRP message similarity search failed: {e}")
+                msg_sim = type("obj", (), {"data": []})()
+
+            if getattr(msg_sim, "data", None):
                 conv_context = []
-                for msg in reversed(message_results.data):  # Chronological order
-                    role = msg["role"]
-                    content = msg["content"]
-                    conv_context.append(f"{role.upper()}: {content}")
-                    sources.append({"type": "message", "role": role})
-
+                for row in msg_sim.data:
+                    role = (row.get("role") or "").upper()
+                    content = row.get("content") or ""
+                    conv_context.append(f"{role}: {content}")
                 if conv_context:
-                    context_parts.append("=== Recent Conversation ===\n" + "\n".join(conv_context))
+                    context_parts.append("=== Relevant Conversation (Similar) ===\n" + "\n".join(conv_context))
+
+            # Also include very recent messages for continuity (chrono)
+            try:
+                message_results = (
+                    self.supabase.table("prp_messages")
+                    .select("content, role")
+                    .eq("session_id", session_id)
+                    .order("created_at", desc=True)
+                    .limit(min(k * 2, 20))
+                    .execute()
+                )
+            except Exception as e:  # noqa: BLE001
+                logger.error(f"Recent message fetch failed: {e}")
+                message_results = type("obj", (), {"data": []})()
+
+            if getattr(message_results, "data", None):
+                conv_context = []
+                for msg in reversed(message_results.data):  # Chronological
+                    conv_context.append(f"{msg['role'].upper()}: {msg['content']}")
+                if conv_context:
+                    context_parts.append("=== Recent Conversation (Latest) ===\n" + "\n".join(conv_context))
 
             # Combine context
             full_context = "\n\n".join(context_parts)

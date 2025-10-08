@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2025-10-07
+
+### Fixed
+- Obsidian plugin default provider set to Anthropic so fresh installs connect without additional env configuration.
+- SDK HTTP provider JSON handling hardened when response is not valid JSON (no crashes, clear logging).
+
+### Changed
+- Obsidian plugin simplified to a single agent in the UI (Claude). Agent controls are only shown when the HTTP bridge provider is selected.
+- `plugin-obsidian-claude-code/start.sh` now auto-starts a local HTTP bridge on `:8787` and exports `HTTP_PROVIDER_URL` and `HTTP_PROVIDER_STREAM` for out-of-the-box HTTP provider usage.
+
+### Added
+- README notes for the Obsidian plugin explaining the HTTP bridge flow, env overrides, and that the agent dropdown is limited to a single Claude option for Obsidian.
+
 ## 2025-09-21
 
 ### Added
@@ -28,4 +41,3 @@ All notable changes to this project will be documented in this file.
 ### Migration order
 1. If `/health` indicates a hybrid type mismatch (error 42804), run `migration/fix_hybrid_search_types.sql`.
 2. Run `migration/tune_hybrid_weighting.sql` to apply the 50/50 weighting.
-

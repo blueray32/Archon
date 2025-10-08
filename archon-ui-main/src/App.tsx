@@ -39,6 +39,75 @@ import { MigrationBanner } from './components/ui/MigrationBanner';
 import { serverHealthService } from './services/serverHealthService';
 import { useMigrationStatus } from './hooks/useMigrationStatus';
 
+const CONFIGCAT_DEFAULT_EMAIL =
+  import.meta.env.VITE_CONFIGCAT_DEFAULT_EMAIL?.trim() || 'beta-user@archon.local';
+const CONFIGCAT_IDENTIFIER =
+  import.meta.env.VITE_CONFIGCAT_IDENTIFIER?.trim() || 'archon-beta-instance';
+
+const resolveConfigCatEmail = (): string => {
+  if (typeof window === 'undefined') {
+    return CONFIGCAT_DEFAULT_EMAIL;
+  }
+
+  const candidates = [
+    window.localStorage?.getItem('archonUserEmail'),
+    window.localStorage?.getItem('archon:userEmail'),
+    window.sessionStorage?.getItem('archonUserEmail'),
+    window.sessionStorage?.getItem('archon:userEmail'),
+  ];
+
+  const emailCandidate = candidates.find((value) => value && value.includes('@'));
+  return (emailCandidate || CONFIGCAT_DEFAULT_EMAIL).trim();
+};
+
+const useConfigCatUser = (): void => {
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const assignUser = (): boolean => {
+      const globalWindow = window as typeof window & {
+        configcatClient?: { setUser?: (user: { identifier: string; email?: string }) => void; getUser?: () => unknown };
+      };
+
+      const client = globalWindow.configcatClient;
+      if (!client || typeof client.setUser !== 'function') {
+        return false;
+      }
+
+      const email = resolveConfigCatEmail();
+
+      try {
+        client.setUser({
+          identifier: CONFIGCAT_IDENTIFIER,
+          email,
+        });
+      } catch (error) {
+        console.warn('[Archon] Failed to set ConfigCat user', error);
+        return false;
+      }
+
+      return true;
+    };
+
+    if (assignUser()) {
+      return;
+    }
+
+    const maxAttempts = 12;
+    let attempts = 0;
+    const intervalId = window.setInterval(() => {
+      attempts += 1;
+      if (assignUser() || attempts >= maxAttempts) {
+        window.clearInterval(intervalId);
+      }
+    }, 500);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
+};
+
 // Create a client with optimized settings for our polling use case
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -156,6 +225,8 @@ const AppContent = (): JSX.Element => {
 };
 
 export function App(): JSX.Element {
+  useConfigCatUser();
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>

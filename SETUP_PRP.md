@@ -120,6 +120,13 @@ WHERE embedding IS NOT NULL
 GROUP BY kind;
 ```
 
+Optional limits:
+
+```
+# Limit per-file characters during embedding to avoid overlong requests
+export PRP_EMBED_TRUNCATE_CHARS=120000
+```
+
 ### Step 4: Restart Services
 
 Restart the agents service to pick up the new agent:

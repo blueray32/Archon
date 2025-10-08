@@ -16,7 +16,7 @@ import logging
 import os
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from .api_routes.agent_chat_api import router as agent_chat_router
@@ -78,6 +78,199 @@ uvicorn_logger.setLevel(logging.WARNING)  # Only log warnings and errors, not ev
 # Global flag to track if initialization is complete
 _initialization_complete = False
 
+_CSP_DIRECTIVES: dict[str, list[str]] = {
+    "default-src": [
+        "'self'",
+        "https://api.supabase.com",
+        "http://localhost:8000",
+        "https://auth.supabase.io",
+        "ws://localhost:8000",
+        "wss://localhost:8000",
+        "https://*.supabase.co",
+        "wss://*.supabase.co",
+        "https://*.hcaptcha.com",
+        "https://cdn-global.configcat.com",
+        "https://configcat.supabase.com",
+        "https://*.stripe.com",
+        "https://*.stripe.network",
+        "https://www.cloudflare.com",
+        "https://cdnjs.cloudflare.com",
+        "https://*.vercel-insights.com",
+        "https://api.github.com",
+        "https://raw.githubusercontent.com",
+        "https://frontend-assets.supabase.com",
+        "https://*.usercentrics.eu",
+        "https://ss.supabase.com",
+        "https://maps.googleapis.com",
+        "https://ph.supabase.com",
+        "wss://*.pusher.com",
+        "https://*.ingest.sentry.io",
+        "https://*.ingest.us.sentry.io",
+        "https://*.ingest.de.sentry.io",
+    ],
+    "connect-src": [
+        "'self'",
+        "data:",
+        "blob:",
+        "https://api.supabase.com",
+        "http://localhost:8000",
+        "https://auth.supabase.io",
+        "ws://localhost:8000",
+        "wss://localhost:8000",
+        "https://*.supabase.co",
+        "wss://*.supabase.co",
+        "https://cdn-global.configcat.com",
+        "https://configcat.supabase.com",
+        "https://*.stripe.com",
+        "https://*.stripe.network",
+        "https://*.vercel-insights.com",
+        "https://api.github.com",
+        "https://raw.githubusercontent.com",
+        "https://frontend-assets.supabase.com",
+        "https://*.usercentrics.eu",
+        "https://ss.supabase.com",
+        "https://maps.googleapis.com",
+        "https://ph.supabase.com",
+        "wss://*.pusher.com",
+        "https://*.ingest.sentry.io",
+        "https://*.ingest.us.sentry.io",
+        "https://*.ingest.de.sentry.io",
+        "https://cdnjs.cloudflare.com",
+    ],
+    "script-src": [
+        "'self'",
+        "'unsafe-inline'",
+        "'unsafe-eval'",
+        "https://cdn.jsdelivr.net",
+        "https://cdnjs.cloudflare.com",
+    ],
+    "style-src": [
+        "'self'",
+        "'unsafe-inline'",
+        "https://fonts.googleapis.com",
+        "https://cdnjs.cloudflare.com",
+    ],
+    "img-src": [
+        "'self'",
+        "data:",
+        "blob:",
+        "https://*.supabase.co",
+        "https://*.stripe.com",
+        "https://www.gstatic.com",
+        "https://maps.googleapis.com",
+    ],
+    "font-src": [
+        "'self'",
+        "data:",
+        "https://fonts.gstatic.com",
+    ],
+    "frame-src": [
+        "'self'",
+        "https://*.stripe.com",
+    ],
+    "worker-src": [
+        "'self'",
+        "blob:",
+    ],
+    "object-src": [
+        "'none'",
+    ],
+}
+
+
+def _build_csp_policy() -> str:
+    directives = []
+    for directive, sources in _CSP_DIRECTIVES.items():
+        unique_sources: list[str] = []
+        for source in sources:
+            if source not in unique_sources:
+                unique_sources.append(source)
+        directives.append(f"{directive} {' '.join(unique_sources)}")
+    return "; ".join(directives)
+
+
+_CSP_POLICY = _build_csp_policy()
+
+
+async def _validate_prp_startup():
+    """Fail-fast validation for PRP system when enabled.
+
+    - Requires OPENAI_API_KEY
+    - Requires PRP tables available (prp_docs, prp_messages, prp_personas)
+    - Validates vector/RPC availability for PRP similarity search
+    """
+    enabled = os.getenv("PRP_ENABLED", "true").lower() in ("true", "1", "yes", "on")
+    if not enabled:
+        return
+
+    # Check OPENAI_API_KEY
+    if not os.getenv("OPENAI_API_KEY"):
+        raise RuntimeError(
+            "PRP system is enabled but OPENAI_API_KEY is missing. Set it in .env or disable PRP_ENABLED."
+        )
+
+    # Verify tables exist via Supabase service client
+    try:
+        from .services.client_manager import get_supabase_client
+
+        client = get_supabase_client()
+        # Probe tables
+        client.table("prp_docs").select("id").limit(1).execute()
+        client.table("prp_messages").select("id").limit(1).execute()
+        client.table("prp_personas").select("id").limit(1).execute()
+    except Exception as e:  # noqa: BLE001
+        raise RuntimeError(
+            f"PRP system not ready (tables). Apply migration/prp_system.sql. Details: {e}"
+        ) from e
+
+    # Validate search RPCs and pgvector
+    strict = os.getenv("PRP_STRICT", "false").lower() in ("true", "1", "yes", "on")
+    try:
+        probe = [0.0] * 1536
+        client.rpc(
+            "search_prp_docs",
+            {"query_embedding": probe, "kind_filter": "prp", "match_count": 1, "similarity_threshold": 0.9},
+        ).execute()
+        client.rpc(
+            "search_prp_messages",
+            {"query_embedding": probe, "session_filter": None, "match_count": 1, "similarity_threshold": 0.9},
+        ).execute()
+    except Exception as e:  # noqa: BLE001
+        msg = str(e)
+        if strict:
+            raise RuntimeError(
+                "PRP search functions not available or vector extension missing. "
+                "Run migration/prp_system.sql. Details: " + msg
+            ) from e
+        else:
+            api_logger.error(
+                "PRP search functions not available or vector extension missing. "
+                "Server will continue (PRP_STRICT is false). Details: %s",
+                msg,
+            )
+
+
+def _validate_core_env():
+    """Fail-fast for core environment configuration before hitting the DB.
+
+    Must have SUPABASE_URL and SUPABASE_SERVICE_KEY to initialize credentials.
+    """
+    supabase_url = os.getenv("SUPABASE_URL")
+    supabase_service_key = os.getenv("SUPABASE_SERVICE_KEY")
+    missing = []
+    if not supabase_url:
+        missing.append("SUPABASE_URL")
+    if not supabase_service_key:
+        missing.append("SUPABASE_SERVICE_KEY")
+    if missing:
+        raise RuntimeError(
+            "Missing required environment variables: "
+            + ", ".join(missing)
+            + ". Set them in your .env before starting Archon."
+        )
+
+    # _validate_core_env only checks core env presence; PRP readiness is handled above
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -93,6 +286,9 @@ async def lifespan(app: FastAPI):
         from .config.config import get_config
 
         get_config()  # This will raise ConfigurationError if anon key detected
+
+        # Fail fast on core env
+        _validate_core_env()
 
         # Initialize credentials from database FIRST - this is the foundation for everything else
         await initialize_credentials()
@@ -115,6 +311,14 @@ async def lifespan(app: FastAPI):
         # Crawler is now managed by CrawlerManager
 
         api_logger.info("✅ Using polling for real-time updates")
+
+        # Fail-fast for PRP when enabled (critical dependency)
+        try:
+            await _validate_prp_startup()
+            api_logger.info("✅ PRP system validation passed")
+        except Exception as prp_err:
+            api_logger.error(f"❌ PRP startup validation failed: {prp_err}")
+            raise
 
         # Initialize prompt service
         try:
@@ -231,6 +435,14 @@ async def skip_health_check_logs(request, call_next):
         logger.setLevel(old_level)
         return response
     return await call_next(request)
+
+
+@app.middleware("http")
+async def apply_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["Content-Security-Policy"] = _CSP_POLICY
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    return response
 
 
 # Include API routers

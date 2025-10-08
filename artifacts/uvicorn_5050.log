@@ -1,0 +1,46 @@
+INFO:     Started server process [1929]
+INFO:     Waiting for application startup.
+2025-10-08 13:11:26,592 - INFO - 🚀 Starting Archon backend...
+2025-10-08 13:11:26,980 - INFO - HTTP Request: GET https://rpqlvsxsrezjqiymsewx.supabase.co/rest/v1/archon_settings?select=%2A "HTTP/2 200 OK"
+2025-10-08 13:11:26,985 - INFO - Loaded 52 credentials from database
+2025-10-08 13:11:27,037 - INFO - Set environment variable: OPENAI_API_KEY
+2025-10-08 13:11:27,037 - INFO - Set environment variable: HOST
+2025-10-08 13:11:27,037 - INFO - Set environment variable: PORT
+2025-10-08 13:11:27,037 - INFO - Set environment variable: MCP_TRANSPORT
+2025-10-08 13:11:27,037 - INFO - Set environment variable: LOGFIRE_ENABLED
+2025-10-08 13:11:27,037 - INFO - Set environment variable: PROJECTS_ENABLED
+2025-10-08 13:11:27,037 - INFO - Set environment variable: LLM_PROVIDER
+2025-10-08 13:11:27,037 - INFO - Set environment variable: LLM_BASE_URL
+2025-10-08 13:11:27,037 - INFO - Set environment variable: EMBEDDING_MODEL
+2025-10-08 13:11:27,037 - INFO - Set environment variable: MODEL_CHOICE
+2025-10-08 13:11:27,037 - INFO - ✅ Credentials loaded and environment variables set
+2025-10-08 13:11:27,037 - INFO - ❌ LOGFIRE_TOKEN not found. Using standard logging.
+2025-10-08 13:11:27,077 - INFO - 📝 Logfire configured but disabled (send_to_logfire=False)
+2025-10-08 13:11:27 | root | INFO | 📋 Logging configured (Logfire: disabled)
+2025-10-08 13:11:27 | src.server.main | INFO | ✅ Credentials initialized
+2025-10-08 13:11:27 | api | INFO | 🔥 Logfire initialized for backend
+2025-10-08 13:11:27 | src.server.services.crawler_manager | INFO | === CRAWLER INITIALIZATION START ===
+2025-10-08 13:11:27 | src.server.services.crawler_manager | INFO | === CRAWLER INITIALIZATION SUCCESS ===
+2025-10-08 13:11:27 | src.server.services.crawler_manager | INFO | Crawler instance: <crawl4ai.async_webcrawler.AsyncWebCrawler object at 0x119bc2660>
+2025-10-08 13:11:27 | src.server.services.crawler_manager | INFO | Initialized: True
+2025-10-08 13:11:27 | api | INFO | ✅ Using polling for real-time updates
+2025-10-08 13:11:29 | api | INFO | ✅ PRP system validation passed
+2025-10-08 13:11:29 | src.server.services.prompt_service | INFO | Loading prompts from database...
+2025-10-08 13:11:29 | src.server.services.prompt_service | INFO | Loaded 3 prompts into memory
+2025-10-08 13:11:29 | api | INFO | ✅ Prompt service initialized
+2025-10-08 13:11:29 | src.server.services.background_task_manager | INFO | BackgroundTaskManager initialized with max 10 concurrent tasks, 1h metadata retention
+2025-10-08 13:11:29 | src.server.services.background_task_manager | INFO | BackgroundTaskManager uses pure async - main loop setting not required
+2025-10-08 13:11:29 | api | INFO | ✅ Main event loop set for background tasks
+2025-10-08 13:11:29 | src.server.services.background_task_manager | INFO | Submitting async task a8ebfecb-91e6-4910-b9ce-bae10eb970a0 for background execution
+2025-10-08 13:11:29 | api | INFO | ✅ Embeddings health monitor started
+2025-10-08 13:11:29 | api | INFO | ℹ️ Embeddings backfill scheduler disabled (set EMBEDDINGS_AUTOBACKFILL_ENABLED=true to enable)
+2025-10-08 13:11:29 | api | INFO | 🎉 Archon backend started successfully!
+2025-10-08 13:11:29 | src.server.services.background_task_manager | INFO | Starting execution of async task a8ebfecb-91e6-4910-b9ce-bae10eb970a0
+2025-10-08 13:11:29 | src.server.services.embeddings.embeddings_maintenance_service | INFO | Starting embeddings health monitor | interval_min=60.0
+2025-10-08 13:11:32 | src.server.services.embeddings.embeddings_maintenance_service | INFO | Embeddings health | pages=0/27060 missing | code=0/2042 missing | total_missing=0
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:5050 (Press CTRL+C to quit)
+2025-10-08 14:16:11 | src.server.services.embeddings.embeddings_maintenance_service | INFO | Embeddings health | pages=0/27060 missing | code=0/2042 missing | total_missing=0
+2025-10-08 15:16:12 | src.server.services.embeddings.embeddings_maintenance_service | INFO | Embeddings health | pages=0/14522 missing | code=0/2042 missing | total_missing=0
+2025-10-08 16:16:12 | src.server.services.embeddings.embeddings_maintenance_service | INFO | Embeddings health | pages=0/11496 missing | code=0/0 missing | total_missing=0
+2025-10-08 17:16:12 | src.server.services.embeddings.embeddings_maintenance_service | INFO | Embeddings health | pages=0/4377 missing | code=0/0 missing | total_missing=0

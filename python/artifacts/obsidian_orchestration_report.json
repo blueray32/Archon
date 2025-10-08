@@ -1,0 +1,12 @@
+{
+  "vault_path": "/Users/ciarancox/Documents/ArchonVault",
+  "notes_scanned": 6634,
+  "tags_found": 780,
+  "areas_found": 0,
+  "auto_tagged": 0,
+  "archon_sync": {
+    "error": "SUPABASE_URL and SUPABASE_SERVICE_KEY must be set in environment variables"
+  },
+  "artifacts_dir": "artifacts/obsidian_sync_2025-10-07",
+  "index_note": "/Users/ciarancox/Documents/ArchonVault/Archon/index.md"
+}

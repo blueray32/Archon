@@ -1,0 +1,24 @@
+{
+  "_README": "Golden dataset for QA validation. Manually label 200+ notes with correct tags.",
+  "_INSTRUCTIONS": "1. Select diverse notes (different topics, lengths, complexity). 2. Manually assign area/service/status. 3. Leave service empty if not applicable. 4. Use exactly the values from TAG_SCHEMA.",
+  "_TAG_SCHEMA": {
+    "area": ["MEP", "BIM", "Revit", "NavisWorks", "Spanish", "Community", "Engineering", "Architecture", "Construction"],
+    "service": ["agents", "crawler", "mcp", "ui", "database", "embedding", "search"],
+    "status": ["draft", "review", "published", "archived"]
+  },
+  "README.md": {
+    "area": "Architecture",
+    "service": "",
+    "status": "published"
+  },
+  "Archon/feature-system-test-planning-2025-09-27.md": {
+    "area": "Engineering",
+    "service": "",
+    "status": "archived"
+  },
+  "Archon/feature-workflow-test-001-2025-09-27.md": {
+    "area": "BIM",
+    "service": "agents",
+    "status": "draft"
+  }
+}
