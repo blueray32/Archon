@@ -84,6 +84,13 @@ tail -f /tmp/archon_obsidian_sync.log
 3. **Wait for completion** (~1.5 hours for full vault)
 4. **Search in Archon** - all changes now searchable
 
+## MCP Client Configuration
+
+- **Config path:** `ai_docs/mcp/obsidian.client.json`
+- **Vault root:** `/Users/ciarancox/Documents/ArchonVault`
+- **Write permissions:** Restricted to `Logs/Agents` and `Tasks`
+- Point any MCP-capable client (Claude Code, Cursor, Windsurf, etc.) at this file to mount the vault through Archon.
+
 ## File Tracking
 
 Each uploaded file maintains traceability:

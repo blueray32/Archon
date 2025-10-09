@@ -212,4 +212,78 @@ def register_obsidian_tools(mcp):
                 "error": f"Failed to stop watching: {str(e)}"
             })
 
+    @mcp.tool()
+    async def list_obsidian_metadata_gaps(ctx: Context) -> str:
+        """List notes missing required area/service/status frontmatter."""
+        try:
+            context = ctx.request_context.lifespan_context
+            service_client = context.service_client
+
+            result = await service_client.call_api(
+                method="GET",
+                endpoint="/api/obsidian/review/missing-tags"
+            )
+
+            return json.dumps({
+                "success": True,
+                "total": result.get("total", 0),
+                "notes": result.get("notes", []),
+                "message": "Retrieved Obsidian frontmatter gaps"
+            })
+
+        except Exception as e:
+            logger.error(f"Failed to list Obsidian metadata gaps: {e}")
+            return json.dumps({
+                "success": False,
+                "error": f"Failed to retrieve metadata gaps: {str(e)}"
+            })
+
+    @mcp.tool()
+    async def update_obsidian_frontmatter(
+        ctx: Context,
+        path: str,
+        updates_json: str,
+        merge: bool = True,
+        preserve_existing: bool = True,
+    ) -> str:
+        """Update frontmatter for a vault note via backend API."""
+        try:
+            try:
+                updates = json.loads(updates_json) if updates_json else {}
+            except json.JSONDecodeError as parse_error:
+                return json.dumps({
+                    "success": False,
+                    "error": f"Invalid updates JSON: {parse_error}"
+                })
+
+            context = ctx.request_context.lifespan_context
+            service_client = context.service_client
+
+            payload = {
+                "path": path,
+                "updates": updates,
+                "merge": merge,
+                "preserve_existing": preserve_existing,
+            }
+
+            result = await service_client.call_api(
+                method="POST",
+                endpoint="/api/obsidian/frontmatter/update",
+                data=payload,
+            )
+
+            return json.dumps({
+                "success": True,
+                "changes": result.get("changes", {}),
+                "frontmatter": result.get("frontmatter", {}),
+                "message": "Frontmatter updated successfully"
+            })
+
+        except Exception as e:
+            logger.error(f"Failed to update Obsidian frontmatter: {e}")
+            return json.dumps({
+                "success": False,
+                "error": f"Failed to update frontmatter: {str(e)}"
+            })
+
     logger.info("✓ Obsidian vault tools registered")

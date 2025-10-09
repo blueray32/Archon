@@ -83,3 +83,9 @@ rag: api-start
 	curl -fsS -X POST $(API)/api/rag/query \
 	  -H 'Content-Type: application/json' -H "X-Session-Id: $$SESSION" \
 	  -d "$$(jq -nc --arg q '$(Q)' --argjson k $(K) '{query:$$q, top_k:$$k}')" | jq .
+
+moc-plan:
+	@MODE=plan VAULT_DIR="$(VAULT_DIR)" bash scripts/obsidian_moc_ops.sh
+
+moc-apply:
+	@MODE=apply VAULT_DIR="$(VAULT_DIR)" bash scripts/obsidian_moc_ops.sh

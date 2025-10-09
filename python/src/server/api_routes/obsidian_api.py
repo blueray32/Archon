@@ -5,11 +5,17 @@ API endpoints for managing Obsidian vault synchronization with Archon's knowledg
 """
 
 import os
+import json
+from typing import Any
+
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from ..config.logfire_config import get_logger, safe_logfire_error, safe_logfire_info
 from ..services.obsidian_sync_service import ObsidianVaultSyncService
+from ...agents.obsidian_tools import ObsidianTools
+from ...agents.obsidian_tools_production import ObsidianToolsProduction
+from pathlib import Path
 
 logger = get_logger(__name__)
 
@@ -49,6 +55,13 @@ class IndexVaultRequest(BaseModel):
 
 class WatchVaultRequest(BaseModel):
     knowledge_type: str = "technical"
+
+
+class FrontmatterUpdateRequest(BaseModel):
+    path: str = Field(..., description="Vault-relative path to markdown file")
+    updates: dict[str, Any] = Field(default_factory=dict, description="Frontmatter fields to set")
+    merge: bool = True
+    preserve_existing: bool = True
 
 
 @router.get("/status")
@@ -223,4 +236,90 @@ async def get_vault_info():
         raise
     except Exception as e:
         safe_logfire_error(f"Failed to get vault info | error={str(e)}")
+        raise HTTPException(status_code=500, detail={"error": str(e)})
+
+
+@router.get("/review/missing-tags")
+async def get_missing_tag_notes():
+    """Return notes missing required frontmatter classifications."""
+    try:
+        vault_path = os.getenv("OBSIDIAN_VAULT")
+        if not vault_path:
+            raise HTTPException(status_code=404, detail={"error": "Obsidian vault not configured"})
+
+        if not os.path.isdir(vault_path):
+            raise HTTPException(status_code=404, detail={"error": f"Vault not found: {vault_path}"})
+
+        tools = ObsidianTools(vault_path)
+        index = tools.scan_vault()
+
+        notes_missing = []
+        for note in index.notes:
+            missing_fields: list[str] = []
+            frontmatter = note.frontmatter or {}
+            for field in ("area", "service", "status"):
+                value = frontmatter.get(field)
+                if value is None or (isinstance(value, str) and not value.strip()):
+                    missing_fields.append(field)
+            if missing_fields:
+                notes_missing.append(
+                    {
+                        "path": note.path,
+                        "title": note.title,
+                        "missing": missing_fields,
+                        "tags": note.tags,
+                    }
+                )
+
+        return {
+            "success": True,
+            "total": len(notes_missing),
+            "notes": notes_missing,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        safe_logfire_error(f"Failed to gather missing tag notes | error={str(e)}")
+        raise HTTPException(status_code=500, detail={"error": str(e)})
+
+
+@router.post("/frontmatter/update")
+async def update_frontmatter(request: FrontmatterUpdateRequest):
+    """Apply frontmatter updates to an Obsidian note."""
+    try:
+        vault_path = os.getenv("OBSIDIAN_VAULT")
+        if not vault_path:
+            raise HTTPException(status_code=404, detail={"error": "Obsidian vault not configured"})
+
+        vault_root = Path(vault_path).resolve()
+        target_path = (vault_root / request.path).resolve()
+
+        if not str(target_path).startswith(str(vault_root)):
+            raise HTTPException(status_code=400, detail={"error": "Invalid note path"})
+
+        if not target_path.exists() or not target_path.is_file():
+            raise HTTPException(status_code=404, detail={"error": f"Note not found: {request.path}"})
+
+        tools = ObsidianToolsProduction(vault_path)
+        changes = tools.update_frontmatter_hygiene(
+            target_path,
+            request.updates,
+            merge=request.merge,
+            preserve_existing=request.preserve_existing,
+        )
+
+        # Return updated frontmatter snapshot for context
+        updated_frontmatter, _ = tools.parse_frontmatter(target_path.read_text(encoding="utf-8"))
+
+        return {
+            "success": True,
+            "changes": changes,
+            "frontmatter": updated_frontmatter,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        safe_logfire_error(f"Failed to update note frontmatter | error={str(e)}")
         raise HTTPException(status_code=500, detail={"error": str(e)})

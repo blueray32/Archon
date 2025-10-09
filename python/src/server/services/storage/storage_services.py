@@ -26,6 +26,7 @@ class DocumentStorageService(BaseStorageService):
         tags: list[str] | None = None,
         progress_callback: Any | None = None,
         cancellation_check: Any | None = None,
+        metadata_overrides: dict[str, Any] | None = None,
     ) -> tuple[bool, dict[str, Any]]:
         """
         Upload and process a document file with progress reporting.
@@ -97,6 +98,9 @@ class DocumentStorageService(BaseStorageService):
 
                     if tags:
                         meta["tags"] = tags
+                    if metadata_overrides:
+                        for key, value in metadata_overrides.items():
+                            meta[key] = value
 
                     urls.append(doc_url)
                     chunk_numbers.append(i)
@@ -191,6 +195,7 @@ class DocumentStorageService(BaseStorageService):
                 tags=doc.get("tags"),
                 progress_callback=kwargs.get("progress_callback"),
                 cancellation_check=kwargs.get("cancellation_check"),
+                metadata_overrides=doc.get("metadata_overrides"),
             )
             results.append(result)
 

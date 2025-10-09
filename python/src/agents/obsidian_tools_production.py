@@ -63,6 +63,24 @@ class TagSchema:
     source: list[str]
 
 
+def _normalize_tag_field(value: Any) -> list[str]:
+    """Normalize frontmatter tag field into a list of strings."""
+    if value is None:
+        return []
+    if isinstance(value, str):
+        value = value.strip()
+        return [value] if value else []
+    if isinstance(value, (list, tuple, set)):
+        normalized: list[str] = []
+        for item in value:
+            if isinstance(item, str):
+                item = item.strip()
+                if item:
+                    normalized.append(item)
+        return normalized
+    return []
+
+
 # Default tag schema
 DEFAULT_TAG_SCHEMA = TagSchema(
     area=["MEP", "BIM", "Revit", "NavisWorks", "Spanish", "Community", "Engineering", "Architecture", "Construction"],
@@ -81,12 +99,15 @@ class SyncState:
     failed_paths: list[str] = None
     last_run_timestamp: str = ""
     content_hashes: dict[str, str] = None  # path -> hash
+    pending_hashes: dict[str, str] = None  # path -> hash snapshot from current scan
 
     def __post_init__(self):
         if self.failed_paths is None:
             self.failed_paths = []
         if self.content_hashes is None:
             self.content_hashes = {}
+        if self.pending_hashes is None:
+            self.pending_hashes = {}
 
     def to_dict(self) -> dict:
         return {
@@ -95,6 +116,7 @@ class SyncState:
             "failed_paths": self.failed_paths,
             "last_run_timestamp": self.last_run_timestamp,
             "content_hashes": self.content_hashes,
+            "pending_hashes": self.pending_hashes,
         }
 
     @classmethod
@@ -105,6 +127,7 @@ class SyncState:
             failed_paths=data.get("failed_paths", []),
             last_run_timestamp=data.get("last_run_timestamp", ""),
             content_hashes=data.get("content_hashes", {}),
+            pending_hashes=data.get("pending_hashes", {}),
         )
 
     def save(self, path: Path):
@@ -178,6 +201,7 @@ class ObsidianToolsProduction:
         skipped_files: list[str] = []
         skip_reasons: dict[str, int] = {}
         total_size = 0
+        new_hashes: dict[str, str] = {}
 
         for md_file in self.vault_path.rglob("*.md"):
             # Check exclusions
@@ -196,8 +220,8 @@ class ObsidianToolsProduction:
                 notes.append(metadata)
                 total_size += metadata.size_bytes
 
-                # Update state
-                state.content_hashes[metadata.path] = metadata.content_hash
+                # Track hash snapshot for later state commit
+                new_hashes[metadata.path] = metadata.content_hash
 
             except Exception as e:
                 logger.warning(f"Failed to process {md_file}: {e}")
@@ -214,6 +238,9 @@ class ObsidianToolsProduction:
             area = note.frontmatter.get("area")
             if area:
                 areas_summary[area] = areas_summary.get(area, 0) + 1
+
+        # Record hash snapshot for this scan without overwriting the previous baseline yet
+        state.pending_hashes = new_hashes
 
         index = VaultIndex(
             vault_path=str(self.vault_path),
@@ -248,7 +275,8 @@ class ObsidianToolsProduction:
         inline_tags = re.findall(r"#([a-zA-Z0-9_/-]+)", body)
 
         # Combine tags
-        all_tags = set(frontmatter.get("tags", []) + inline_tags)
+        frontmatter_tags = _normalize_tag_field(frontmatter.get("tags"))
+        all_tags = set(frontmatter_tags + inline_tags)
 
         # Get file stats
         stat = note_path.stat()

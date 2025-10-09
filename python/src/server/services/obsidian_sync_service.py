@@ -28,6 +28,7 @@ except ImportError:
 
 from ..config.logfire_config import get_logger
 from ..services.storage import DocumentStorageService
+from ..services.source_management_service import SourceManagementService
 from ..utils import get_supabase_client
 
 logger = get_logger(__name__)
@@ -46,8 +47,10 @@ class ObsidianVaultSyncService:
         self.vault_path = Path(vault_path)
         self.supabase = get_supabase_client()
         self.storage_service = DocumentStorageService(self.supabase)
+        self.source_service = SourceManagementService(self.supabase)
         self.observer = None
         self.is_watching = False
+        self.loop: asyncio.AbstractEventLoop | None = None
 
         # Track synced files and their hashes to detect changes
         self.synced_files: dict[str, str] = {}  # path -> hash
@@ -178,6 +181,18 @@ class ObsidianVaultSyncService:
                 "obsidian_links": links,
                 **frontmatter,  # Include all frontmatter
             }
+            frontmatter_overrides = {
+                "obsidian_vault": True,
+                "vault_path": str(self.vault_path),
+                "relative_path": relative_path,
+                "area": frontmatter.get("area"),
+                "service": frontmatter.get("service"),
+                "status": frontmatter.get("status"),
+            }
+            frontmatter_overrides = {k: v for k, v in frontmatter_overrides.items() if v is not None and v != ""}
+            frontmatter_overrides.setdefault("obsidian_vault", True)
+            frontmatter_overrides.setdefault("vault_path", str(self.vault_path))
+            frontmatter_overrides.setdefault("relative_path", relative_path)
 
             # Use existing storage service to process the file
             # This handles chunking, embeddings, and database storage
@@ -187,6 +202,7 @@ class ObsidianVaultSyncService:
                 source_id=source_id,
                 knowledge_type=knowledge_type,
                 tags=all_tags,
+                metadata_overrides=frontmatter_overrides,
             )
 
             if not success:
@@ -202,6 +218,26 @@ class ObsidianVaultSyncService:
         except Exception as e:
             logger.error(f"Failed to index Obsidian file {file_path}: {e}")
             return False
+
+    async def _remove_indexed_file(self, relative_path: str) -> None:
+        """Remove indexed records for a deleted Obsidian note."""
+        source_id = f"obsidian_{relative_path.replace('/', '_').replace('.md', '')}"
+        try:
+            loop = asyncio.get_running_loop()
+            success, result = await loop.run_in_executor(
+                None, self.source_service.delete_source, source_id
+            )
+            if not success:
+                logger.warning(f"Failed to delete source for {relative_path}: {result.get('error')}")
+            else:
+                logger.info(f"Removed indexed records for {relative_path}")
+        except RuntimeError:
+            # Fallback if no running loop (should not happen when called via schedule)
+            success, result = self.source_service.delete_source(source_id)
+            if not success:
+                logger.warning(f"Failed to delete source for {relative_path}: {result.get('error')}")
+            else:
+                logger.info(f"Removed indexed records for {relative_path}")
 
     async def index_vault(
         self, knowledge_type: str = "technical", exclude_patterns: list[str] | None = None, max_files: int | None = None
@@ -290,6 +326,11 @@ class ObsidianVaultSyncService:
             logger.warning("Vault watching already started")
             return
 
+        try:
+            self.loop = asyncio.get_running_loop()
+        except RuntimeError as exc:
+            raise RuntimeError("Vault watching requires an active asyncio event loop") from exc
+
         class ObsidianFileHandler(FileSystemEventHandler):
             """Handler for Obsidian file system events."""
 
@@ -302,14 +343,14 @@ class ObsidianVaultSyncService:
                     return
                 file_path = Path(event.src_path)
                 logger.info(f"File modified: {file_path}")
-                asyncio.create_task(self.sync_service.index_file(file_path, self.knowledge_type))
+                self.sync_service._submit_async(self.sync_service.index_file(file_path, self.knowledge_type))
 
             def on_created(self, event):
                 if event.is_directory or not event.src_path.endswith(".md"):
                     return
                 file_path = Path(event.src_path)
                 logger.info(f"File created: {file_path}")
-                asyncio.create_task(self.sync_service.index_file(file_path, self.knowledge_type))
+                self.sync_service._submit_async(self.sync_service.index_file(file_path, self.knowledge_type))
 
             def on_deleted(self, event):
                 if event.is_directory or not event.src_path.endswith(".md"):
@@ -317,9 +358,7 @@ class ObsidianVaultSyncService:
                 file_path = Path(event.src_path)
                 relative_path = str(file_path.relative_to(self.sync_service.vault_path))
                 logger.info(f"File deleted: {relative_path}")
-                # Remove from knowledge base
-                source_id = f"obsidian_{relative_path.replace('/', '_').replace('.md', '')}"
-                # TODO: Call delete endpoint
+                self.sync_service._submit_async(self.sync_service._handle_file_deleted(relative_path))
 
         event_handler = ObsidianFileHandler(self)
         self.observer = Observer()
@@ -336,3 +375,37 @@ class ObsidianVaultSyncService:
             self.observer.join()
             self.is_watching = False
             logger.info("Stopped watching Obsidian vault")
+        self.loop = None
+
+    def _submit_async(self, coro: Any) -> None:
+        """Submit coroutine to stored event loop safely."""
+        if self.loop is None:
+            logger.warning("Async submission requested without event loop; dropping task")
+            return
+        future = asyncio.run_coroutine_threadsafe(self._wrap_coro(coro), self.loop)
+        future.add_done_callback(self._log_future_error)
+
+    async def _wrap_coro(self, coro: Any) -> None:
+        """Wrapper to await coroutine and suppress cancellation noise."""
+        try:
+            await coro
+        except asyncio.CancelledError:
+            logger.debug("Watcher task cancelled")
+        except Exception as exc:
+            logger.error(f"Watcher task failed: {exc}")
+
+    @staticmethod
+    def _log_future_error(fut: asyncio.Future) -> None:
+        """Log unexpected errors from run_coroutine_threadsafe futures."""
+        if fut.cancelled():
+            return
+        exc = fut.exception()
+        if exc:
+            logger.error(f"Watcher async task raised: {exc}")
+
+    async def _handle_file_deleted(self, relative_path: str) -> None:
+        """Handle removal of a vault file."""
+        try:
+            await self._remove_indexed_file(relative_path)
+        finally:
+            self.synced_files.pop(relative_path, None)

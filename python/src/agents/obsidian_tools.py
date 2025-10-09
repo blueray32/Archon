@@ -59,6 +59,24 @@ class TagSchema:
     source: list[str]
 
 
+def _normalize_tag_field(value: Any) -> list[str]:
+    """Normalize frontmatter tag field into a list of strings."""
+    if value is None:
+        return []
+    if isinstance(value, str):
+        value = value.strip()
+        return [value] if value else []
+    if isinstance(value, (list, tuple, set)):
+        normalized: list[str] = []
+        for item in value:
+            if isinstance(item, str):
+                item = item.strip()
+                if item:
+                    normalized.append(item)
+        return normalized
+    return []
+
+
 # Default tag schema for Archon + Obsidian
 DEFAULT_TAG_SCHEMA = TagSchema(
     area=["MEP", "BIM", "Revit", "NavisWorks", "Spanish", "Community", "Engineering", "Architecture", "Construction"],
@@ -158,7 +176,8 @@ class ObsidianTools:
         inline_tags = re.findall(r"#([a-zA-Z0-9_/-]+)", body)
 
         # Combine frontmatter tags and inline tags
-        all_tags = set(frontmatter.get("tags", []) + inline_tags)
+        frontmatter_tags = _normalize_tag_field(frontmatter.get("tags"))
+        all_tags = set(frontmatter_tags + inline_tags)
 
         # Get file stats
         stat = note_path.stat()

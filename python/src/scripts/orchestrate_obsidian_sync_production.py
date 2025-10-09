@@ -181,7 +181,7 @@ async def run_production_sync(
                     tag_suggestions.update(shard_suggestions)
 
                     # Save state after each shard
-                    if not dry_run:
+                    if not dry_run and resume:
                         state.save(state_path)
                         logger.info(f"✓ Saved state (processed {state.processed_count} notes)")
 
@@ -286,6 +286,16 @@ async def run_production_sync(
         logger.info(f"✓ Created {index_note_path}")
     else:
         index_note_path = None
+
+    # Finalize state hashes once scan completed
+    if not dry_run:
+        state.content_hashes = state.pending_hashes or {}
+        state.pending_hashes = {}
+        if resume:
+            state.save(state_path)
+    else:
+        # Avoid carrying pending hashes across dry runs
+        state.pending_hashes = {}
 
     # Save metrics
     metrics_path = artifacts_dir / "metrics.json"
