@@ -9,11 +9,13 @@
  * - Business logic hooks (useTaskDragDrop, useDocumentEditor)
  */
 
+export { useProjectMutation } from "./useProjectMutation";
 export {
   projectKeys,
   useCreateProject,
   useDeleteProject,
   useProjectFeatures,
   useProjects,
+  useTaskCounts,
   useUpdateProject,
 } from "./useProjectQueries";

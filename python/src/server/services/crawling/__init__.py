@@ -8,6 +8,7 @@ and related orchestration operations.
 from .code_extraction_service import CodeExtractionService
 from .crawling_service import (
     CrawlingService,
+    CrawlOrchestrationService,
     get_active_orchestration,
     register_orchestration,
     unregister_orchestration,
@@ -27,6 +28,7 @@ from .strategies.sitemap import SitemapCrawlStrategy
 
 __all__ = [
     "CrawlingService",
+    "CrawlOrchestrationService",
     "CodeExtractionService",
     "DocumentStorageOperations",
     "ProgressMapper",

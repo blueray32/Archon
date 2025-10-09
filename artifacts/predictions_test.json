@@ -1,0 +1,52 @@
+{
+  "ai-agent-mastery-main/7_Agent_Architecture/.claude/commands/execute-prp.md": {
+    "area": "DevOps",
+    "service": "",
+    "status": "complete"
+  },
+  "Processed/www_philschmid_de_cloud-attention_issue-9.md": {
+    "area": "Technology",
+    "service": "",
+    "status": "active"
+  },
+  "Processed/Makefile.md": {
+    "area": "DevOps",
+    "service": "Makefile",
+    "status": "active"
+  },
+  "Archon/Knowledge/Philschmid_De_-_Philipp-Schmid/code_examples/www_philschmid_de_deploy-gptj-sagemaker_.md": {
+    "area": "AI",
+    "service": "Hugging Face Transformers, GPT-j-6B model",
+    "status": "active"
+  },
+  "Processed/BIm/Tritex24-229/01-10-2025  Design/1.01 Planning/KAM BIM Templates/Tender Review Checklist/12345-KAM-XX-XX-CL-X-00001_ TENDER RVIEW.md": {
+    "area": "Architecture",
+    "service": "BIM (Building Information Modeling)",
+    "status": "active"
+  },
+  "Processed/BIm/Tritex24-229/01-10-2025  Design/1.02 Inputs/BMS - SSE/2025.07.30 Control Enclosure location/Control enclosure locations (revised).md": {
+    "area": "Architecture",
+    "service": "Arup Design Documentation",
+    "status": "active"
+  },
+  "Processed/BIm/Tritex24-229/01-10-2025  Design/1.02 Inputs/Consulant - ARUP/1.01 Drawings & Documents/25.01.23 ICT Dwgs/SHS-ARUP-XX-01-DR-YI-5502 Rev 01.md": {
+    "area": "Architecture",
+    "service": "",
+    "status": "complete"
+  },
+  "Processed/QF 4.1.12 Intruder Alarm.md": {
+    "area": "Automation",
+    "service": "",
+    "status": "complete"
+  },
+  "Archon/Knowledge/Philschmid_De_-_Philipp-Schmid/code_examples/www_philschmid_de_bloom-sagemaker-peft.md": {
+    "area": "AI",
+    "service": "Amazon SageMaker, Hugging Face",
+    "status": "active"
+  },
+  "Processed/QF 4.1.102 Fire Alarm - Roof Area 1-6.md": {
+    "area": "Construction",
+    "service": "",
+    "status": "active"
+  }
+}

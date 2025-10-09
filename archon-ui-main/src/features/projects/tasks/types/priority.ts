@@ -1,36 +1,39 @@
 /**
  * Priority System Types
  *
- * Defines priority levels independent from task_order (which handles drag-and-drop positioning).
- * Priority represents semantic importance and is stored directly in the database.
+ * Defines user-facing priority levels separate from task_order (which handles drag-and-drop positioning).
+ * Priority is for display and user understanding, not for ordering logic.
  */
 
 export type TaskPriority = "critical" | "high" | "medium" | "low";
 
 export interface TaskPriorityOption {
-  value: TaskPriority; // Direct priority values from database enum
+  value: number; // Maps to task_order values for backwards compatibility
   label: string;
   color: string;
 }
 
 export const TASK_PRIORITY_OPTIONS: readonly TaskPriorityOption[] = [
-  { value: "critical", label: "Critical", color: "text-red-600" },
-  { value: "high", label: "High", color: "text-orange-600" },
-  { value: "medium", label: "Medium", color: "text-blue-600" },
-  { value: "low", label: "Low", color: "text-gray-600" },
+  { value: 1, label: "Critical", color: "text-red-600" },
+  { value: 25, label: "High", color: "text-orange-600" },
+  { value: 50, label: "Medium", color: "text-blue-600" },
+  { value: 100, label: "Low", color: "text-gray-600" },
 ] as const;
 
 /**
- * Get task priority display properties from priority value
+ * Convert task_order value to TaskPriority enum
  */
-export function getTaskPriorityOption(priority: TaskPriority): TaskPriorityOption {
-  const priorityOption = TASK_PRIORITY_OPTIONS.find((p) => p.value === priority);
-  return priorityOption || TASK_PRIORITY_OPTIONS[2]; // Default to 'Medium'
+export function getTaskPriorityFromTaskOrder(taskOrder: number): TaskPriority {
+  if (taskOrder <= 1) return "critical";
+  if (taskOrder <= 25) return "high";
+  if (taskOrder <= 50) return "medium";
+  return "low";
 }
 
 /**
- * Validate priority value against allowed enum values
+ * Get task priority display properties from task_order
  */
-export function isValidTaskPriority(priority: string): priority is TaskPriority {
-  return ["critical", "high", "medium", "low"].includes(priority);
+export function getTaskPriorityOption(taskOrder: number): TaskPriorityOption {
+  const priority = TASK_PRIORITY_OPTIONS.find((p) => p.value >= taskOrder);
+  return priority || TASK_PRIORITY_OPTIONS[TASK_PRIORITY_OPTIONS.length - 1]; // Default to 'Low'
 }

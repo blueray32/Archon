@@ -1,0 +1,16 @@
+{
+  "start_time": "2025-10-07T20:14:14.628835",
+  "end_time": "2025-10-07T20:14:15.760680",
+  "duration_s": 1.131845,
+  "notes_scanned": 1740,
+  "notes_processed": 0,
+  "notes_skipped_unchanged": 1740,
+  "notes_skipped_rules": 0,
+  "notes_failed": 0,
+  "tags_applied": 0,
+  "durations": {
+    "scan": 0.777227,
+    "auto_tag": 0.348231
+  },
+  "errors": []
+}

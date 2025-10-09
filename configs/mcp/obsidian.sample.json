@@ -1,0 +1,11 @@
+{
+  "name": "obsidian-vault",
+  "transport": "websocket",
+  "url": "ws://localhost:7860",
+  "capabilities": [
+    "file.read",
+    "file.write",
+    "workspace.list"
+  ],
+  "notes": "Point this to your Obsidian Claude Code MCP plugin port."
+}

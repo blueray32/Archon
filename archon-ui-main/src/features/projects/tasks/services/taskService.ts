@@ -3,11 +3,21 @@
  * Focused service for task CRUD operations only
  */
 
-import { callAPIWithETag } from "../../../shared/apiWithEtag";
-import { formatZodErrors, ValidationError } from "../../../shared/errors";
+import { formatZodErrors, ValidationError } from "../../shared/api";
+import { callAPIWithETag, invalidateETagCache } from "../../shared/apiWithEtag";
 
-import { validateCreateTask, validateUpdateTask, validateUpdateTaskStatus } from "../schemas";
-import type { CreateTaskRequest, DatabaseTaskStatus, Task, TaskCounts, UpdateTaskRequest } from "../types";
+import {
+  validateCreateTask,
+  validateUpdateTask,
+  validateUpdateTaskStatus,
+} from "../schemas";
+import type {
+  CreateTaskRequest,
+  DatabaseTaskStatus,
+  Task,
+  TaskCounts,
+  UpdateTaskRequest,
+} from "../types";
 
 export const taskService = {
   /**
@@ -15,7 +25,9 @@ export const taskService = {
    */
   async getTasksByProject(projectId: string): Promise<Task[]> {
     try {
-      const tasks = await callAPIWithETag<Task[]>(`/api/projects/${projectId}/tasks`);
+      const tasks = await callAPIWithETag<Task[]>(
+        `/api/projects/${projectId}/tasks`,
+      );
 
       // Return tasks as-is; UI uses DB status values (todo/doing/review/done)
       return tasks;
@@ -52,13 +64,16 @@ export const taskService = {
       // The validation.data already has defaults from schema
       const requestData = validation.data;
 
-      // Backend returns { message: string, task: Task } for mutations
-      const response = await callAPIWithETag<{ message: string; task: Task }>("/api/tasks", {
+      const task = await callAPIWithETag<Task>("/api/tasks", {
         method: "POST",
         body: JSON.stringify(requestData),
       });
 
-      return response.task;
+      // Invalidate task list cache for the project
+      invalidateETagCache(`/api/projects/${taskData.project_id}/tasks`);
+      invalidateETagCache("/api/tasks/counts");
+
+      return task;
     } catch (error) {
       console.error("Failed to create task:", error);
       throw error;
@@ -76,13 +91,16 @@ export const taskService = {
     }
 
     try {
-      // Backend returns { message: string, task: Task } for mutations
-      const response = await callAPIWithETag<{ message: string; task: Task }>(`/api/tasks/${taskId}`, {
+      const task = await callAPIWithETag<Task>(`/api/tasks/${taskId}`, {
         method: "PUT",
         body: JSON.stringify(validation.data),
       });
 
-      return response.task;
+      // Invalidate related caches
+      // Note: We don't know the project_id here, so TanStack Query will handle invalidation
+      invalidateETagCache("/api/tasks/counts");
+
+      return task;
     } catch (error) {
       console.error(`Failed to update task ${taskId}:`, error);
       throw error;
@@ -92,7 +110,10 @@ export const taskService = {
   /**
    * Update task status (for drag & drop operations)
    */
-  async updateTaskStatus(taskId: string, status: DatabaseTaskStatus): Promise<Task> {
+  async updateTaskStatus(
+    taskId: string,
+    status: DatabaseTaskStatus,
+  ): Promise<Task> {
     // Validate input
     const validation = validateUpdateTaskStatus({
       task_id: taskId,
@@ -104,13 +125,15 @@ export const taskService = {
 
     try {
       // Use the standard update task endpoint with JSON body
-      // Backend returns { message: string, task: Task } for mutations
-      const response = await callAPIWithETag<{ message: string; task: Task }>(`/api/tasks/${taskId}`, {
+      const task = await callAPIWithETag<Task>(`/api/tasks/${taskId}`, {
         method: "PUT",
         body: JSON.stringify({ status }),
       });
 
-      return response.task;
+      // Invalidate task counts cache when status changes
+      invalidateETagCache("/api/tasks/counts");
+
+      return task;
     } catch (error) {
       console.error(`Failed to update task status ${taskId}:`, error);
       throw error;
@@ -125,6 +148,9 @@ export const taskService = {
       await callAPIWithETag<void>(`/api/tasks/${taskId}`, {
         method: "DELETE",
       });
+
+      // Invalidate task counts cache after deletion
+      invalidateETagCache("/api/tasks/counts");
     } catch (error) {
       console.error(`Failed to delete task ${taskId}:`, error);
       throw error;
@@ -134,7 +160,11 @@ export const taskService = {
   /**
    * Update task order for better drag-and-drop support
    */
-  async updateTaskOrder(taskId: string, newOrder: number, newStatus?: DatabaseTaskStatus): Promise<Task> {
+  async updateTaskOrder(
+    taskId: string,
+    newOrder: number,
+    newStatus?: DatabaseTaskStatus,
+  ): Promise<Task> {
     try {
       const updates: UpdateTaskRequest = {
         task_order: newOrder,
@@ -160,7 +190,9 @@ export const taskService = {
     try {
       // Note: This method requires cross-project access
       // For now, we'll throw an error suggesting to use project-scoped queries
-      throw new Error("getTasksByStatus requires cross-project access. Use getTasksByProject instead.");
+      throw new Error(
+        "getTasksByStatus requires cross-project access. Use getTasksByProject instead.",
+      );
     } catch (error) {
       console.error(`Failed to get tasks by status ${status}:`, error);
       throw error;
@@ -173,7 +205,9 @@ export const taskService = {
    */
   async getTaskCountsForAllProjects(): Promise<Record<string, TaskCounts>> {
     try {
-      const response = await callAPIWithETag<Record<string, TaskCounts>>("/api/projects/task-counts");
+      const response = await callAPIWithETag<Record<string, TaskCounts>>(
+        "/api/projects/task-counts",
+      );
       return response || {};
     } catch (error) {
       console.error("Failed to get task counts for all projects:", error);

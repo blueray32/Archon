@@ -3,7 +3,6 @@ import { Copy, Check, Link, Unlink } from 'lucide-react';
 import { NeonButton, type CornerRadius, type GlowIntensity, type ColorOption } from '../ui/NeonButton';
 import { motion } from 'framer-motion';
 import { cn } from '../../lib/utils';
-import { copyToClipboard } from '../../features/shared/utils/clipboard';
 
 export const ButtonPlayground: React.FC = () => {
   const [showLayer2, setShowLayer2] = useState(true);
@@ -204,7 +203,7 @@ export const ButtonPlayground: React.FC = () => {
   };
 
   // Helper functions for CSS generation
-  const getSizePadding = () => {
+  const _getSizePadding = () => {
     const sizes = { sm: '12px 6px', md: '16px 8px', lg: '24px 12px', xl: '32px 16px' };
     return sizes['md'];
   };
@@ -263,12 +262,12 @@ export const ButtonPlayground: React.FC = () => {
     return configs[color];
   };
 
-  const getGradient = (color: ColorOption) => {
+  const _getGradient = (color: ColorOption) => {
     if (color === 'none') return 'rgba(255,255,255,0.8), rgba(255,255,255,0.6)';
     return 'rgba(255,255,255,0.7), rgba(255,255,255,0.5)';
   };
 
-  const getBorderColor = (color: ColorOption) => {
+  const _getBorderColor = (color: ColorOption) => {
     const colors = {
       none: 'rgba(229,231,235,0.5)',
       purple: 'rgba(196,181,253,0.6)',
@@ -280,14 +279,10 @@ export const ButtonPlayground: React.FC = () => {
     return colors[color];
   };
 
-  const handleCopyToClipboard = async () => {
-    const result = await copyToClipboard(generateCSS());
-    if (result.success) {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } else {
-      console.error('Failed to copy to clipboard:', result.error);
-    }
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(generateCSS());
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   // Corner input component
@@ -659,7 +654,7 @@ export const ButtonPlayground: React.FC = () => {
           <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
             <h3 className="text-lg font-semibold text-gray-800 dark:text-white">CSS Styles</h3>
             <button
-              onClick={handleCopyToClipboard}
+              onClick={copyToClipboard}
               className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center gap-2 shadow-lg shadow-purple-600/25"
             >
               {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}

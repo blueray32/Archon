@@ -120,7 +120,7 @@ Ready to get started? Follow our comprehensive setup guide:
 | **[Configuration](./configuration)** | Environment variables, database setup, and service configuration |
 | **[MCP Integration](./mcp-overview)** | Connect AI clients like Cursor, Windsurf, Claude Desktop |
 | **[API Reference](./api-reference)** | Complete REST API documentation with examples |
-| **[Socket.IO Communication](./websockets)** | Real-time updates, progress tracking, and troubleshooting |
+| **[Polling & Caching](./polling)** | HTTP polling with ETag and progress endpoints |
 | **[RAG Strategies](./rag)** | Configure advanced retrieval strategies for optimal performance |
 | **[Task Management](./tasks)** | Organize projects and tasks with AI agent integration |
 | **[Web Interface](./ui)** | Comprehensive guide to the React frontend |
@@ -181,17 +181,14 @@ graph TB
     MCP --> Supabase
 ```
 
-## 🔮 Real-Time Features
+## 🔄 Live Updates
 
-Archon implements comprehensive real-time communication:
+Archon now uses efficient HTTP polling with ETag caching:
 
-- **🔄 Live Progress Tracking**: Real-time updates during crawling operations
-- **📡 Server Log Streaming**: Socket.IO-based log streaming from MCP server to UI
-- **🎯 Progress Callbacks**: Business logic reports progress via callbacks to Socket.IO broadcasts
-- **🔗 Auto-Reconnection**: Robust connection handling with automatic reconnect on failures
-- **📱 Responsive UI Updates**: Instant feedback without polling or page refreshes
-
-📋 **[Complete Socket.IO Guide](./server#socket-io-communication)** - Implementation patterns and best practices
+- **Progress Endpoints**: `/api/progress/{operation_id}` with 304 ETag support
+- **Smart Intervals**: Pauses when tab is hidden, resumes when active
+- **Low Overhead**: 304 Not Modified dramatically reduces bandwidth
+- **Consistent UX**: Predictable updates without WebSockets
 
 ## 🎯 Next Steps
 

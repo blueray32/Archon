@@ -39,6 +39,8 @@ async def process_data():
     embeddings = await create_embeddings_batch_async(texts)
 ```
 
+> Note: This document contains legacy Socket.IO guidance. Archon Beta now uses HTTP polling with ETag caching for live updates. See the Polling & Caching guide.
+
 ## Socket.IO Best Practices
 
 ### Room-Based Broadcasting

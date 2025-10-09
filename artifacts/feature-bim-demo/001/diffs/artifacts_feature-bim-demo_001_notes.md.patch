@@ -1,0 +1,10 @@
+diff --git a/artifacts/feature-bim-demo/001/notes.md b/artifacts/feature-bim-demo/001/notes.md
+new file mode 100644
+index 0000000..d0386f4
+--- /dev/null
++++ b/artifacts/feature-bim-demo/001/notes.md
+@@ -0,0 +1,4 @@
++# Dev run for feature-bim-demo/001
++2025-09-27T00:06:12Z
++- PRP: ai_docs/PRPs/feature-bim-demo/001/PRP.md
++- Executor: manual mode (RUN_CLAUDE=0 or no claude CLI)

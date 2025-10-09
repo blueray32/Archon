@@ -1,0 +1,17 @@
+diff --git a/artifacts/feature-bim-demo/001/diffs/artifacts_feature-bim-demo_001_changed_files.csv.patch b/artifacts/feature-bim-demo/001/diffs/artifacts_feature-bim-demo_001_changed_files.csv.patch
+new file mode 100644
+index 0000000..fce0609
+--- /dev/null
++++ b/artifacts/feature-bim-demo/001/diffs/artifacts_feature-bim-demo_001_changed_files.csv.patch
+@@ -0,0 +1,11 @@
++diff --git a/artifacts/feature-bim-demo/001/changed_files.csv b/artifacts/feature-bim-demo/001/changed_files.csv
++new file mode 100644
++index 0000000..13d0e24
++--- /dev/null
+++++ b/artifacts/feature-bim-demo/001/changed_files.csv
++@@ -0,0 +1,5 @@
+++artifacts/feature-bim-demo/001/changed_files.csv
+++artifacts/feature-bim-demo/001/diffs/artifacts_feature-bim-demo_001_changed_files.csv.patch
+++artifacts/feature-bim-demo/001/diffs/artifacts_feature-bim-demo_001_diffs_artifacts_feature-bim-demo_001_notes.md.patch.patch
+++artifacts/feature-bim-demo/001/diffs/artifacts_feature-bim-demo_001_notes.md.patch
+++artifacts/feature-bim-demo/001/notes.md

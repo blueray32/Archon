@@ -11,6 +11,7 @@ The agents use MCP tools for all data operations.
 
 import asyncio
 import json
+import re
 import logging
 import os
 from collections.abc import AsyncGenerator
@@ -22,10 +23,15 @@ import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+from openai import AsyncOpenAI
 
 # Import our PydanticAI agents
 from .document_agent import DocumentAgent
 from .rag_agent import RagAgent
+from .pydantic_ai_loader import get_pydantic_ai_agent_class
+from .spanish_tutor_agent import SpanishTutorAgent
+from .researcher_agent import ResearcherAgent
+from .prp_agent import PRPAgent
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -55,6 +61,10 @@ class AgentResponse(BaseModel):
 AVAILABLE_AGENTS = {
     "document": DocumentAgent,
     "rag": RagAgent,
+    "spanish_tutor": SpanishTutorAgent,
+    "researcher": ResearcherAgent,
+    "pydantic_ai": get_pydantic_ai_agent_class(),
+    "prp": PRPAgent,
 }
 
 # Global credentials storage
@@ -66,39 +76,69 @@ async def fetch_credentials_from_server():
     max_retries = 30  # Try for up to 5 minutes (30 * 10 seconds)
     retry_delay = 10  # seconds
 
+    server_port = os.getenv("ARCHON_SERVER_PORT", "8181")
+    candidate_bases: list[str] = []
+
+    api_service_url = os.getenv("API_SERVICE_URL")
+    if api_service_url:
+        candidate_bases.append(api_service_url)
+
+    # Docker compose expects the archon-server hostname
+    candidate_bases.append(f"http://archon-server:{server_port}")
+
+    # Local development fallback
+    candidate_bases.append(f"http://127.0.0.1:{server_port}")
+
+    total_attempts = max_retries * len(candidate_bases)
+    attempt_counter = 0
+
     for attempt in range(max_retries):
         try:
             async with httpx.AsyncClient() as client:
-                # Call the server's internal credentials endpoint
-                server_port = os.getenv("ARCHON_SERVER_PORT")
-                if not server_port:
-                    raise ValueError(
-                        "ARCHON_SERVER_PORT environment variable is required. "
-                        "Please set it in your .env file or environment."
-                    )
-                response = await client.get(
-                    f"http://archon-server:{server_port}/internal/credentials/agents", timeout=10.0
-                )
-                response.raise_for_status()
-                credentials = response.json()
+                last_error: Exception | None = None
 
-                # Set credentials as environment variables
-                for key, value in credentials.items():
-                    if value is not None:
-                        os.environ[key] = str(value)
-                        logger.info(f"Set credential: {key}")
+                for base_url in candidate_bases:
+                    attempt_counter += 1
 
-                # Store credentials globally for agent initialization
-                global AGENT_CREDENTIALS
-                AGENT_CREDENTIALS = credentials
+                    url = f"{base_url.rstrip('/')}/internal/credentials/agents"
+                    try:
+                        response = await client.get(url, timeout=10.0)
+                        response.raise_for_status()
+                        credentials = response.json()
 
-                logger.info(f"Successfully fetched {len(credentials)} credentials from server")
-                return credentials
+                        # Set credentials as environment variables
+                        for key, value in credentials.items():
+                            if value is not None:
+                                os.environ[key] = str(value)
+                                logger.info(f"Set credential: {key}")
+
+                        global AGENT_CREDENTIALS
+                        AGENT_CREDENTIALS = credentials
+
+                        logger.info(
+                            "Successfully fetched %s credentials from server using base %s",
+                            len(credentials),
+                            base_url,
+                        )
+                        return credentials
+
+                    except (httpx.HTTPError, httpx.RequestError) as inner_exc:
+                        last_error = inner_exc
+                        logger.warning(
+                            "Credentials fetch failed via %s (attempt %s/%s): %s",
+                            base_url,
+                            attempt_counter,
+                            total_attempts,
+                            inner_exc,
+                        )
+
+                if last_error:
+                    raise last_error
 
         except (httpx.HTTPError, httpx.RequestError) as e:
             if attempt < max_retries - 1:
                 logger.warning(
-                    f"Failed to fetch credentials (attempt {attempt + 1}/{max_retries}): {e}"
+                    f"Failed to fetch credentials (pass {attempt + 1}/{max_retries}): {e}"
                 )
                 logger.info(f"Retrying in {retry_delay} seconds...")
                 await asyncio.sleep(retry_delay)
@@ -120,18 +160,57 @@ async def lifespan(app: FastAPI):
         logger.error(f"Failed to fetch credentials: {e}")
         # Continue with defaults if we can't get credentials
 
+    # Initialize PRP service for RAG retrieval
+    app.state.prp_service = None
+    try:
+        from supabase import create_client
+        from ..server.services.prp_service import PRPService
+
+        supabase_url = os.getenv("SUPABASE_URL")
+        supabase_key = os.getenv("SUPABASE_SERVICE_KEY")
+        openai_key = os.getenv("OPENAI_API_KEY")
+
+        if supabase_url and supabase_key:
+            supabase_client = create_client(supabase_url, supabase_key)
+            app.state.prp_service = PRPService(supabase_client, openai_key)
+            logger.info("PRPService initialized successfully")
+        else:
+            logger.warning("PRPService not initialized - missing Supabase credentials")
+    except Exception as e:
+        logger.error(f"Failed to initialize PRPService: {e}")
+
     # Initialize agents with fetched credentials
     app.state.agents = {}
     for name, agent_class in AVAILABLE_AGENTS.items():
         try:
+            logger.info(f"Attempting to initialize {name} agent...")
             # Pass model configuration from credentials
             model_key = f"{name.upper()}_AGENT_MODEL"
             model = AGENT_CREDENTIALS.get(model_key, "openai:gpt-4o-mini")
 
-            app.state.agents[name] = agent_class(model=model)
-            logger.info(f"Initialized {name} agent with model: {model}")
+            # Override Spanish tutor to use gpt-4o-mini to avoid quota issues
+            if name == "spanish_tutor" and model == "openai:gpt-4o":
+                model = "openai:gpt-4o-mini"
+                logger.info(f"Overriding Spanish tutor to use gpt-4o-mini due to quota limits")
+
+            logger.info(f"Using model: {model} for {name} agent")
+
+            # agent_class may be a class, a factory function, or an instance
+            if isinstance(agent_class, type):
+                agent_instance = agent_class(model=model)
+            elif callable(agent_class):
+                try:
+                    agent_instance = agent_class(model=model)
+                except TypeError:
+                    agent_instance = agent_class()
+            else:
+                agent_instance = agent_class
+            app.state.agents[name] = agent_instance
+            logger.info(f"Successfully initialized {name} agent with model: {model}")
         except Exception as e:
+            import traceback
             logger.error(f"Failed to initialize {name} agent: {e}")
+            logger.error(f"Stack trace: {traceback.format_exc()}")
 
     yield
 
@@ -167,25 +246,288 @@ async def run_agent(request: AgentRequest):
     The agent will use MCP tools for any data operations.
     """
     try:
+        # If the request includes file content, short‑circuit to a local summarizer
+        try:
+            if request.context and isinstance(request.context, dict):
+                fc = request.context.get("file_content")
+                if isinstance(fc, str) and fc.strip():
+                    snippet = fc.strip()
+                    if len(snippet) > 16000:
+                        snippet = snippet[:16000] + "\n[Content truncated]"
+                    # Use OpenAI directly for a tool‑free summary
+                    model = os.getenv("RAG_AGENT_MODEL", "gpt-4o-mini")
+                    # allow either plain model or provider:model
+                    if ":" in model:
+                        model = model.split(":", 1)[1]
+                    client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+                    prompt = (
+                        "Summarize the following note. Return only a concise bullet list of actionable next steps. "
+                        "Do not search or use any external information.\n\n[NOTE]\n"
+                        + snippet
+                        + "\n[/NOTE]\n\nUser request: "
+                        + (request.prompt or "")
+                    )
+                    resp = await client.chat.completions.create(
+                        model=model,
+                        messages=[
+                            {"role": "system", "content": "You are a precise summarizer."},
+                            {"role": "user", "content": prompt},
+                        ],
+                        temperature=0.2,
+                    )
+                    text = resp.choices[0].message.content or ""
+                    return AgentResponse(
+                        success=True,
+                        result={"output": text, "raw": {"output": text}},
+                        metadata={"agent_type": request.agent_type, "model": model},
+                    )
+        except Exception as e:
+            logger.error(f"File-content summarization failed, falling back to agent: {e}")
+
         # Get the requested agent
         if request.agent_type not in app.state.agents:
             raise HTTPException(status_code=400, detail=f"Unknown agent type: {request.agent_type}")
 
         agent = app.state.agents[request.agent_type]
 
-        # Prepare dependencies for the agent
-        deps = {
-            "context": request.context or {},
-            "options": request.options or {},
-            "mcp_endpoint": os.getenv("MCP_SERVICE_URL", "http://archon-mcp:8051"),
-        }
+        # If file_content is provided in context, prepend it to the prompt so agents can operate on note content.
+        # This makes HTTP provider useful for note-level tasks even without local tools.
+        try:
+            if request.context and isinstance(request.context, dict):
+                fc = request.context.get("file_content")
+                if isinstance(fc, str) and fc.strip():
+                    snippet = fc.strip()
+                    # Cap length to keep requests efficient
+                    if len(snippet) > 12000:
+                        snippet = snippet[:12000] + "\n[Content truncated]"
+                    request.prompt = (
+                        "You are summarizing an Obsidian note. "
+                        "Answer strictly using the note content; do not perform external search, retrieval, or tool calls. "
+                        "Return a concise bullet list of key actions.\n\n"
+                        "[BEGIN_NOTE]\n" + snippet + "\n[END_NOTE]\n\n" + request.prompt
+                    )
+        except Exception:
+            # Non-fatal if context formatting fails
+            pass
 
-        # Run the agent
-        result = await agent.run(request.prompt, deps)
+        # Prepare dependencies based on agent type
+        try:
+            logger.info(f"[Agents] Running {request.agent_type} with prompt prefix: {request.prompt[:80]!r}")
+        except Exception:
+            pass
+        if request.agent_type in ("rag", "pydantic_ai"):
+            from .rag_agent import RagDependencies
+
+            deps = RagDependencies(
+                source_filter=request.context.get("source_filter") if request.context else None,
+                match_count=request.context.get("match_count", 5) if request.context else 5,
+                project_id=request.context.get("project_id") if request.context else None,
+                prp_mode=(request.agent_type == "pydantic_ai"),
+            )
+        elif request.agent_type == "document":
+            from .document_agent import DocumentDependencies
+
+            deps = DocumentDependencies(
+                project_id=request.context.get("project_id") if request.context else None,
+                user_id=request.context.get("user_id") if request.context else None,
+            )
+        elif request.agent_type == "spanish_tutor":
+            from .spanish_tutor_agent import SpanishTutorDependencies
+
+            deps = SpanishTutorDependencies(
+                student_level=request.context.get("student_level", "beginner") if request.context else "beginner",
+                conversation_mode=request.context.get("conversation_mode", "casual") if request.context else "casual",
+                focus_area=request.context.get("focus_area") if request.context else None,
+                previous_context=request.context.get("previous_context") if request.context else None,
+                response_style=request.context.get("response_style", "minimal") if request.context else "minimal",
+                include_translation=bool(request.context.get("include_translation", False)) if request.context else False,
+                include_corrections=bool(request.context.get("include_corrections", True)) if request.context else True,
+                include_grammar_notes=bool(request.context.get("include_grammar_notes", False)) if request.context else False,
+                include_vocabulary=bool(request.context.get("include_vocabulary", False)) if request.context else False,
+                include_cultural_notes=bool(request.context.get("include_cultural_notes", False)) if request.context else False,
+                include_encouragement=bool(request.context.get("include_encouragement", True)) if request.context else True,
+                include_next_topic=bool(request.context.get("include_next_topic", False)) if request.context else False,
+                max_reply_sentences=int(request.context.get("max_reply_sentences", 2)) if request.context else 2,
+                reading_mode=bool(request.context.get("reading_mode", False)) if request.context else False,
+            )
+        elif request.agent_type == "researcher":
+            from .researcher_agent import ResearcherDependencies
+
+            deps = ResearcherDependencies(
+                project_id=request.context.get("project_id") if request.context else None,
+                source_filter=request.context.get("source_filter") if request.context else None,
+                match_count=request.context.get("match_count", 5) if request.context else 5,
+                enable_web_search=request.context.get("enable_web_search", True) if request.context else True,
+                enable_image_analysis=request.context.get("enable_image_analysis", True) if request.context else True,
+                enable_code_execution=request.context.get("enable_code_execution", True) if request.context else True,
+                enable_knowledge_graph=request.context.get("enable_knowledge_graph", True) if request.context else True,
+                user_memories=request.context.get("user_memories", "") if request.context else "",
+                brave_api_key=os.getenv('BRAVE_API_KEY'),
+                searxng_base_url=os.getenv('SEARXNG_BASE_URL'),
+            )
+        elif request.agent_type == "prp":
+            from .prp_agent import PRPAgent
+
+            # Use run_with_context for PRP agent to enable RAG retrieval
+            session_id = request.context.get("session_id", "default") if request.context else "default"
+            persona_name = request.context.get("persona_name", "chat_gpt_like") if request.context else "chat_gpt_like"
+
+            # Get RAG retriever from PRPService
+            rag_retriever = None
+            if hasattr(app.state, "prp_service") and app.state.prp_service:
+                async def retriever_func(sid: str, msg: str):
+                    return await app.state.prp_service.retrieve_context(sid, msg)
+                rag_retriever = retriever_func
+
+            # Call run_with_context instead of run
+            result = await agent.run_with_context(
+                user_prompt=request.prompt,
+                session_id=session_id,
+                persona_name=persona_name,
+                rag_retriever=rag_retriever
+            )
+
+            # Store message in database if PRPService is available
+            if app.state.prp_service:
+                try:
+                    await app.state.prp_service.store_message(
+                        session_id=session_id,
+                        role="user",
+                        content=request.prompt,
+                        agent_type="prp"
+                    )
+                    await app.state.prp_service.store_message(
+                        session_id=session_id,
+                        role="assistant",
+                        content=result.output if hasattr(result, "output") else str(result),
+                        agent_type="prp"
+                    )
+                except Exception as e:
+                    logger.warning(f"Failed to store PRP messages: {e}")
+
+            # Skip the normal agent.run() path for PRP
+            deps = None  # Signal to skip normal run
+        else:
+            # Default dependencies
+            from .base_agent import ArchonDependencies
+
+            deps = ArchonDependencies()
+
+        # Run the agent (skip if already run for PRP)
+        if deps is not None:
+            result = await agent.run(request.prompt, deps)
+
+        # Normalize result into a consistent shape `{ output: string, raw: Any }`
+        def to_output(res: Any) -> str:
+            try:
+                if isinstance(res, str):
+                    return res
+                if isinstance(res, dict):
+                    # common keys in our agents
+                    for key in ("output", "answer", "text", "message"):
+                        if key in res and isinstance(res[key], str):
+                            return res[key]
+                    # last resort - pretty print
+                    import json
+                    return json.dumps(res, ensure_ascii=False)[:4000]
+                # Pydantic models or other objects
+                if hasattr(res, "model_dump"):
+                    dumped = res.model_dump()
+                    return to_output(dumped)
+                return str(res)
+            except Exception:
+                return str(res)
+
+        output_text = to_output(result)
+
+        # Enforce strict reading mode for Spanish tutor (two lines: Spanish then English)
+        def unwrap_agent_result_text(text: str) -> str:
+            try:
+                if isinstance(text, str) and text.startswith("AgentRunResult(") and "output=" in text:
+                    # Capture contents of output='...'
+                    m = re.search(r"output\s*=\s*'([^']*)'", text, flags=re.S)
+                    if not m:
+                        m = re.search(r'output\s*=\s*"([^"]*)"', text, flags=re.S)
+                    if m:
+                        inner = m.group(1)
+                        # Light unescape for common sequences without breaking UTF‑8
+                        inner = (
+                            inner
+                            .replace(r"\n", "\n")
+                            .replace(r"\t", "\t")
+                            .replace(r'\"', '"')
+                            .replace(r"\'", "'")
+                        )
+                        return inner
+                    # Fallback: strip wrapper if we can't parse cleanly
+                    stripped = text[len("AgentRunResult(") :]
+                    return stripped[:-1] if stripped.endswith(")") else stripped
+            except Exception:
+                return text
+            return text
+
+        def strip_emojis(s: str) -> str:
+            try:
+                # Remove common emoji ranges
+                return re.sub("[\U0001F300-\U0001F6FF\U0001F900-\U0001F9FF\U0001F1E6-\U0001F1FF\u2600-\u26FF\u2700-\u27BF]", "", s)
+            except re.error:
+                # Narrow fallback if wide unicode not supported
+                return s
+
+        def strip_bullets_markdown(s: str) -> str:
+            try:
+                # Remove leading bullets or numeric list markers
+                s = re.sub(r"^\s*(?:[-*•]+|\d+[\.\)]\s*)\s*", "", s)
+                # Remove markdown bold/italic
+                s = re.sub(r"\*\*(.*?)\*\*", r"\1", s)
+                s = re.sub(r"\*(.*?)\*", r"\1", s)
+                # Remove bracketed phonetics or asides
+                s = re.sub(r"\[[^\]]+\]", "", s)
+                # Remove stray bullet symbols (keep dashes in word pairs)
+                s = re.sub(r"[•▪︎◦·●]", "", s)
+                # Trim repeated spaces
+                s = re.sub(r"\s{2,}", " ", s)
+                return s.strip()
+            except re.error:
+                return s
+
+        def enforce_reading_mode(text: str) -> str:
+            # Unwrap wrappers and normalize
+            t = unwrap_agent_result_text(text)
+            # Split and sanitize lines
+            lines = [strip_bullets_markdown(strip_emojis(ln.strip())) for ln in t.splitlines() if ln.strip()]
+
+            # Expand any inline translations "Spanish (English)" into two lines
+            expanded: list[str] = []
+            for ln in lines:
+                m = re.match(r"^(.*?)\s*\(([^()]*)\)\s*$", ln)
+                if m:
+                    es = m.group(1).strip().strip('"“”')
+                    en = m.group(2).strip().strip('"“”')
+                    if es:
+                        expanded.append(es)
+                    if en:
+                        expanded.append(en)
+                else:
+                    expanded.append(ln)
+
+            # Remove any leftover list-like starts that slipped through
+            cleaned = [re.sub(r"^\s*(?:[-*•]+|\d+[\.\)]\s*)\s*", "", ln).strip() for ln in expanded if ln]
+
+            # Join back preserving order to keep bilingual pairs authored by the agent
+            return "\n".join([ln for ln in cleaned if ln])
+
+        # Always unwrap AgentRunResult wrappers for cleaner UI
+        output_text = unwrap_agent_result_text(output_text)
+
+        if request.agent_type == "spanish_tutor" and request.context and request.context.get("reading_mode"):
+            output_text = enforce_reading_mode(output_text)
+
+        normalized = {"output": output_text, "raw": result}
 
         return AgentResponse(
             success=True,
-            result=result,
+            result=normalized,
             metadata={"agent_type": request.agent_type, "model": agent.model},
         )
 
@@ -210,6 +552,53 @@ async def list_agents():
     return {"agents": agents_info, "total": len(agents_info)}
 
 
+def _reinit_agents(app: FastAPI):
+    """Reinitialize agents using current AGENT_CREDENTIALS and registry."""
+    app.state.agents = {}
+    for name, agent_class in AVAILABLE_AGENTS.items():
+        try:
+            logger.info(f"Reinitializing {name} agent...")
+            model_key = f"{name.upper()}_AGENT_MODEL"
+            model = AGENT_CREDENTIALS.get(model_key, "openai:gpt-4o-mini")
+
+            # Override Spanish tutor to use gpt-4o-mini to avoid quota issues
+            if name == "spanish_tutor" and model == "openai:gpt-4o":
+                model = "openai:gpt-4o-mini"
+                logger.info(f"Overriding Spanish tutor to use gpt-4o-mini due to quota limits")
+            if isinstance(agent_class, type):
+                agent_instance = agent_class(model=model)
+            elif callable(agent_class):
+                try:
+                    agent_instance = agent_class(model=model)
+                except TypeError:
+                    agent_instance = agent_class()
+            else:
+                agent_instance = agent_class
+            app.state.agents[name] = agent_instance
+            logger.info(f"Agent {name} ready with model {model}")
+        except Exception as e:
+            logger.error(f"Failed to initialize {name}: {e}")
+
+
+@app.post("/agents/refresh-credentials")
+async def refresh_credentials():
+    """Refresh credentials from the main server and reinitialize agents.
+
+    Useful after updating OPENAI_API_KEY or model choices via Settings without restart.
+    """
+    try:
+        creds = await fetch_credentials_from_server()
+        # Update global creds
+        global AGENT_CREDENTIALS
+        AGENT_CREDENTIALS = creds
+        # Reinit agents with possibly updated models/keys
+        _reinit_agents(app)
+        return {"success": True, "message": "Credentials refreshed", "keys": list(creds.keys())}
+    except Exception as e:
+        logger.error(f"Refresh credentials failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/agents/{agent_type}/stream")
 async def stream_agent(agent_type: str, request: AgentRequest):
     """
@@ -222,19 +611,81 @@ async def stream_agent(agent_type: str, request: AgentRequest):
     if agent_type not in app.state.agents:
         raise HTTPException(status_code=400, detail=f"Unknown agent type: {agent_type}")
 
+    # If file_content provided, stream a direct summary (no tools) to honor user's request
+    try:
+        if request.context and isinstance(request.context, dict):
+            fc = request.context.get("file_content")
+            if isinstance(fc, str) and fc.strip():
+                snippet = fc.strip()
+                if len(snippet) > 16000:
+                    snippet = snippet[:16000] + "\n[Content truncated]"
+                model = os.getenv("RAG_AGENT_MODEL", "gpt-4o-mini")
+                if ":" in model:
+                    model = model.split(":", 1)[1]
+                client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+                prompt = (
+                    "Summarize the following note. Return only a concise bullet list of actionable next steps. "
+                    "Do not search or use any external information.\n\n[NOTE]\n"
+                    + snippet
+                    + "\n[/NOTE]\n\nUser request: "
+                    + (request.prompt or "")
+                )
+
+                async def generate_one():
+                    try:
+                        resp = await client.chat.completions.create(
+                            model=model,
+                            messages=[
+                                {"role": "system", "content": "You are a precise summarizer."},
+                                {"role": "user", "content": prompt},
+                            ],
+                            temperature=0.2,
+                        )
+                        text = resp.choices[0].message.content or ""
+                        yield f"data: {{\"type\": \"stream_chunk\", \"content\": {json.dumps(text)} }}\n\n"
+                        yield f"data: {{\"type\": \"stream_complete\", \"content\": {json.dumps(text)} }}\n\n"
+                    except Exception as e:
+                        yield f"data: {{\"type\": \"error\", \"error\": {json.dumps(str(e))} }}\n\n"
+
+                return StreamingResponse(
+                    generate_one(),
+                    media_type="text/event-stream",
+                    headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+                )
+    except Exception as e:
+        logger.error(f"Streaming file-content summary failed; falling back to agent: {e}")
+
     agent = app.state.agents[agent_type]
+
+    # If file_content provided, inject into prompt (same as /agents/run)
+    try:
+        if request.context and isinstance(request.context, dict):
+            fc = request.context.get("file_content")
+            if isinstance(fc, str) and fc.strip():
+                snippet = fc.strip()
+                if len(snippet) > 12000:
+                    snippet = snippet[:12000] + "\n[Content truncated]"
+                request.prompt = (
+                    "You are summarizing an Obsidian note. "
+                    "Answer strictly using the note content; do not perform external search, retrieval, or tool calls. "
+                    "Return a concise bullet list of key actions.\n\n"
+                    "[BEGIN_NOTE]\n" + snippet + "\n[END_NOTE]\n\n" + request.prompt
+                )
+    except Exception:
+        pass
 
     async def generate() -> AsyncGenerator[str, None]:
         try:
             # Prepare dependencies based on agent type
             # Import dependency classes
-            if agent_type == "rag":
+            if agent_type in ("rag", "pydantic_ai"):
                 from .rag_agent import RagDependencies
 
                 deps = RagDependencies(
                     source_filter=request.context.get("source_filter") if request.context else None,
                     match_count=request.context.get("match_count", 5) if request.context else 5,
                     project_id=request.context.get("project_id") if request.context else None,
+                    prp_mode=(agent_type == "pydantic_ai"),
                 )
             elif agent_type == "document":
                 from .document_agent import DocumentDependencies
@@ -242,6 +693,40 @@ async def stream_agent(agent_type: str, request: AgentRequest):
                 deps = DocumentDependencies(
                     project_id=request.context.get("project_id") if request.context else None,
                     user_id=request.context.get("user_id") if request.context else None,
+                )
+            elif agent_type == "spanish_tutor":
+                from .spanish_tutor_agent import SpanishTutorDependencies
+
+                deps = SpanishTutorDependencies(
+                    student_level=request.context.get("student_level", "beginner") if request.context else "beginner",
+                    conversation_mode=request.context.get("conversation_mode", "casual") if request.context else "casual",
+                    focus_area=request.context.get("focus_area") if request.context else None,
+                    previous_context=request.context.get("previous_context") if request.context else None,
+                    response_style=request.context.get("response_style", "minimal") if request.context else "minimal",
+                    include_translation=bool(request.context.get("include_translation", False)) if request.context else False,
+                    include_corrections=bool(request.context.get("include_corrections", True)) if request.context else True,
+                    include_grammar_notes=bool(request.context.get("include_grammar_notes", False)) if request.context else False,
+                    include_vocabulary=bool(request.context.get("include_vocabulary", False)) if request.context else False,
+                    include_cultural_notes=bool(request.context.get("include_cultural_notes", False)) if request.context else False,
+                    include_encouragement=bool(request.context.get("include_encouragement", True)) if request.context else True,
+                    include_next_topic=bool(request.context.get("include_next_topic", False)) if request.context else False,
+                    max_reply_sentences=int(request.context.get("max_reply_sentences", 2)) if request.context else 2,
+                    reading_mode=bool(request.context.get("reading_mode", False)) if request.context else False,
+                )
+            elif agent_type == "researcher":
+                from .researcher_agent import ResearcherDependencies
+
+                deps = ResearcherDependencies(
+                    project_id=request.context.get("project_id") if request.context else None,
+                    source_filter=request.context.get("source_filter") if request.context else None,
+                    match_count=request.context.get("match_count", 5) if request.context else 5,
+                    enable_web_search=request.context.get("enable_web_search", True) if request.context else True,
+                    enable_image_analysis=request.context.get("enable_image_analysis", True) if request.context else True,
+                    enable_code_execution=request.context.get("enable_code_execution", True) if request.context else True,
+                    enable_knowledge_graph=request.context.get("enable_knowledge_graph", True) if request.context else True,
+                    user_memories=request.context.get("user_memories", "") if request.context else "",
+                    brave_api_key=os.getenv('BRAVE_API_KEY'),
+                    searxng_base_url=os.getenv('SEARXNG_BASE_URL'),
                 )
             else:
                 # Default dependencies

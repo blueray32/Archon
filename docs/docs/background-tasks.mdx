@@ -7,7 +7,9 @@ sidebar_label: Background Tasks
 
 ## Overview
 
-This document describes the architecture for handling long-running operations in Archon without blocking the FastAPI/Socket.IO event loop. The key insight is that browser-based operations (crawling) must remain in the main event loop, while only CPU-intensive operations should be offloaded to threads.
+> Legacy Notice: References to Socket.IO reflect an earlier architecture. Archon Beta now uses HTTP polling with ETag caching for live updates.
+
+This document describes the architecture for handling long-running operations in Archon without blocking the FastAPI event loop. The key insight is that browser-based operations (crawling) must remain in the main event loop, while only CPU-intensive operations should be offloaded to threads.
 
 ## Architecture Principles
 

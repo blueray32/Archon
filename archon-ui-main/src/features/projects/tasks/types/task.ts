@@ -11,12 +11,8 @@ export type { TaskPriority };
 // Database status enum - using database values directly
 export type DatabaseTaskStatus = "todo" | "doing" | "review" | "done";
 
-// Assignee type - flexible string to support any agent name
-export type Assignee = string;
-
-// Common assignee options for UI suggestions
-export const COMMON_ASSIGNEES = ["User", "Archon", "Coding Agent"] as const;
-export type CommonAssignee = (typeof COMMON_ASSIGNEES)[number];
+// Assignee type - simplified to predefined options
+export type Assignee = "User" | "Archon" | "AI IDE Agent";
 
 // Task counts for project overview
 export interface TaskCounts {
@@ -50,7 +46,7 @@ export interface Task {
   title: string;
   description: string;
   status: DatabaseTaskStatus;
-  assignee: Assignee; // Can be any string - agent names, "User", etc.
+  assignee: Assignee;
   task_order: number;
   feature?: string;
   sources?: TaskSource[];
@@ -63,11 +59,9 @@ export interface Task {
   archived_at?: string;
   archived_by?: string;
 
-  // Priority field (required database field)
-  priority: TaskPriority;
-
   // Extended UI properties
   featureColor?: string;
+  priority?: TaskPriority;
 }
 
 // Request types
@@ -76,7 +70,7 @@ export interface CreateTaskRequest {
   title: string;
   description: string;
   status?: DatabaseTaskStatus;
-  assignee?: Assignee; // Optional assignee string
+  assignee?: Assignee;
   task_order?: number;
   feature?: string;
   featureColor?: string;
@@ -89,7 +83,7 @@ export interface UpdateTaskRequest {
   title?: string;
   description?: string;
   status?: DatabaseTaskStatus;
-  assignee?: Assignee; // Optional assignee string
+  assignee?: Assignee;
   task_order?: number;
   feature?: string;
   featureColor?: string;

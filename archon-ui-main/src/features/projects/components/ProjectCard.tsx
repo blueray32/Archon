@@ -1,8 +1,6 @@
 import { motion } from "framer-motion";
 import { Activity, CheckCircle2, ListTodo } from "lucide-react";
 import type React from "react";
-import { isOptimistic } from "../../shared/optimistic";
-import { OptimisticIndicator } from "../../ui/primitives/OptimisticIndicator";
 import { cn } from "../../ui/primitives/styles";
 import type { Project } from "../types";
 import { ProjectCardActions } from "./ProjectCardActions";
@@ -29,25 +27,12 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   onPin,
   onDelete,
 }) => {
-  // Check if project is optimistic
-  const optimistic = isOptimistic(project);
-
   return (
-    <motion.div
-      tabIndex={0}
-      aria-label={`Select project ${project.title}`}
-      aria-current={isSelected ? "true" : undefined}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onSelect(project);
-        }
-      }}
+    <motion.li
       onClick={() => onSelect(project)}
       className={cn(
         "relative rounded-xl backdrop-blur-md w-72 min-h-[180px] cursor-pointer overflow-visible group flex flex-col",
         "transition-all duration-300",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-zinc-900",
         project.pinned
           ? "bg-gradient-to-b from-purple-100/80 via-purple-50/30 to-purple-100/50 dark:from-purple-900/30 dark:via-purple-900/20 dark:to-purple-900/10"
           : isSelected
@@ -64,7 +49,6 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           : "shadow-[0_10px_30px_-15px_rgba(0,0,0,0.1)] dark:shadow-[0_10px_30px_-15px_rgba(0,0,0,0.7)]",
         "hover:shadow-[0_15px_40px_-15px_rgba(0,0,0,0.2)] dark:hover:shadow-[0_15px_40px_-15px_rgba(0,0,0,0.9)]",
         isSelected ? "scale-[1.02]" : "hover:scale-[1.01]", // Use scale instead of translate to avoid clipping
-        optimistic && "opacity-80 ring-1 ring-cyan-400/30",
       )}
     >
       {/* Subtle aurora glow effect for selected card */}
@@ -77,7 +61,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
       {/* Main content area with padding */}
       <div className="flex-1 p-4 pb-2">
         {/* Title section */}
-        <div className="flex flex-col items-center justify-center mb-4 min-h-[48px]">
+        <div className="flex items-center justify-center mb-4 min-h-[48px]">
           <h3
             className={cn(
               "font-medium text-center leading-tight line-clamp-2 transition-all duration-300",
@@ -90,7 +74,6 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           >
             {project.title}
           </h3>
-          <OptimisticIndicator isOptimistic={optimistic} className="mt-1" />
         </div>
 
         {/* Task count pills */}
@@ -115,13 +98,17 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 <ListTodo
                   className={cn(
                     "w-4 h-4",
-                    isSelected ? "text-pink-600 dark:text-pink-400" : "text-gray-500 dark:text-gray-600",
+                    isSelected
+                      ? "text-pink-600 dark:text-pink-400"
+                      : "text-gray-500 dark:text-gray-600",
                   )}
                 />
                 <span
                   className={cn(
                     "text-[8px] font-medium",
-                    isSelected ? "text-pink-600 dark:text-pink-400" : "text-gray-500 dark:text-gray-600",
+                    isSelected
+                      ? "text-pink-600 dark:text-pink-400"
+                      : "text-gray-500 dark:text-gray-600",
                   )}
                 >
                   ToDo
@@ -130,13 +117,17 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               <div
                 className={cn(
                   "flex-1 flex items-center justify-center border-l",
-                  isSelected ? "border-pink-300 dark:border-pink-500/30" : "border-gray-300/50 dark:border-gray-700/50",
+                  isSelected
+                    ? "border-pink-300 dark:border-pink-500/30"
+                    : "border-gray-300/50 dark:border-gray-700/50",
                 )}
               >
                 <span
                   className={cn(
                     "text-lg font-bold",
-                    isSelected ? "text-pink-600 dark:text-pink-400" : "text-gray-500 dark:text-gray-600",
+                    isSelected
+                      ? "text-pink-600 dark:text-pink-400"
+                      : "text-gray-500 dark:text-gray-600",
                   )}
                 >
                   {taskCounts.todo || 0}
@@ -165,13 +156,17 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 <Activity
                   className={cn(
                     "w-4 h-4",
-                    isSelected ? "text-blue-600 dark:text-blue-400" : "text-gray-500 dark:text-gray-600",
+                    isSelected
+                      ? "text-blue-600 dark:text-blue-400"
+                      : "text-gray-500 dark:text-gray-600",
                   )}
                 />
                 <span
                   className={cn(
                     "text-[8px] font-medium",
-                    isSelected ? "text-blue-600 dark:text-blue-400" : "text-gray-500 dark:text-gray-600",
+                    isSelected
+                      ? "text-blue-600 dark:text-blue-400"
+                      : "text-gray-500 dark:text-gray-600",
                   )}
                 >
                   Doing
@@ -180,13 +175,17 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               <div
                 className={cn(
                   "flex-1 flex items-center justify-center border-l",
-                  isSelected ? "border-blue-300 dark:border-blue-500/30" : "border-gray-300/50 dark:border-gray-700/50",
+                  isSelected
+                    ? "border-blue-300 dark:border-blue-500/30"
+                    : "border-gray-300/50 dark:border-gray-700/50",
                 )}
               >
                 <span
                   className={cn(
                     "text-lg font-bold",
-                    isSelected ? "text-blue-600 dark:text-blue-400" : "text-gray-500 dark:text-gray-600",
+                    isSelected
+                      ? "text-blue-600 dark:text-blue-400"
+                      : "text-gray-500 dark:text-gray-600",
                   )}
                 >
                   {(taskCounts.doing || 0) + (taskCounts.review || 0)}
@@ -215,13 +214,17 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 <CheckCircle2
                   className={cn(
                     "w-4 h-4",
-                    isSelected ? "text-green-600 dark:text-green-400" : "text-gray-500 dark:text-gray-600",
+                    isSelected
+                      ? "text-green-600 dark:text-green-400"
+                      : "text-gray-500 dark:text-gray-600",
                   )}
                 />
                 <span
                   className={cn(
                     "text-[8px] font-medium",
-                    isSelected ? "text-green-600 dark:text-green-400" : "text-gray-500 dark:text-gray-600",
+                    isSelected
+                      ? "text-green-600 dark:text-green-400"
+                      : "text-gray-500 dark:text-gray-600",
                   )}
                 >
                   Done
@@ -238,7 +241,9 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 <span
                   className={cn(
                     "text-lg font-bold",
-                    isSelected ? "text-green-600 dark:text-green-400" : "text-gray-500 dark:text-gray-600",
+                    isSelected
+                      ? "text-green-600 dark:text-green-400"
+                      : "text-gray-500 dark:text-gray-600",
                   )}
                 >
                   {taskCounts.done || 0}
@@ -265,16 +270,10 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           projectId={project.id}
           projectTitle={project.title}
           isPinned={project.pinned}
-          onPin={(e) => {
-            e.stopPropagation();
-            onPin(e, project.id);
-          }}
-          onDelete={(e) => {
-            e.stopPropagation();
-            onDelete(e, project.id, project.title);
-          }}
+          onPin={(e) => onPin(e, project.id)}
+          onDelete={(e) => onDelete(e, project.id, project.title)}
         />
       </div>
-    </motion.div>
+    </motion.li>
   );
 };

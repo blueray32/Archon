@@ -1,0 +1,3296 @@
+{
+  "_README": "Golden dataset for QA validation. Manually label each note with correct area/service/status.",
+  "_INSTRUCTIONS": "1. Review each note. 2. Assign area (required), service (optional), status (required). 3. Leave service empty (\"\") if not applicable.",
+  "_TAG_SCHEMA": {
+    "area": [
+      "MEP",
+      "BIM",
+      "Revit",
+      "NavisWorks",
+      "Spanish",
+      "Community",
+      "Engineering",
+      "Architecture",
+      "Construction"
+    ],
+    "service": [
+      "agents",
+      "crawler",
+      "mcp",
+      "ui",
+      "database",
+      "embedding",
+      "search"
+    ],
+    "status": [
+      "draft",
+      "review",
+      "published",
+      "archived"
+    ]
+  },
+  "_STATS": {
+    "vault_path": "/Users/ciarancox/Documents/ArchonVault",
+    "total_notes": 6635,
+    "sampled_notes": 200,
+    "sample_distribution": {
+      "by_size": {
+        "small (<100 words)": 21,
+        "medium (100-500)": 53,
+        "large (>500)": 126
+      },
+      "by_tags": {
+        "none": 148,
+        "few (1-3)": 34,
+        "many (>3)": 18
+      }
+    }
+  },
+  "ai-agent-mastery-main/7_Agent_Architecture/.claude/commands/execute-prp.md": {
+    "area": "DevOps",
+    "service": "PRP (Process Request Protocol)",
+    "status": "active",
+    "_context": {
+      "title": "execute-prp",
+      "word_count": 204,
+      "tags": [],
+      "headings": [
+        "Execute BASE PRP",
+        "PRP File: $ARGUMENTS",
+        "Execution Process"
+      ]
+    }
+  },
+  "Processed/www_philschmid_de_cloud-attention_issue-9.md": {
+    "area": "AI",
+    "service": "Hugging Face, DeepSeek AI, IBM Granite Code Models, Whisper model",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_cloud-attention_issue-9",
+      "word_count": 474,
+      "tags": [],
+      "headings": [
+        "https://www.philschmid.de/cloud-attention/issue-9",
+        "Issue 9: DeepSeek v2 and the Buzz Dataset Revolutionize AI Training -  May 11, 2024",
+        "Issue 9: DeepSeek v2 and the Buzz Dataset Revolutionize AI Training",
+        "News",
+        "Research"
+      ]
+    }
+  },
+  "Processed/Makefile.md": {
+    "area": "DevOps",
+    "service": "Makefile automation",
+    "status": "active",
+    "_context": {
+      "title": "Makefile",
+      "word_count": 202,
+      "tags": [],
+      "headings": [
+        "file://Makefile",
+        "Note: Slash-commands are executed inside your Claude/agent environment.",
+        "These make targets focus on repo hygiene and bundle utilities.",
+        "Lint the universal memory file",
+        "Create a new context bundle and append a PRIME event"
+      ]
+    }
+  },
+  "Archon/Knowledge/Philschmid_De_-_Philipp-Schmid/code_examples/www_philschmid_de_deploy-gptj-sagemaker_.md": {
+    "area": "DevOps",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_deploy-gptj-sagemaker_",
+      "word_count": 132,
+      "tags": [],
+      "headings": [
+        "Code Example",
+        "key: children",
+        "key: startups",
+        "key: hugging face"
+      ]
+    }
+  },
+  "Processed/BIm/Tritex24-229/01-10-2025  Design/1.01 Planning/KAM BIM Templates/Tender Review Checklist/12345-KAM-XX-XX-CL-X-00001_ TENDER RVIEW.md": {
+    "area": "Architecture",
+    "service": "BIM (Building Information Modeling)",
+    "status": "active",
+    "_context": {
+      "title": "12345-KAM-XX-XX-CL-X-00001_ TENDER RVIEW",
+      "word_count": 230,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Processed/BIm/Tritex24-229/01-10-2025  Design/1.02 Inputs/BMS - SSE/2025.07.30 Control Enclosure location/Control enclosure locations (revised).md": {
+    "area": "Architecture",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "Control enclosure locations (revised)",
+      "word_count": 405,
+      "tags": [],
+      "headings": [
+        "General Notes"
+      ]
+    }
+  },
+  "Processed/BIm/Tritex24-229/01-10-2025  Design/1.02 Inputs/Consulant - ARUP/1.01 Drawings & Documents/25.01.23 ICT Dwgs/SHS-ARUP-XX-01-DR-YI-5502 Rev 01.md": {
+    "area": "Architecture",
+    "service": "Architectural Drawings and Documentation",
+    "status": "active",
+    "_context": {
+      "title": "SHS-ARUP-XX-01-DR-YI-5502 Rev 01",
+      "word_count": 433,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Processed/QF 4.1.12 Intruder Alarm.md": {
+    "area": "Security",
+    "service": "",
+    "status": "complete",
+    "_context": {
+      "title": "QF 4.1.12 Intruder Alarm",
+      "word_count": 139,
+      "tags": [],
+      "headings": [
+        "**Intruder Alarm System - Commissioning &amp; Handover Check Sheet**"
+      ]
+    }
+  },
+  "Archon/Knowledge/Philschmid_De_-_Philipp-Schmid/code_examples/www_philschmid_de_bloom-sagemaker-peft.md": {
+    "area": "AI",
+    "service": "Amazon SageMaker, Hugging Face",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_bloom-sagemaker-peft",
+      "word_count": 101,
+      "tags": [],
+      "headings": [
+        "Code Example",
+        "create Hugging Face Model Class",
+        "deploy model to SageMaker Inference"
+      ]
+    }
+  },
+  "Processed/QF 4.1.102 Fire Alarm - Roof Area 1-6.md": {
+    "area": "Construction",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "QF 4.1.102 Fire Alarm - Roof Area 1-6",
+      "word_count": 452,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Archon/Knowledge/Synergyspanish/pages/checkout_synergyspanish_com_28-day-spanish-challenge-bundle-1-trial_ref_ga.md": {
+    "area": "Language Learning",
+    "service": "Spanish courses",
+    "status": "active",
+    "_context": {
+      "title": "checkout_synergyspanish_com_28-day-spanish-challenge-bundle-1-trial_ref_ga",
+      "word_count": 354,
+      "tags": [],
+      "headings": [
+        "https://checkout.synergyspanish.com/28-day-spanish-challenge-bundle-1-trial/?ref=ga",
+        "Your payment details:"
+      ]
+    }
+  },
+  "Archon/Knowledge/Philschmid_De_-_Philipp-Schmid/code_examples/www_philschmid_de_fine-tune-multimodal-llms-with-trl_.md": {
+    "area": "AI",
+    "service": "accelerate, HuggingFaceH4, llava-hf",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_fine-tune-multimodal-llms-with-trl_",
+      "word_count": 115,
+      "tags": [],
+      "headings": [
+        "Code Example",
+        "Tested on 8x H100 GPUs"
+      ]
+    }
+  },
+  "Processed/Archon/Knowledge/Philschmid_De_-_Philipp-Schmid/code_examples/www_philschmid_de_fine-tune-flan-t5-peft.md": {
+    "area": "AI",
+    "service": "Natural Language Processing (NLP)",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_fine-tune-flan-t5-peft",
+      "word_count": 246,
+      "tags": [],
+      "headings": [
+        "Code Example",
+        "Metric",
+        "load test dataset from distk",
+        "run predictions",
+        "this can take ~45 minutes"
+      ]
+    }
+  },
+  "Processed/www_revitapidocs_com_2024_.md": {
+    "area": "Architecture",
+    "service": "Revit API",
+    "status": "active",
+    "_context": {
+      "title": "www_revitapidocs_com_2024_",
+      "word_count": 191,
+      "tags": [],
+      "headings": [
+        "https://www.revitapidocs.com/2024/",
+        "Revit API 2024",
+        "[What's New in the Revit 2024 API](https://www.revitapidocs.com/2024/news)",
+        "[Revit API 2024 - Official Reference Guide](http://help.autodesk.com/view/RVT/2024/ENU/)"
+      ]
+    }
+  },
+  "Processed/Archon/Knowledge/Philschmid_De_-_Philipp-Schmid/code_examples/www_philschmid_de_getting-started-habana-gaudi_.md": {
+    "area": "DevOps",
+    "service": "AWS CLI, EC2",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_getting-started-habana-gaudi_",
+      "word_count": 109,
+      "tags": [],
+      "headings": [
+        "Code Example"
+      ]
+    }
+  },
+  "Processed/BIm/Tritex24-229/01-10-2025-eh/4.03 Health & Safety Files/1.00 Site Safety/GA 1/Loler Ceritificates/2025.09.23 KM 29.md": {
+    "area": "Safety",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "2025.09.23 KM 29",
+      "word_count": 418,
+      "tags": [],
+      "headings": [
+        "REPORT OF THOROUGH EXAMINATION OF LIFTING EQUIPMENT",
+        "B: Other defects / Recommendatlons",
+        "C: Observations",
+        "DECLARATION"
+      ]
+    }
+  },
+  "Processed/circle_so_blog_membership-site.md": {
+    "area": "Web Development",
+    "service": "",
+    "status": "draft",
+    "_context": {
+      "title": "circle_so_blog_membership-site",
+      "word_count": 35,
+      "tags": [],
+      "headings": [
+        "https://circle.so/blog/membership-site"
+      ]
+    }
+  },
+  "Processed/community_circle_so_c_product-updates_may-2023-update.md": {
+    "area": "Technology",
+    "service": "community.circle.so",
+    "status": "active",
+    "_context": {
+      "title": "community_circle_so_c_product-updates_may-2023-update",
+      "word_count": 35,
+      "tags": [],
+      "headings": [
+        "https://community.circle.so/c/product-updates/may-2023-update"
+      ]
+    }
+  },
+  "Processed/www_philschmid_de_fine-tuning-lilt_SCUT-DLVCLab_lilt-roberta-en-base.md": {
+    "area": "AI",
+    "service": "Hugging Face blog",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_fine-tuning-lilt_SCUT-DLVCLab_lilt-roberta-en-base",
+      "word_count": 49,
+      "tags": [],
+      "headings": [
+        "https://www.philschmid.de/fine-tuning-lilt/SCUT-DLVCLab/lilt-roberta-en-base",
+        "404 - Page Not Found"
+      ]
+    }
+  },
+  "Processed/BIm/Tritex24-229/01-10-2025  Design/1.01 Planning/61. Distribution/2025.09.22 - DB Schedules/DB-86.md": {
+    "area": "Construction",
+    "service": "BIM (Building Information Modeling)",
+    "status": "active",
+    "_context": {
+      "title": "DB-86",
+      "word_count": 35,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Processed/BIm/Tritex24-229/01-10-2025  Design/1.01 Planning/61. Distribution/2025.09.22 - DB Schedules/DB-03.md": {
+    "area": "IT",
+    "service": "Database Schedules",
+    "status": "active",
+    "_context": {
+      "title": "DB-03",
+      "word_count": 14,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Archon/Knowledge/Unknown_Source_Code/index.md": {
+    "area": "DevOps",
+    "service": "Python Script for Context Bundling",
+    "status": "active",
+    "_context": {
+      "title": "Unknown Source Code",
+      "word_count": 76,
+      "tags": [],
+      "headings": [
+        "Unknown Source Code"
+      ]
+    }
+  },
+  "Archon/Knowledge/Philschmid_De_-_Philipp-Schmid/code_examples/www_philschmid_de_getting-started-with-automl-and-aws-autogluon_.md": {
+    "area": "Technology",
+    "service": "AutoGluon",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_getting-started-with-automl-and-aws-autogluon_",
+      "word_count": 66,
+      "tags": [],
+      "headings": [
+        "Code Example"
+      ]
+    }
+  },
+  "Processed/circle_so_customer-stories_whoggga_.md": {
+    "area": "Tech",
+    "service": "",
+    "status": "draft",
+    "_context": {
+      "title": "circle_so_customer-stories_whoggga_",
+      "word_count": 35,
+      "tags": [],
+      "headings": [
+        "https://circle.so/customer-stories/whoggga/"
+      ]
+    }
+  },
+  "Archon/Knowledge/Community_Dynamous/pages/community_circle_so_c_events-new-1bd76d_.md": {
+    "area": "Tech Community",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "community_circle_so_c_events-new-1bd76d_",
+      "word_count": 29,
+      "tags": [],
+      "headings": [
+        "https://community.circle.so/c/events-new-1bd76d/"
+      ]
+    }
+  },
+  "Processed/BIm/Tritex24-229/01-10-2025  Design/1.01 Planning/61. Distribution/2025.09.22 - DB Schedules/DB-64.md": {
+    "area": "Construction",
+    "service": "BIM (Building Information Modeling)",
+    "status": "active",
+    "_context": {
+      "title": "DB-64",
+      "word_count": 14,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Archon/Knowledge/Philschmid_De_-_Philipp-Schmid/pages/www_philschmid_de_few-shot-learning-gpt-neo_https_arxiv_org_abs_2005_14165_.md": {
+    "area": "Technology",
+    "service": "",
+    "status": "inactive",
+    "_context": {
+      "title": "www_philschmid_de_few-shot-learning-gpt-neo_https_arxiv_org_abs_2005_14165_",
+      "word_count": 29,
+      "tags": [],
+      "headings": [
+        "https://www.philschmid.de/few-shot-learning-gpt-neo/\\\"https:/arxiv.org/abs/2005.14165\\\"",
+        "404 - Page Not Found"
+      ]
+    }
+  },
+  "Archon/Knowledge/Philschmid_De_-_Philipp-Schmid/code_examples/www_philschmid_de_habana-distributed-training.md": {
+    "area": "AI",
+    "service": "Tokenizer and Dataset Processing",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_habana-distributed-training",
+      "word_count": 64,
+      "tags": [],
+      "headings": [
+        "Code Example"
+      ]
+    }
+  },
+  "Archon/Knowledge/Philschmid_De_-_Philipp-Schmid/code_examples/www_philschmid_de_how-to-set-up-a-ci-cd-pipeline-for-aws-lambda-with-github-actions-and-serverless.md": {
+    "area": "DevOps",
+    "service": "AWS Lambda, GitHub Actions, Serverless Framework",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_how-to-set-up-a-ci-cd-pipeline-for-aws-lambda-with-github-actions-and-serverless",
+      "word_count": 86,
+      "tags": [],
+      "headings": [
+        "Code Example"
+      ]
+    }
+  },
+  "Archon/Knowledge/Community_Dynamous/pages/circle_so_blog_membership-site.md": {
+    "area": "Tech",
+    "service": "circle.so",
+    "status": "active",
+    "_context": {
+      "title": "circle_so_blog_membership-site",
+      "word_count": 29,
+      "tags": [],
+      "headings": [
+        "https://circle.so/blog/membership-site"
+      ]
+    }
+  },
+  "Processed/Archon/Knowledge/Community_Dynamous/pages/circle_so.md": {
+    "area": "Technology",
+    "service": "circle.so",
+    "status": "active",
+    "_context": {
+      "title": "circle_so",
+      "word_count": 35,
+      "tags": [],
+      "headings": [
+        "http://circle.so"
+      ]
+    }
+  },
+  "Processed/BIm/Tritex24-229/01-10-2025  Design/1.01 Planning/61. Distribution/2025.09.22 - DB Schedules/DB-10.md": {
+    "area": "Business",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "DB-10",
+      "word_count": 42,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Archon/Knowledge/GitHub_-_coleam00_ottomator-agents/pages/github_com_abdusabri.md": {
+    "area": "Business",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "github_com_abdusabri",
+      "word_count": 3429,
+      "tags": [],
+      "headings": [
+        "https://github.com/abdusabri",
+        "Navigation Menu",
+        "Search code, repositories, users, issues, pull requests...",
+        "Provide feedback ",
+        "Saved searches "
+      ]
+    }
+  },
+  "Processed/BIm/Tritex24-229/01-10-2025-eh/4.02 Quality/5.00 ITPs/Electrical/TestPacks WIP/DB's/DB's fed from SWB-5/24-233 DB-36- Test pack/Inspection check sheet/QF 4.1.91 Cabling - DB-36.md": {
+    "area": "Construction",
+    "service": "Building Services",
+    "status": "active",
+    "_context": {
+      "title": "QF 4.1.91 Cabling - DB-36",
+      "word_count": 557,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Processed/QF 4.1.91 Cabling - DB-107.md": {
+    "area": "Construction",
+    "service": "Cable Installation and Management",
+    "status": "active",
+    "_context": {
+      "title": "QF 4.1.91 Cabling - DB-107",
+      "word_count": 557,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Processed/QF 4.1.97 Distribution Boards (DB-C2).md": {
+    "area": "Construction",
+    "service": "",
+    "status": "complete",
+    "_context": {
+      "title": "QF 4.1.97 Distribution Boards (DB-C2)",
+      "word_count": 508,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Processed/Archon/Knowledge/GitHub_-_dynamous-community_context-engineering-hub/pages/github_com_adityatelange_hugo-PaperMod_stargazers.md": {
+    "area": "DevOps",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "github_com_adityatelange_hugo-PaperMod_stargazers",
+      "word_count": 852,
+      "tags": [],
+      "headings": [
+        "https://github.com/adityatelange/hugo-PaperMod/stargazers",
+        "Navigation Menu",
+        "Search code, repositories, users, issues, pull requests...",
+        "Provide feedback",
+        "Saved searches"
+      ]
+    }
+  },
+  "Processed/Archon/Knowledge/Community_Dynamous/pages/circle_so_blog.md": {
+    "area": "Marketing",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "circle_so_blog",
+      "word_count": 988,
+      "tags": [
+        "1"
+      ],
+      "headings": [
+        "https://circle.so/blog",
+        "The Circle Blog",
+        "Subscribe to Circle’s newsletter for the best creator and community stories, playbooks, and insights sent straight to your inbox.",
+        "[Build a brand community that turns customers into lifelong advocates](https://circle.so/blog/brand-community)",
+        "[The super-simple guide to community marketing that drives ROI](https://circle.so/blog/community-marketing)"
+      ]
+    }
+  },
+  "Processed/BIm/Tritex24-229/01-10-2025-eh/4.02 Quality/5.00 ITPs/Electrical/TestPacks WIP/DB's/DB's fed from SWB-5/24-233 DB-33- Test pack/Inspection check sheet/QF 4.1.97 Distribution Boards (DB-33).md": {
+    "area": "Construction",
+    "service": "Tritax Park- Magnet Technology Factory",
+    "status": "active",
+    "_context": {
+      "title": "QF 4.1.97 Distribution Boards (DB-33)",
+      "word_count": 533,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Processed/github_com_coleam00_tab_stars.md": {
+    "area": "DevOps",
+    "service": "GitHub Pages, GitHub Actions, Docker, OpenTelemetry, Langchain, LiteLLM, Ollama, OpenAI API, OpenWebUI",
+    "status": "active",
+    "_context": {
+      "title": "github_com_coleam00_tab_stars",
+      "word_count": 955,
+      "tags": [],
+      "headings": [
+        "https://github.com/coleam00?tab=stars",
+        "Navigation Menu",
+        "Search code, repositories, users, issues, pull requests...",
+        "Provide feedback",
+        "Saved searches"
+      ]
+    }
+  },
+  "Processed/BIm/Tritex24-229/01-10-2025  Design/1.02 Inputs/Architect Arup/1.01 Drawings & Documents/2025.01.23/10.Detail Arrange/SHS-ARUP-XX-GF-DR-A-4021 Rev 01.md": {
+    "area": "Architecture",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "SHS-ARUP-XX-GF-DR-A-4021 Rev 01",
+      "word_count": 554,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Processed/Archon/Knowledge/GitHub_-_coleam00_ottomator-agents/pages/github_com_coleam00_context-engineering-intro_forks.md": {
+    "area": "Business",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "github_com_coleam00_context-engineering-intro_forks",
+      "word_count": 1160,
+      "tags": [],
+      "headings": [
+        "https://github.com/coleam00/context-engineering-intro/forks",
+        "Navigation Menu",
+        "Search code, repositories, users, issues, pull requests...",
+        "Provide feedback",
+        "Saved searches"
+      ]
+    }
+  },
+  "Processed/4.2.10a - Social Value Plan Electrical.md": {
+    "area": "Social Responsibility",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "4.2.10a - Social Value Plan Electrical",
+      "word_count": 931,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Processed/www_philschmid_de_gemini-langchain-cheatsheet_.md": {
+    "area": "AI",
+    "service": "LangChain, Google Gemini API",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_gemini-langchain-cheatsheet_",
+      "word_count": 1331,
+      "tags": [],
+      "headings": [
+        "https://www.philschmid.de/gemini-langchain-cheatsheet/",
+        "Google Gemini LangChain Cheatsheet",
+        "Google Gemini with LangChain Chat Models",
+        "Initialize model",
+        "Simple invocation"
+      ]
+    }
+  },
+  "Processed/Archon/Knowledge/Synergyspanish/pages/synergyspanish_com_2-for-1-valentines-spanish-special_.md": {
+    "area": "Language Learning",
+    "service": "Spanish courses",
+    "status": "active",
+    "_context": {
+      "title": "synergyspanish_com_2-for-1-valentines-spanish-special_",
+      "word_count": 819,
+      "tags": [],
+      "headings": [
+        "https://synergyspanish.com/2-for-1-valentines-spanish-special/",
+        "2 for 1 Valentine’s Spanish Special",
+        "2 for 1 Valentine’s Spanish Special",
+        "Share This Story, Choose Your Platform!",
+        "Related Posts"
+      ]
+    }
+  },
+  "Processed/4657-KAM-XX-00-IP-X-0096_DB- 75.md": {
+    "area": "Construction",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "4657-KAM-XX-00-IP-X-0096_DB- 75",
+      "word_count": 536,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Processed/Archon/Knowledge/Synergyspanish/pages/synergyspanish_com_338-spanish-speaking-success-stories_.md": {
+    "area": "Education",
+    "service": "Spanish Language Learning",
+    "status": "active",
+    "_context": {
+      "title": "synergyspanish_com_338-spanish-speaking-success-stories_",
+      "word_count": 945,
+      "tags": [],
+      "headings": [
+        "https://synergyspanish.com/338-spanish-speaking-success-stories/",
+        "338 Spanish-speaking success stories",
+        "338 Spanish-speaking success stories",
+        "Share This Story, Choose Your Platform!",
+        "Related Posts"
+      ]
+    }
+  },
+  "Processed/Archon/Knowledge/Community_Dynamous/pages/circle_so_ai-workflows.md": {
+    "area": "Technology",
+    "service": "AI workflows platform (Circle)",
+    "status": "active",
+    "_context": {
+      "title": "circle_so_ai-workflows",
+      "word_count": 2161,
+      "tags": [],
+      "headings": [
+        "https://circle.so/ai-workflows",
+        "Automate your community management with **AI workflows**",
+        "Flag and moderate content with AI moderation",
+        "**Spot negative sentiment** in posts or comments",
+        "**Hide flagged posts** from featured areas"
+      ]
+    }
+  },
+  "README.md": {
+    "area": "IT Automation",
+    "service": "Docling Ingest Process",
+    "status": "active",
+    "_context": {
+      "title": "README",
+      "word_count": 396,
+      "tags": [],
+      "headings": [
+        "ArchonVault — Docling Ingest (Obsidian‑friendly)"
+      ]
+    }
+  },
+  "Processed/github_com_coleam00_ottomator-agents_actions.md": {
+    "area": "DevOps",
+    "service": "GitHub Actions",
+    "status": "active",
+    "_context": {
+      "title": "github_com_coleam00_ottomator-agents_actions",
+      "word_count": 723,
+      "tags": [],
+      "headings": [
+        "https://github.com/coleam00/ottomator-agents/actions",
+        "Navigation Menu",
+        "Search code, repositories, users, issues, pull requests...",
+        "Provide feedback",
+        "Saved searches"
+      ]
+    }
+  },
+  "Processed/12345-KAM-XX-XX-FM-X-00002_ RESOURCE ASSESSMENT FORM.md": {
+    "area": "Construction",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "12345-KAM-XX-XX-FM-X-00002_ RESOURCE ASSESSMENT FORM",
+      "word_count": 166,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Processed/synergyspanish_com_aff_.md": {
+    "area": "Marketing",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "synergyspanish_com_aff_",
+      "word_count": 284,
+      "tags": [],
+      "headings": [
+        "https://synergyspanish.com/aff/",
+        "aff",
+        "***Every other day, receive FREE Spanish Lessons with...***",
+        "**\"My Top Secrets for Speaking Spanish FAST With Just 138 Words\"**",
+        "***Receive FREE Spanish Lessons with...***"
+      ]
+    }
+  },
+  "Processed/www_philschmid_de_fine-tuning-lilt.md": {
+    "area": "AI",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_fine-tuning-lilt",
+      "word_count": 1712,
+      "tags": [
+        "dataset_id",
+        "lilt",
+        "or-generate-your-own-checkpoint-optional"
+      ],
+      "headings": [
+        "https://www.philschmid.de/fine-tuning-lilt",
+        "Document AI: LiLT a better language agnostic LayoutLM model",
+        "Quick intro: LiLT Language-independent Layout Transformer",
+        "1. Setup Development Environment",
+        "python"
+      ]
+    }
+  },
+  "Processed/www_philschmid_de_fine-tune-multimodal-llms-with-trl.md": {
+    "area": "Technology",
+    "service": "Hugging Face TRL, Qwen, Llama-3.2-11B-Vision, Pixtral-12B, Molmo-7B-D-0924",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_fine-tune-multimodal-llms-with-trl",
+      "word_count": 2600,
+      "tags": [
+        "CATEGORY",
+        "L321",
+        "PRODUCT"
+      ],
+      "headings": [
+        "https://www.philschmid.de/fine-tune-multimodal-llms-with-trl",
+        "How to Fine-Tune Multimodal Models or VLMs with Hugging Face TRL",
+        "1. Define our multimodal use case",
+        "2. Setup development environment",
+        "Install Hugging Face libraries"
+      ]
+    }
+  },
+  "Processed/QF 4.1.41 Mechanical Ventilation Commissioning and Handover Check Sheet.md": {
+    "area": "Construction",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "QF 4.1.41 Mechanical Ventilation Commissioning and Handover Check Sheet",
+      "word_count": 542,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Processed/checkout_synergyspanish_com_s2s-video_ref_ema_coupon_NEWSTUDENT5_.md": {
+    "area": "eCommerce",
+    "service": "ThriveCart",
+    "status": "active",
+    "_context": {
+      "title": "checkout_synergyspanish_com_s2s-video_ref_ema_coupon_NEWSTUDENT5_",
+      "word_count": 650,
+      "tags": [],
+      "headings": [
+        "https://checkout.synergyspanish.com/s2s-video/?ref=ema&amp;coupon=NEWSTUDENT5/",
+        "Your details:",
+        "Billing address",
+        "Your payment details:"
+      ]
+    }
+  },
+  "Processed/www_philschmid_de_rl-with-llms-in-2025-dpo.md": {
+    "area": "AI",
+    "service": "",
+    "status": "complete",
+    "_context": {
+      "title": "www_philschmid_de_rl-with-llms-in-2025-dpo",
+      "word_count": 2917,
+      "tags": [
+        "loss-functions"
+      ],
+      "headings": [
+        "https://www.philschmid.de/rl-with-llms-in-2025-dpo",
+        "How to align open LLMs in 2025 with DPO &amp; and synthetic data",
+        "1. Setup development environment",
+        "Install flash-attn",
+        "Install Hugging Face libraries"
+      ]
+    }
+  },
+  "Processed/membership_synergyspanish_com_login_.md": {
+    "area": "Business",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "membership_synergyspanish_com_login_",
+      "word_count": 152,
+      "tags": [],
+      "headings": [
+        "https://membership.synergyspanish.com/login/",
+        "Login",
+        "Login",
+        "Report",
+        "Block Member?"
+      ]
+    }
+  },
+  "Processed/synergyspanish_com_a-sure-fire-spanish-conversation-starter_.md": {
+    "area": "Education",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "synergyspanish_com_a-sure-fire-spanish-conversation-starter_",
+      "word_count": 486,
+      "tags": [],
+      "headings": [
+        "https://synergyspanish.com/a-sure-fire-spanish-conversation-starter/",
+        "A sure fire Spanish conversation starter",
+        "A sure fire Spanish conversation starter",
+        "Share This Story, Choose Your Platform!",
+        "Related Posts"
+      ]
+    }
+  },
+  "Processed/checkout_synergyspanish_com_unlock-your-spanish-genius-7-days_ref_emb.md": {
+    "area": "Marketing",
+    "service": "ThriveCart",
+    "status": "active",
+    "_context": {
+      "title": "checkout_synergyspanish_com_unlock-your-spanish-genius-7-days_ref_emb",
+      "word_count": 629,
+      "tags": [],
+      "headings": [
+        "https://checkout.synergyspanish.com/unlock-your-spanish-genius-7-days/?ref=emb",
+        "Your details:",
+        "Billing address",
+        "Your payment details:"
+      ]
+    }
+  },
+  "Processed/K&M Standard Form PCG.md": {
+    "area": "Legal",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "K&M Standard Form PCG",
+      "word_count": 649,
+      "tags": [],
+      "headings": [
+        "1 nothing in this guarantee shall be construed as imposing greater obligations or liabilities on the Guarantor than are imposed on the Subcontractor under the Subcontract; and",
+        "2 the Guarantor shall be entitled in any proceedings arising to rely upon the same defences and limitations of liability as the Subcontractor may be entitled to raise under or pursuant to the Subcontract or otherwise at law.",
+        "1 "
+      ]
+    }
+  },
+  "Processed/www_philschmid_de_openai-codex-cli_.md": {
+    "area": "Technology",
+    "service": "OpenAI Codex CLI",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_openai-codex-cli_",
+      "word_count": 1719,
+      "tags": [
+        "L1021",
+        "L512"
+      ],
+      "headings": [
+        "https://www.philschmid.de/openai-codex-cli/",
+        "OpenAI Codex CLI, how does it work?",
+        "Core Components &amp; Workflow",
+        "User Interface (UI)",
+        "Agent Loop"
+      ]
+    }
+  },
+  "Processed/docs_github_com_en_get-started_writing-on-github_working-with-saved-replies_deleting-a-saved-reply.md": {
+    "area": "DevOps",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "docs_github_com_en_get-started_writing-on-github_working-with-saved-replies_deleting-a-saved-reply",
+      "word_count": 774,
+      "tags": [],
+      "headings": [
+        "https://docs.github.com/en/get-started/writing-on-github/working-with-saved-replies/deleting-a-saved-reply",
+        "[Get started](https://docs.github.com/en/get-started)",
+        "Deleting a saved reply",
+        "Help and support",
+        "Get quick answers!"
+      ]
+    }
+  },
+  "Processed/Archon/Knowledge/Philschmid_De_-_Philipp-Schmid/pages/www_philschmid_de_custom-inference-huggingface-sagemaker_.md": {
+    "area": "AI",
+    "service": "Hugging Face Inference Toolkit, Amazon SageMaker",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_custom-inference-huggingface-sagemaker_",
+      "word_count": 1262,
+      "tags": [],
+      "headings": [
+        "https://www.philschmid.de/custom-inference-huggingface-sagemaker/",
+        "Creating document embeddings with Hugging Face's Transformers &amp; Amazon SageMaker",
+        "Development Environment and Permissions",
+        "Installation",
+        "For other environments (Ubuntu)"
+      ]
+    }
+  },
+  "Processed/BIm/Tritex24-229/01-10-2025-eh/4.03 Health & Safety Files/1.00 Site Safety/GA 1/Loler Ceritificates/2025.09.11 KM 13.md": {
+    "area": "Business",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "2025.09.11 KM 13",
+      "word_count": 281,
+      "tags": [],
+      "headings": [
+        "THOROUGH EXAMINATION REPORT"
+      ]
+    }
+  },
+  "Processed/BIm/Tritex24-229/01-10-2025  Design/1.01 Planning/61. Distribution/2025.09.22 - DB Schedules/DB-76.md": {
+    "area": "Business",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "DB-76",
+      "word_count": 14,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Processed/BIm/Tritex24-229/01-10-2025  Design/1.02 Inputs/Architect Arup/1.01 Drawings & Documents/2025.01.23/8.Ceilings/SHS-ARUP-XX-01-DR-A-7511 Rev 01.md": {
+    "area": "Architecture",
+    "service": "",
+    "status": "tender issue",
+    "_context": {
+      "title": "SHS-ARUP-XX-01-DR-A-7511 Rev 01",
+      "word_count": 973,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Processed/Archon/Knowledge/AI-Driven_Revit_MEP_Automation/index.md": {
+    "area": "Architecture",
+    "service": "Revit, Dynamo",
+    "status": "active",
+    "_context": {
+      "title": "index",
+      "word_count": 164,
+      "tags": [],
+      "headings": [
+        "AI-Driven Revit MEP Automation"
+      ]
+    }
+  },
+  "Processed/Archon/Knowledge/Synergyspanish/pages/checkout_synergyspanish_com_unlock-your-spanish-genius-7-days_ref_fb.md": {
+    "area": "Marketing",
+    "service": "ThriveCart",
+    "status": "active",
+    "_context": {
+      "title": "checkout_synergyspanish_com_unlock-your-spanish-genius-7-days_ref_fb",
+      "word_count": 629,
+      "tags": [],
+      "headings": [
+        "https://checkout.synergyspanish.com/unlock-your-spanish-genius-7-days/?ref=fb",
+        "Your details:",
+        "Billing address",
+        "Your payment details:"
+      ]
+    }
+  },
+  "Processed/BIm/Tritex24-229/01-10-2025  Design/1.01 Planning/90. Offsite Fabrication/Distribution Boards/KAM-XX-XX-DR-E-60004 - SCHNEIDER ACT9 24 WAY DOUBLE DISTRIBUTION BOARD.md": {
+    "area": "Construction",
+    "service": "Architectural Drawings",
+    "status": "active",
+    "_context": {
+      "title": "KAM-XX-XX-DR-E-60004 - SCHNEIDER ACT9 24 WAY DOUBLE DISTRIBUTION BOARD",
+      "word_count": 364,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Processed/Archon/Knowledge/GitHub_-_coleam00_ottomator-agents/pages/github_com_coleam00_ottomator-agents_commit_7a2517769dbe62804434b6481a36eab62557af28.md": {
+    "area": "DevOps",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "github_com_coleam00_ottomator-agents_commit_7a2517769dbe62804434b6481a36eab62557af28",
+      "word_count": 1910,
+      "tags": [],
+      "headings": [
+        "https://github.com/coleam00/ottomator-agents/commit/7a2517769dbe62804434b6481a36eab62557af28",
+        "Navigation Menu",
+        "Search code, repositories, users, issues, pull requests...",
+        "Provide feedback",
+        "Saved searches"
+      ]
+    }
+  },
+  "Processed/BIm/Tritex24-229/01-10-2025  Design/1.01 Planning/60. ELEC SKETCHES/2025.03.25 - Containment Drawing Reference/SHS-ARUP-XX-GF-DR-E-1551 Rev 02_High Level - Administration and Welfare Block - Level 00.md": {
+    "area": "Architecture",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "SHS-ARUP-XX-GF-DR-E-1551 Rev 02_High Level - Administration and Welfare Block - Level 00",
+      "word_count": 716,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Processed/Archon/Knowledge/GitHub_-_dynamous-community_context-engineering-hub/pages/github_com_Done-0_fuck-u-code_stargazers.md": {
+    "area": "Software Development",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "github_com_Done-0_fuck-u-code_stargazers",
+      "word_count": 824,
+      "tags": [],
+      "headings": [
+        "https://github.com/Done-0/fuck-u-code/stargazers",
+        "Navigation Menu",
+        "Search code, repositories, users, issues, pull requests...",
+        "Provide feedback",
+        "Saved searches"
+      ]
+    }
+  },
+  "Processed/Archon/Knowledge/Synergyspanish/pages/checkout_synergyspanish_com_shortcut-spanish-video_ref_ga.md": {
+    "area": "e-commerce",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "checkout_synergyspanish_com_shortcut-spanish-video_ref_ga",
+      "word_count": 772,
+      "tags": [],
+      "headings": [
+        "https://checkout.synergyspanish.com/shortcut-spanish-video/?ref=ga",
+        "Easy to Speak Spanish For Real-Life",
+        "Easy to Speak Spanish For Real-Life",
+        "Contact information:",
+        "Choose your price:"
+      ]
+    }
+  },
+  "Archon/Knowledge/Synergyspanish/pages/membership_synergyspanish_com_topic_synergy-spanish-8x-session-5-step-2_.md": {
+    "area": "Education",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "membership_synergyspanish_com_topic_synergy-spanish-8x-session-5-step-2_",
+      "word_count": 990,
+      "tags": [],
+      "headings": [
+        "https://membership.synergyspanish.com/topic/synergy-spanish-8x-session-5-step-2/",
+        "Synergy Spanish 8x",
+        "Course Content ",
+        "Start Here",
+        "About Instructor"
+      ]
+    }
+  },
+  "Processed/Archon/Knowledge/Philschmid_De_-_Philipp-Schmid/pages/www_philschmid_de_auto-scaling-sagemaker-huggingface_.md": {
+    "area": "DevOps",
+    "service": "Amazon SageMaker, Hugging Face Transformers, FastAPI (implied from code snippets)",
+    "status": "complete",
+    "_context": {
+      "title": "www_philschmid_de_auto-scaling-sagemaker-huggingface_",
+      "word_count": 1166,
+      "tags": [
+        "metricsV2"
+      ],
+      "headings": [
+        "https://www.philschmid.de/auto-scaling-sagemaker-huggingface/",
+        "Going Production: Auto-scaling Hugging Face Transformers with Amazon SageMaker",
+        "'2.66.2.post0'",
+        "Deploy s Hugging Face Transformer model to Amazon SageMaker for Inference",
+        "Hub Model configuration. https://huggingface.co/models"
+      ]
+    }
+  },
+  "Processed/Archon/Knowledge/Revitapidocs/pages/www_revitapidocs_com_2025_3_.md": {
+    "area": "Architecture",
+    "service": "Revit API",
+    "status": "active",
+    "_context": {
+      "title": "www_revitapidocs_com_2025_3_",
+      "word_count": 161,
+      "tags": [],
+      "headings": [
+        "https://www.revitapidocs.com/2025.3/",
+        "Revit API 2025.3",
+        "[What's New in the Revit 2025.3 API](https://www.revitapidocs.com/2025.3/news)",
+        "[Revit API 2025.3 - Official Reference Guide](http://help.autodesk.com/view/RVT/2025/ENU/)"
+      ]
+    }
+  },
+  "Processed/Archon/Knowledge/Philschmid_De_-_Philipp-Schmid/pages/www_philschmid_de_evaluate-llm-with-gemini.md": {
+    "area": "AI",
+    "service": "Vertex AI, Google-Cloud-Containers, Hugging Face Hub",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_evaluate-llm-with-gemini",
+      "word_count": 1883,
+      "tags": [],
+      "headings": [
+        "https://www.philschmid.de/evaluate-llm-with-gemini",
+        "Evaluate open LLMs with Vertex AI and Gemini",
+        "Setup / Configuration",
+        "Deploy Llama 3.1 8B on Vertex AI",
+        "create endpoint"
+      ]
+    }
+  },
+  "Processed/BIm/Tritex24-229/01-10-2025  Design/1.02 Inputs/Consulant - ARUP/1.01 Drawings & Documents/25.01.23 ICT Dwgs/SHS-ARUP-XX-02-DR-YI-5511 Rev 01.md": {
+    "area": "Architecture",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "SHS-ARUP-XX-02-DR-YI-5511 Rev 01",
+      "word_count": 364,
+      "tags": [],
+      "headings": [
+        "General Notes",
+        "ICT Notes"
+      ]
+    }
+  },
+  "Archon/Knowledge/GitHub_-_dynamous-community_context-engineering-hub/pages/github_com_aral.md": {
+    "area": "Business",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "github_com_aral",
+      "word_count": 3006,
+      "tags": [],
+      "headings": [
+        "https://github.com/aral",
+        "Navigation Menu",
+        "Search code, repositories, users, issues, pull requests...",
+        "Provide feedback ",
+        "Saved searches "
+      ]
+    }
+  },
+  "Processed/BIm/Tritex24-229/01-10-2025  Design/1.01 Planning/61. Distribution/2025.09.22 - DB Schedules/DB-06.md": {
+    "area": "Design",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "DB-06",
+      "word_count": 14,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Archon/Knowledge/Philschmid_De_-_Philipp-Schmid/pages/www_philschmid_de_cloud-attention_issue-28_.md": {
+    "area": "Technology",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_cloud-attention_issue-28_",
+      "word_count": 647,
+      "tags": [],
+      "headings": [
+        "https://www.philschmid.de/cloud-attention/issue-28/",
+        "Issue 28: OpenAI DevDay, New Whisper Model, and LLM Price keeps dropping -  October 7, 2024",
+        "News",
+        "OpenAI DevDay 2024: A Plethora of New Features",
+        "FLUX1.1 [pro]: Faster and Higher-Quality Image Generation"
+      ]
+    }
+  },
+  "Processed/QF 4.1.107 Lighting & Emerg Lighting DB-77.md": {
+    "area": "Construction",
+    "service": "Building Services - Lighting",
+    "status": "active",
+    "_context": {
+      "title": "QF 4.1.107 Lighting & Emerg Lighting DB-77",
+      "word_count": 535,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Archon/Knowledge/Synergyspanish/pages/checkout_synergyspanish_com_synergy-spanish-cds-fts_ref_ema.md": {
+    "area": "Education",
+    "service": "Online Language Course",
+    "status": "active",
+    "_context": {
+      "title": "checkout_synergyspanish_com_synergy-spanish-cds-fts_ref_ema",
+      "word_count": 1131,
+      "tags": [],
+      "headings": [
+        "https://checkout.synergyspanish.com/synergy-spanish-cds-fts/?ref=ema",
+        "![](https://spark.thrivecart.com/fit-in/1280x0/%2Fuser_assets%2F0OU35SXC%2Fproducts%2F122%2Flogo1-1-1540536172.png)",
+        "Easy to Speak Spanish For Real-Life",
+        "Contact information:",
+        "Billing address"
+      ]
+    }
+  },
+  "Archon/Knowledge/Philschmid_De_-_Philipp-Schmid/code_examples/www_philschmid_de_inferentia2-mixtral-8x7b.md": {
+    "area": "DevOps",
+    "service": "JSON processing, benchmarking",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_inferentia2-mixtral-8x7b",
+      "word_count": 117,
+      "tags": [],
+      "headings": [
+        "Code Example",
+        "Reads the summary.json file and prints the results"
+      ]
+    }
+  },
+  "Processed/QF 4.1.15 Fire Alarm.md": {
+    "area": "Building & Construction",
+    "service": "Fire Alarm System",
+    "status": "active",
+    "_context": {
+      "title": "QF 4.1.15 Fire Alarm",
+      "word_count": 320,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Processed/Archon/Knowledge/Revitapidocs/pages/www_revitapidocs_com_2025_.md": {
+    "area": "Architecture",
+    "service": "Revit API",
+    "status": "active",
+    "_context": {
+      "title": "www_revitapidocs_com_2025_",
+      "word_count": 161,
+      "tags": [],
+      "headings": [
+        "https://www.revitapidocs.com/2025/",
+        "Revit API 2025",
+        "[What's New in the Revit 2025 API](https://www.revitapidocs.com/2025/news)",
+        "[Revit API 2025 - Official Reference Guide](http://help.autodesk.com/view/RVT/2025/ENU/)"
+      ]
+    }
+  },
+  "Processed/BIm/Tritex24-229/01-10-2025  Design/1.02 Inputs/Architect Arup/1.01 Drawings & Documents/2025.01.23/12.Setting out RCP/SHS-ARUP-XX-GF-DR-A-4303 Rev 01.md": {
+    "area": "Architecture",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "SHS-ARUP-XX-GF-DR-A-4303 Rev 01",
+      "word_count": 961,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Processed/2025.07.01 Systems to Design.md": {
+    "area": "Architecture",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "2025.07.01 Systems to Design",
+      "word_count": 1140,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Processed/Archon/Knowledge/Synergyspanish/pages/checkout_synergyspanish_com_shortcut-video-plus-cds_ref_yt.md": {
+    "area": "Business",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "checkout_synergyspanish_com_shortcut-video-plus-cds_ref_yt",
+      "word_count": 1194,
+      "tags": [],
+      "headings": [
+        "https://checkout.synergyspanish.com/shortcut-video-plus-cds/?ref=yt",
+        "Easy to Speak Spanish For Real-Life",
+        "Easy to Speak Spanish For Real-Life",
+        "Contact information:",
+        "Billing address"
+      ]
+    }
+  },
+  "Processed/BIm/Tritex24-229/01-10-2025-eh/4.02 Quality/5.00 ITPs/Electrical/TestPacks WIP/Containment/Containment High Level Master copy/4657-KAM-XX-ZZ-IP-X-0001_Containment High Level .md": {
+    "area": "Construction",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "4657-KAM-XX-ZZ-IP-X-0001_Containment High Level ",
+      "word_count": 1626,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Processed/BIm/Tritex24-229/01-10-2025  Design/1.01 Planning/61. Distribution/2025.05.29 - Submains Cable Schedule Report/SWB8.md": {
+    "area": "Architecture",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "SWB8",
+      "word_count": 297,
+      "tags": [],
+      "headings": [
+        "Content",
+        "Cables schedule with protective device settings report"
+      ]
+    }
+  },
+  "Archon/Knowledge/Philschmid_De_-_Philipp-Schmid/code_examples/www_philschmid_de_inferentia2-embeddings.md": {
+    "area": "DevOps",
+    "service": "Python threading",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_inferentia2-embeddings",
+      "word_count": 322,
+      "tags": [],
+      "headings": [
+        "Code Example",
+        "Create multiple threads",
+        "start all threads",
+        "wait for all threads to finish"
+      ]
+    }
+  },
+  "ai-agent-mastery-main/7_Agent_Architecture/7.4-LangGraphAgentWithGuardrail/.claude/commands/execute-prp.md": {
+    "area": "AI Agents",
+    "service": "LangGraph workflows",
+    "status": "active",
+    "_context": {
+      "title": "execute-prp",
+      "word_count": 204,
+      "tags": [],
+      "headings": [
+        "Execute BASE PRP",
+        "PRP File: $ARGUMENTS",
+        "Execution Process"
+      ]
+    }
+  },
+  "Processed/docs_github_com_en_get-started_writing-on-github_getting-started-with-writing-and-formatting-on-github_basic-writing-and.md": {
+    "area": "DevOps",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "docs_github_com_en_get-started_writing-on-github_getting-started-with-writing-and-formatting-on-github_basic-writing-and",
+      "word_count": 4901,
+      "tags": [
+        "000000",
+        "0969DA",
+        "739",
+        "RRGGBB",
+        "backslash",
+        "enabling-fixed-width-fonts-in-the-editor",
+        "example-265",
+        "ffffff",
+        "my-custom-anchor-point",
+        "sample-section"
+      ],
+      "headings": [
+        "https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax",
+        "[Get started](https://docs.github.com/en/get-started)",
+        "Basic writing and formatting syntax",
+        "Who can use this feature?",
+        "In this article"
+      ]
+    }
+  },
+  "Archon/Knowledge/Philschmid_De_-_Philipp-Schmid/pages/www_philschmid_de_sagemaker-deepspeed.md": {
+    "area": "AI",
+    "service": "Amazon SageMaker, DeepSpeed, Hugging Face Transformers",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_sagemaker-deepspeed",
+      "word_count": 1866,
+      "tags": [
+        "10830",
+        "10956",
+        "3-results--experiments",
+        "4586",
+        "configuration"
+      ],
+      "headings": [
+        "https://www.philschmid.de/sagemaker-deepspeed",
+        "Combine Amazon SageMaker and DeepSpeed to fine-tune FLAN-T5 XXL",
+        "sagemaker session bucket -> used for uploading data, models and logs",
+        "sagemaker will automatically create this bucket if it not exists",
+        "1. Process dataset and upload to S3"
+      ]
+    }
+  },
+  "Processed/Archon/Knowledge/GitHub_-_coleam00_ottomator-agents/pages/github_com_andrewrk.md": {
+    "area": "Business",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "github_com_andrewrk",
+      "word_count": 3233,
+      "tags": [
+        "13938",
+        "22906",
+        "24061",
+        "25111",
+        "5973",
+        "sponsors"
+      ],
+      "headings": [
+        "https://github.com/andrewrk",
+        "Navigation Menu",
+        "Search code, repositories, users, issues, pull requests...",
+        "Provide feedback",
+        "Saved searches"
+      ]
+    }
+  },
+  "Archon/Knowledge/GitHub_-_dynamous-community_context-engineering-hub/pages/github_com_enterprise_startups.md": {
+    "area": "Business",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "github_com_enterprise_startups",
+      "word_count": 3282,
+      "tags": [
+        "faq",
+        "features-automation",
+        "features-collaboration",
+        "features-security",
+        "join-partners"
+      ],
+      "headings": [
+        "https://github.com/enterprise/startups",
+        "Navigation Menu",
+        "Search code, repositories, users, issues, pull requests...",
+        "Provide feedback ",
+        "Saved searches "
+      ]
+    }
+  },
+  "Archon/Knowledge/GitHub_-_dynamous-community_context-engineering-hub/pages/github_com_github_site-policy_pull_582.md": {
+    "area": "",
+    "service": "",
+    "status": "success",
+    "_context": {
+      "title": "github_com_github_site-policy_pull_582",
+      "word_count": 12721,
+      "tags": [
+        "1",
+        "1062",
+        "1089",
+        "179",
+        "196",
+        "24",
+        "27",
+        "5",
+        "582",
+        "diff-2f1b40ad665a8e80ef8b8ce95ae1f73b274bf6e4cc752e9337b96218cfe28404"
+      ],
+      "headings": [
+        "https://github.com/github/site-policy/pull/582",
+        "Navigation Menu",
+        "Search code, repositories, users, issues, pull requests...",
+        "Provide feedback ",
+        "Saved searches "
+      ]
+    }
+  },
+  "Processed/www_philschmid_de_gemini-cli-cheatsheet.md": {
+    "area": "Technology",
+    "service": "Google Gemini CLI",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_gemini-cli-cheatsheet",
+      "word_count": 1640,
+      "tags": [
+        "181818",
+        "56B6C2",
+        "5C6370",
+        "61AFEF",
+        "82AAFF",
+        "98C379",
+        "ABB2BF",
+        "C678DD",
+        "E06C75",
+        "E5C07B"
+      ],
+      "headings": [
+        "https://www.philschmid.de/gemini-cli-cheatsheet",
+        "Google Gemini CLI Cheatsheet",
+        "🚀 Getting Started",
+        "Installation",
+        "Authentication with a Gemini API Key"
+      ]
+    }
+  },
+  "Processed/www_philschmid_de_optimize-sentence-transformers.md": {
+    "area": "AI",
+    "service": "Hugging Face blog",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_optimize-sentence-transformers",
+      "word_count": 1991,
+      "tags": [
+        "map",
+        "optimizing-with-ortoptimizer",
+        "optimum",
+        "pipelines",
+        "training-data"
+      ],
+      "headings": [
+        "https://www.philschmid.de/optimize-sentence-transformers",
+        "Accelerate Sentence Transformers with Hugging Face Optimum",
+        "Quick intro: What are Sentence Transformers",
+        "1. Setup Development Environment",
+        "2. Convert a Sentence Transformers model to ONNX and create custom Inference Pipeline"
+      ]
+    }
+  },
+  "Processed/github_com_coleam00_Archon_pull_647.md": {
+    "area": "DevOps",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "github_com_coleam00_Archon_pull_647",
+      "word_count": 11500,
+      "tags": [
+        "0",
+        "421",
+        "488",
+        "502",
+        "643",
+        "647",
+        "692",
+        "705",
+        "diff-188361f52a8e73f8babb946180fe9472c59b2da2b9bf4ec3b03d7a7285d93e7e",
+        "diff-22d5922a609ca6523a6765167e9b9c876b360c61d27f74c2c7250ab89d2a5763"
+      ],
+      "headings": [
+        "https://github.com/coleam00/Archon/pull/647",
+        "Navigation Menu",
+        "Search code, repositories, users, issues, pull requests...",
+        "Provide feedback",
+        "Saved searches"
+      ]
+    }
+  },
+  "Processed/Archon/Knowledge/GitHub_-_coleam00_ottomator-agents/pages/github_com_coleam00_Archon_pull_705.md": {
+    "area": "AI",
+    "service": "Archon pull request #705",
+    "status": "active",
+    "_context": {
+      "title": "github_com_coleam00_Archon_pull_705",
+      "word_count": 4361,
+      "tags": [
+        "0",
+        "313",
+        "421",
+        "647",
+        "705",
+        "717",
+        "diff-f2133d1fdeca7919960a0ef3838acb535a34cec68e495a5f59db71061c7fafda",
+        "event-19817310821",
+        "hiding-a-comment"
+      ],
+      "headings": [
+        "https://github.com/coleam00/Archon/pull/705",
+        "Navigation Menu",
+        "Search code, repositories, users, issues, pull requests...",
+        "Provide feedback",
+        "Saved searches"
+      ]
+    }
+  },
+  "Processed/Archon/Knowledge/Philschmid_De_-_Philipp-Schmid/pages/www_philschmid_de_gemini-cli-cheatsheet_.md": {
+    "area": "Technology",
+    "service": "Gemini CLI",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_gemini-cli-cheatsheet_",
+      "word_count": 1640,
+      "tags": [
+        "181818",
+        "56B6C2",
+        "5C6370",
+        "61AFEF",
+        "82AAFF",
+        "98C379",
+        "ABB2BF",
+        "C678DD",
+        "E06C75",
+        "E5C07B"
+      ],
+      "headings": [
+        "https://www.philschmid.de/gemini-cli-cheatsheet/",
+        "Google Gemini CLI Cheatsheet",
+        "🚀 Getting Started",
+        "Installation",
+        "Authentication with a Gemini API Key"
+      ]
+    }
+  },
+  "Processed/www_philschmid_de_deploy-gptj-sagemaker_.md": {
+    "area": "AI",
+    "service": "Hugging Face Transformers, Amazon SageMaker",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_deploy-gptj-sagemaker_",
+      "word_count": 1833,
+      "tags": [
+        "deploy-a-model-from-the-",
+        "deploy-with-model_data",
+        "installation-and-setup",
+        "sagemaker_region",
+        "save-load-entire-model",
+        "save-load-state-dict-recommended"
+      ],
+      "headings": [
+        "https://www.philschmid.de/deploy-gptj-sagemaker/",
+        "Deploy GPT-J 6B for inference using Hugging Face Transformers and Amazon SageMaker",
+        "Background",
+        "Tutorial",
+        "Save `GPT-J` using `torch.save`"
+      ]
+    }
+  },
+  "Processed/github_com_features.md": {
+    "area": "DevOps",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "github_com_features",
+      "word_count": 2637,
+      "tags": [
+        "about-the-github-advisory-database",
+        "draft-pull-requests",
+        "github-dependabot-alerts-for-vulnerable-dependencies",
+        "using-the-audit-log-api",
+        "viewing-organization-dependency-insights"
+      ],
+      "headings": [
+        "https://github.com/features",
+        "Navigation Menu",
+        "Search code, repositories, users, issues, pull requests...",
+        "Explore",
+        "Provide feedback"
+      ]
+    }
+  },
+  "Processed/cli_github_com.md": {
+    "area": "Software Development",
+    "service": "GitHub CLI",
+    "status": "active",
+    "_context": {
+      "title": "cli_github_com",
+      "word_count": 654,
+      "tags": [
+        "100",
+        "13",
+        "14",
+        "16",
+        "19",
+        "21",
+        "8",
+        "github-enterprise",
+        "installation"
+      ],
+      "headings": [
+        "https://cli.github.com",
+        "Take GitHub to the command line",
+        "$ gh issue list gh pr status gh pr checkout gh pr create gh pr checks gh release create gh repo view gh alias set",
+        "Goodbye, context switching. Hello, terminal.",
+        "Your entire GitHub workflow"
+      ]
+    }
+  },
+  "Archon/Knowledge/GitHub_-_coleam00_ottomator-agents/pages/github_com_AUTOMATIC1111_stable-diffusion-webui.md": {
+    "area": "AI",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "github_com_AUTOMATIC1111_stable-diffusion-webui",
+      "word_count": 3360,
+      "tags": [
+        "1",
+        "14354",
+        "14478",
+        "16059",
+        "16065",
+        "16092",
+        "16144",
+        "16166",
+        "16275",
+        "alt-diffusion"
+      ],
+      "headings": [
+        "https://github.com/AUTOMATIC1111/stable-diffusion-webui",
+        "Navigation Menu",
+        "Search code, repositories, users, issues, pull requests...",
+        "Provide feedback ",
+        "Saved searches "
+      ]
+    }
+  },
+  "Archon/Knowledge/GitHub_-_dynamous-community_context-engineering-hub/pages/docs_github_com_code-security_dependabot_dependabot-alerts_about-dependabot-alerts.md": {
+    "area": "DevOps",
+    "service": "GitHub Dependabot",
+    "status": "active",
+    "_context": {
+      "title": "docs_github_com_code-security_dependabot_dependabot-alerts_about-dependabot-alerts",
+      "word_count": 3468,
+      "tags": [
+        "access-requirements-for-security-features",
+        "configuring-your-watch-settings-for-an-individual-repository",
+        "enabling-or-disabling-security-and-analysis-features-for-private-repositories",
+        "granting-access-to-security-alerts",
+        "malware-advisories",
+        "supported-package-ecosystems"
+      ],
+      "headings": [
+        "https://docs.github.com/code-security/dependabot/dependabot-alerts/about-dependabot-alerts",
+        "[Secure coding](https://docs.github.com/en/code-security)",
+        "About Dependabot alerts",
+        "Who can use this feature?",
+        "In this article"
+      ]
+    }
+  },
+  "Archon/Knowledge/Philschmid_De_-_Philipp-Schmid/pages/www_philschmid_de_deploy-gptj-sagemaker.md": {
+    "area": "AI",
+    "service": "Amazon SageMaker, Hugging Face Transformers",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_deploy-gptj-sagemaker",
+      "word_count": 1779,
+      "tags": [
+        "deploy-a-model-from-the-",
+        "deploy-with-model_data",
+        "installation-and-setup",
+        "sagemaker_region",
+        "save-load-entire-model",
+        "save-load-state-dict-recommended"
+      ],
+      "headings": [
+        "https://www.philschmid.de/deploy-gptj-sagemaker",
+        "Deploy GPT-J 6B for inference using Hugging Face Transformers and Amazon SageMaker",
+        "Background",
+        "Tutorial",
+        "Save `GPT-J` using `torch.save`"
+      ]
+    }
+  },
+  "Archon/Knowledge/GitHub_-_coleam00_ottomator-agents/pages/github_com_coleam00_ottomator-agents_commit_8de2ea767143e369a4609b4e0d76c3bc4911956e.md": {
+    "area": "DevOps",
+    "service": "GitHub Actions, Supabase, Pydantic",
+    "status": "active",
+    "_context": {
+      "title": "github_com_coleam00_ottomator-agents_commit_8de2ea767143e369a4609b4e0d76c3bc4911956e",
+      "word_count": 19785,
+      "tags": [
+        "variable_conflict"
+      ],
+      "headings": [
+        "https://github.com/coleam00/ottomator-agents/commit/8de2ea767143e369a4609b4e0d76c3bc4911956e",
+        "Navigation Menu",
+        "Search code, repositories, users, issues, pull requests...",
+        "Provide feedback ",
+        "Saved searches "
+      ]
+    }
+  },
+  "Processed/Archon/Knowledge/Philschmid_De_-_Philipp-Schmid/pages/www_philschmid_de_llm-evaluation_.md": {
+    "area": "AI",
+    "service": "LLM Evaluation and Retrieval Augmented Generation (RAG)",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_llm-evaluation_",
+      "word_count": 2034,
+      "tags": [
+        "eval-systems-unlock-superpowers-for-free"
+      ],
+      "headings": [
+        "https://www.philschmid.de/llm-evaluation/",
+        "LLM Evaluation doesn't need to be complicated",
+        "How to create a good evaluation prompt for LLM as a Judge",
+        "1. Define a Clear Evaluation Metric (Optional: Additive Score)",
+        "2. Define Chain-of-Thought (CoT) Evaluation Steps"
+      ]
+    }
+  },
+  "Archon/Knowledge/Philschmid_De_-_Philipp-Schmid/pages/www_philschmid_de_fine-tune-flan-t5-peft.md": {
+    "area": "AI",
+    "service": "Hugging Face blog",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_fine-tune-flan-t5-peft",
+      "word_count": 1723,
+      "tags": [
+        "3-results--experiments"
+      ],
+      "headings": [
+        "https://www.philschmid.de/fine-tune-flan-t5-peft",
+        "Efficient Large Language Model training with LoRA and Hugging Face",
+        "Quick intro: PEFT or Parameter Efficient Fine-tuning",
+        "1. Setup Development Environment",
+        "install additional dependencies needed for training"
+      ]
+    }
+  },
+  "Processed/Archon/Knowledge/GitHub_-_dynamous-community_context-engineering-hub/pages/docs_github_com_en_get-started_writing-on-github_working-with-advanced-formatting_writing-mathematical-expressions.md": {
+    "area": "DevOps",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "docs_github_com_en_get-started_writing-on-github_working-with-advanced-formatting_writing-mathematical-expressions",
+      "word_count": 1301,
+      "tags": [
+        "line-breaks",
+        "reader-guide",
+        "tex-and-latex-support"
+      ],
+      "headings": [
+        "https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/writing-mathematical-expressions",
+        "[Get started](https://docs.github.com/en/get-started)",
+        "Writing mathematical expressions",
+        "Who can use this feature?",
+        "In this article"
+      ]
+    }
+  },
+  "Processed/github_com_features_discussions.md": {
+    "area": "DevOps",
+    "service": "GitHub Discussions",
+    "status": "active",
+    "_context": {
+      "title": "github_com_features_discussions",
+      "word_count": 1684,
+      "tags": [
+        "1192",
+        "1238",
+        "community"
+      ],
+      "headings": [
+        "https://github.com/features/discussions",
+        "Navigation Menu",
+        "Search code, repositories, users, issues, pull requests...",
+        "Explore",
+        "Provide feedback"
+      ]
+    }
+  },
+  "Processed/Archon/Knowledge/GitHub_-_coleam00_ottomator-agents/pages/github_com_coleam00_ottomator-agents_activity.md": {
+    "area": "DevOps",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "github_com_coleam00_ottomator-agents_activity",
+      "word_count": 1310,
+      "tags": [
+        "7"
+      ],
+      "headings": [
+        "https://github.com/coleam00/ottomator-agents/activity",
+        "Navigation Menu",
+        "Search code, repositories, users, issues, pull requests...",
+        "Provide feedback",
+        "Saved searches"
+      ]
+    }
+  },
+  "Processed/github_com_github_site-policy_pull_582_checks.md": {
+    "area": "Software Development",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "github_com_github_site-policy_pull_582_checks",
+      "word_count": 653,
+      "tags": [
+        "582"
+      ],
+      "headings": [
+        "https://github.com/github/site-policy/pull/582/checks",
+        "Navigation Menu",
+        "Search code, repositories, users, issues, pull requests...",
+        "Provide feedback",
+        "Saved searches"
+      ]
+    }
+  },
+  "Processed/BIm/Tritex24-229/01-10-2025-eh/4.03 Health & Safety Files/1.00 Site Safety/GA 2/2025/07. July/WE 2025.07.11.md": {
+    "area": "Business",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "WE 2025.07.11",
+      "word_count": 1589,
+      "tags": [
+        "faults",
+        "nf"
+      ],
+      "headings": [
+        "Report of Weekly Plant Examination",
+        "Report of Weekly Plant Examination"
+      ]
+    }
+  },
+  "Archon/Knowledge/GitHub_-_dynamous-community_context-engineering-hub/pages/docs_github_com_billing_managing-billing-for-your-products_about-billing-for-github-models.md": {
+    "area": "Business",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "docs_github_com_billing_managing-billing-for-your-products_about-billing-for-github-models",
+      "word_count": 1577,
+      "tags": [
+        "enabling-github-models",
+        "rate-limits"
+      ],
+      "headings": [
+        "https://docs.github.com/billing/managing-billing-for-your-products/about-billing-for-github-models",
+        "[Billing and payments](https://docs.github.com/en/billing)",
+        "GitHub Models billing",
+        "In this article",
+        "How use of GitHub Models is measured"
+      ]
+    }
+  },
+  "Archon/Knowledge/Synergyspanish/pages/synergyspanish_com_49-2_.md": {
+    "area": "Language Learning",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "synergyspanish_com_49-2_",
+      "word_count": 1037,
+      "tags": [
+        "comments",
+        "respond"
+      ],
+      "headings": [
+        "https://synergyspanish.com/49-2/",
+        "World Cup Spanish Lesson Parts 1 & 2",
+        "World Cup Spanish Lesson Parts 1 & 2",
+        "Share This Story, Choose Your Platform!",
+        "Related Posts "
+      ]
+    }
+  },
+  "Archon/Knowledge/Community_Dynamous/pages/help_circle_so_p_audience_member-management_apply-and-manage-member-tags.md": {
+    "area": "Community Management",
+    "service": "Circle",
+    "status": "active",
+    "_context": {
+      "title": "help_circle_so_p_audience_member-management_apply-and-manage-member-tags",
+      "word_count": 735,
+      "tags": [
+        "17a16b90-33d7-4a8d-aeb4-03cc9abc126a"
+      ],
+      "headings": [
+        "https://help.circle.so/p/audience/member-management/apply-and-manage-member-tags",
+        "Apply and manage member tags",
+        "Apply member tags",
+        "Community invite",
+        "M**ember account update**"
+      ]
+    }
+  },
+  "Processed/Archon/Knowledge/GitHub_-_coleam00_ottomator-agents/pages/github_com_coleam00_ottomator-agents_commit_355c7039ca63fa26f6941f2b16a05f8cb4bd3022.md": {
+    "area": "AI",
+    "service": "Ag-Ui-Rag-Agent",
+    "status": "active",
+    "_context": {
+      "title": "github_com_coleam00_ottomator-agents_commit_355c7039ca63fa26f6941f2b16a05f8cb4bd3022",
+      "word_count": 1798,
+      "tags": [
+        "6366f1"
+      ],
+      "headings": [
+        "https://github.com/coleam00/ottomator-agents/commit/355c7039ca63fa26f6941f2b16a05f8cb4bd3022",
+        "Navigation Menu",
+        "Search code, repositories, users, issues, pull requests...",
+        "Provide feedback",
+        "Saved searches"
+      ]
+    }
+  },
+  "Archon/Knowledge/GitHub_-_dynamous-community_context-engineering-hub/pages/github_com_customer-stories_team_industry_Retail_2B_2526_2Becommerce.md": {
+    "area": "Business",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "github_com_customer-stories_team_industry_Retail_2B_2526_2Becommerce",
+      "word_count": 1147,
+      "tags": [
+        "browse"
+      ],
+      "headings": [
+        "https://github.com/customer-stories/team?industry=Retail%2B%2526%2Becommerce",
+        "Navigation Menu",
+        "Search code, repositories, users, issues, pull requests...",
+        "Provide feedback ",
+        "Saved searches "
+      ]
+    }
+  },
+  "Archon/Knowledge/Synergyspanish/pages/synergyspanish_com_beatles-beaten-in-spanish-again_.md": {
+    "area": "Education",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "synergyspanish_com_beatles-beaten-in-spanish-again_",
+      "word_count": 1771,
+      "tags": [
+        "respond"
+      ],
+      "headings": [
+        "https://synergyspanish.com/beatles-beaten-in-spanish-again/",
+        "Beatles beaten in Spanish again",
+        "Beatles beaten in Spanish again",
+        "Share This Story, Choose Your Platform!",
+        "Related Posts "
+      ]
+    }
+  },
+  "Processed/Archon/Knowledge/Philschmid_De_-_Philipp-Schmid/pages/www_philschmid_de_gptq-llama.md": {
+    "area": "Technology",
+    "service": "GPTQ, Hugging Face Optimum, AutoGPTQ, Transformers, Text Generation Inference",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_gptq-llama",
+      "word_count": 1625,
+      "tags": [
+        "4-test-model-and-run-inference",
+        "L76"
+      ],
+      "headings": [
+        "https://www.philschmid.de/gptq-llama",
+        "Optimize open LLMs using GPTQ and Hugging Face Optimum",
+        "What is GPTQ?",
+        "1. Setup our development environment",
+        "2. Prepare quantization dataset"
+      ]
+    }
+  },
+  "Archon/Knowledge/Synergyspanish/pages/synergyspanish_com_an-unknown-comprehension-killer_.md": {
+    "area": "Language Learning",
+    "service": "Spanish Ear Training",
+    "status": "active",
+    "_context": {
+      "title": "synergyspanish_com_an-unknown-comprehension-killer_",
+      "word_count": 4332,
+      "tags": [
+        "respond"
+      ],
+      "headings": [
+        "https://synergyspanish.com/an-unknown-comprehension-killer/",
+        "An Unknown Comprehension Killer",
+        "An Unknown Comprehension Killer",
+        "Share This Story, Choose Your Platform!",
+        "Related Posts "
+      ]
+    }
+  },
+  "Processed/BIm/Tritex24-229/01-10-2025-eh/4.03 Health & Safety Files/1.00 Site Safety/GA 2/2025/09. September/WE 2025.09.12.md": {
+    "area": "Business",
+    "service": "MEWP (Mobile Elevating Work Platform) operations and safety",
+    "status": "active",
+    "_context": {
+      "title": "WE 2025.09.12",
+      "word_count": 10552,
+      "tags": [],
+      "headings": [
+        "Report of Weekly Plant Examination",
+        "Report of Weekly Plant Examination",
+        "QF 4.0.19: Report of weekly plant (MEWP) Exanimation",
+        "Report of Weekly Plant Examination",
+        "Report of Weekly Plant Examination"
+      ]
+    }
+  },
+  "Processed/BIm/Tritex24-229/01-10-2025-eh/4.02 Quality/5.00 ITPs/Electrical/TestPacks WIP/DB's/DB's fed from SWB-6/24-233 DB-88-Test pack/Inspection check sheet/QF 4.1.97 Distribution Boards (DB-88).md": {
+    "area": "Construction",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "QF 4.1.97 Distribution Boards (DB-88)",
+      "word_count": 533,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Processed/BIm/Tritex24-229/01-10-2025  Design/1.01 Planning/60. ELEC SKETCHES/2025.07.23 Goods In-Out Containment QA/4657-KAM-XX-00-DR-X-6609.md": {
+    "area": "Business",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "4657-KAM-XX-00-DR-X-6609",
+      "word_count": 4014,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Processed/BIm/Tritex24-229/01-10-2025  Design/1.01 Planning/61. Distribution/2025.09.22 - DB Schedules/DB-65.md": {
+    "area": "Design",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "DB-65",
+      "word_count": 14,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Processed/Archon/Knowledge/Community_Dynamous/pages/circle_so_customer-stories_shambala.md": {
+    "area": "Business",
+    "service": "",
+    "status": "complete",
+    "_context": {
+      "title": "circle_so_customer-stories_shambala",
+      "word_count": 1961,
+      "tags": [],
+      "headings": [
+        "https://circle.so/customer-stories/shambala",
+        "From freelancer to founder–with just one platform",
+        "Overview",
+        "From isolation to inspiration: why Tom built Shambala",
+        "All the building blocks for a real business"
+      ]
+    }
+  },
+  "Processed/Archon/Knowledge/Pydantic_Documentation_-_Llms-Full_Txt/index.md": {
+    "area": "Python",
+    "service": "Pydantic documentation",
+    "status": "active",
+    "_context": {
+      "title": "index",
+      "word_count": 173,
+      "tags": [],
+      "headings": [
+        "Pydantic Documentation - Llms-Full.Txt"
+      ]
+    }
+  },
+  "Processed/BIm/Tritex24-229/01-10-2025  Design/1.02 Inputs/Architect Arup/1.01 Drawings & Documents/2025.01.23/6.Wall Types/SHS-ARUP-XX-02-DR-A-7012 Rev 02.md": {
+    "area": "Architecture",
+    "service": "",
+    "status": "archived",
+    "_context": {
+      "title": "SHS-ARUP-XX-02-DR-A-7012 Rev 02",
+      "word_count": 1084,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Processed/BIm/Tritex24-229/01-10-2025  Design/1.02 Inputs/Consulant - ARUP/1.01 Drawings & Documents/25.01.23 Combined Services/SHS-ARUP-XX-ZZ-DR-N-0610 Rev 01.md": {
+    "area": "Architecture",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "SHS-ARUP-XX-ZZ-DR-N-0610 Rev 01",
+      "word_count": 462,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Processed/BIm/Tritex24-229/01-10-2025  Design/1.02 Inputs/Architect Arup/1.01 Drawings & Documents/2025.01.23/11.Setting out Plan/SHS-ARUP-XX-01-DR-A-4406 Rev 02.md": {
+    "area": "Architecture",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "SHS-ARUP-XX-01-DR-A-4406 Rev 02",
+      "word_count": 1051,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Processed/BIm/Tritex24-229/01-10-2025  Design/1.01 Planning/KAM BIM Templates/Assessment Forms/12345-KAM-XX-XX-FM-X-00002_ RESOURCE ASSESSMENT FORM.md": {
+    "area": "Construction",
+    "service": "BIM (Building Information Modeling)",
+    "status": "active",
+    "_context": {
+      "title": "12345-KAM-XX-XX-FM-X-00002_ RESOURCE ASSESSMENT FORM",
+      "word_count": 166,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Processed/BIm/Tritex24-229/01-10-2025  Design/1.01 Planning/63. Lighting/- DESIGN CHECKLIST - COPY FROM HERE -/63. Internal Lighting.md": {
+    "area": "Construction",
+    "service": "BIM (Building Information Modeling)",
+    "status": "active",
+    "_context": {
+      "title": "63. Internal Lighting",
+      "word_count": 347,
+      "tags": [],
+      "headings": [
+        "63. Lighting Design Checklist",
+        "Design Inputs",
+        "Design Outputs",
+        "Key Design Checks",
+        "63. Lighting Design Checklist"
+      ]
+    }
+  },
+  "Processed/BIm/Tritex24-229/01-10-2025 -Contracts/6.01 Contract Documents/Previous draft Sub-Contract & PSCA revisions/Draft Sub-Contract 08-05-25/Appendix 9.1 - Web-Contractor/WebContractor Guidance Document.md": {
+    "area": "Business",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "WebContractor Guidance Document",
+      "word_count": 3941,
+      "tags": [],
+      "headings": [
+        "WebContractor Guidance Document",
+        "Commercial &amp; Procurement",
+        "WebContractor Guidance Document",
+        "WebContractor Guidance Document",
+        "WebContractor Guidance Document"
+      ]
+    }
+  },
+  "Processed/BIm/Tritex24-229/01-10-2025  Design/1.02 Inputs/Architect - BDP/1.01 Drawings & Documents/2025.06.12/4657-BDP-XX-02-DR-A-3508_L02 Ceiling Setting Out Plan - Sheet 01.md": {
+    "area": "Architecture",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "4657-BDP-XX-02-DR-A-3508_L02 Ceiling Setting Out Plan - Sheet 01",
+      "word_count": 837,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Processed/BIm/Tritex24-229/01-10-2025-eh/4.03 Health & Safety Files/1.00 Site Safety/Tool Box Talks/3.00 Quality Toolbox Talks/Quality TBT No 3.md": {
+    "area": "Business",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "Quality TBT No 3",
+      "word_count": 236,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Processed/BIm/Tritex24-229/01-10-2025-eh/4.03 Health & Safety Files/1.00 Site Safety/GA 1/Loler Ceritificates/2025.09.29 KM 53.md": {
+    "area": "Safety",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "2025.09.29 KM 53",
+      "word_count": 189,
+      "tags": [],
+      "headings": [
+        "Owner of Platform:",
+        "CERTIFICATE OF THOROUGH EXAMINATION",
+        "Address of Examination:"
+      ]
+    }
+  },
+  "Processed/Archon/Knowledge/GitHub_-_coleam00_ottomator-agents/pages/github_com_coleam00_ottomator-agents_commit_c4ea72ae5a19995a04105a4dffc3aa43780ce846.md": {
+    "area": "DevOps",
+    "service": "GitHub Actions, FastAPI, Docker, Pydantic, Copilot Autofix",
+    "status": "active",
+    "_context": {
+      "title": "github_com_coleam00_ottomator-agents_commit_c4ea72ae5a19995a04105a4dffc3aa43780ce846",
+      "word_count": 1945,
+      "tags": [
+        "Usage"
+      ],
+      "headings": [
+        "https://github.com/coleam00/ottomator-agents/commit/c4ea72ae5a19995a04105a4dffc3aa43780ce846",
+        "Navigation Menu",
+        "Search code, repositories, users, issues, pull requests...",
+        "Provide feedback",
+        "Saved searches"
+      ]
+    }
+  },
+  "Processed/synergyspanish_com_aci-vip_.md": {
+    "area": "Education",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "synergyspanish_com_aci-vip_",
+      "word_count": 962,
+      "tags": [],
+      "headings": [
+        "https://synergyspanish.com/aci-vip/",
+        "Advanced Concepts Intensive",
+        "The Final Summit: Master Advanced Spanish offer is closed. However you can still join at the regular price.",
+        "*For graduates of Bola de Nieve who want to master advanced Spanish.*",
+        "**You can join an elite group and learn all my tricks and secrets to fluent mastery of advanced Spanish.**"
+      ]
+    }
+  },
+  "Processed/Archon/Knowledge/GitHub_-_dynamous-community_context-engineering-hub/pages/github_com_github.md": {
+    "area": "Business",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "github_com_github",
+      "word_count": 1541,
+      "tags": [],
+      "headings": [
+        "https://github.com/github",
+        "Navigation Menu",
+        "Search code, repositories, users, issues, pull requests...",
+        "Provide feedback",
+        "Saved searches"
+      ]
+    }
+  },
+  "Processed/Archon/Knowledge/Synergyspanish/pages/synergyspanish_com_64-more-spanish-comprehension-killers_.md": {
+    "area": "Language Learning",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "synergyspanish_com_64-more-spanish-comprehension-killers_",
+      "word_count": 2531,
+      "tags": [
+        "1",
+        "2"
+      ],
+      "headings": [
+        "https://synergyspanish.com/64-more-spanish-comprehension-killers/",
+        "64 more Spanish comprehension killers.",
+        "64 more Spanish comprehension killers.",
+        "Share This Story, Choose Your Platform!",
+        "Related Posts"
+      ]
+    }
+  },
+  "Processed/Archon/Knowledge/Philschmid_De_-_Philipp-Schmid/pages/www_philschmid_de_hugginface-sagemaker-workshop.md": {
+    "area": "Technology",
+    "service": "Hugging Face, Amazon SageMaker",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_hugginface-sagemaker-workshop",
+      "word_count": 799,
+      "tags": [],
+      "headings": [
+        "https://www.philschmid.de/hugginface-sagemaker-workshop",
+        "Workshop: Enterprise-Scale NLP with Hugging Face &amp; Amazon SageMaker",
+        "Workshop 1: **Getting Started with Amazon SageMaker: Training your first NLP Transformer model with Hugging Face and deploying it**",
+        "Workshop 2: **Going Production: Deploying, Scaling &amp; Monitoring Hugging Face Transformer models with Amazon SageMaker**",
+        "Workshop 3: **MLOps: End-to-End Hugging Face Transformers with the Hub &amp; SageMaker Pipelines**"
+      ]
+    }
+  },
+  "Processed/Heat Recovery Systems.md": {
+    "area": "Engineering",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "Heat Recovery Systems",
+      "word_count": 238,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Processed/QF 4.1.04 Distribution Boards Hand Over - DB-47.md": {
+    "area": "Engineering",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "QF 4.1.04 Distribution Boards Hand Over - DB-47",
+      "word_count": 291,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Processed/Archon/Knowledge/Philschmid_De_-_Philipp-Schmid/pages/www_philschmid_de_financial-summarizatio-huggingface-keras_scripts_train_py.md": {
+    "area": "Technology",
+    "service": "Cloud Services, AI Models, GitHub Actions, DeepSpeed",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_financial-summarizatio-huggingface-keras_scripts_train_py",
+      "word_count": 722,
+      "tags": [],
+      "headings": [
+        "https://www.philschmid.de/financial-summarizatio-huggingface-keras/scripts/train.py",
+        "404 - Page Not Found"
+      ]
+    }
+  },
+  "Processed/QF 4.1.11 Access Control System.md": {
+    "area": "IT Operations",
+    "service": "Access Control System",
+    "status": "active",
+    "_context": {
+      "title": "QF 4.1.11 Access Control System",
+      "word_count": 138,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Processed/github_com_coleam00_ottomator-agents_commit_c4ea72ae5a19995a04105a4dffc3aa43780ce846.md": {
+    "area": "DevOps",
+    "service": "GitHub Actions, FastAPI, Docker, Pydantic, Supabase, OpenRouter API",
+    "status": "active",
+    "_context": {
+      "title": "github_com_coleam00_ottomator-agents_commit_c4ea72ae5a19995a04105a4dffc3aa43780ce846",
+      "word_count": 1945,
+      "tags": [
+        "Usage"
+      ],
+      "headings": [
+        "https://github.com/coleam00/ottomator-agents/commit/c4ea72ae5a19995a04105a4dffc3aa43780ce846",
+        "Navigation Menu",
+        "Search code, repositories, users, issues, pull requests...",
+        "Provide feedback",
+        "Saved searches"
+      ]
+    }
+  },
+  "Processed/Archon/Knowledge/Philschmid_De_-_Philipp-Schmid/pages/www_philschmid_de_cloud-attention_.md": {
+    "area": "Technology",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_cloud-attention_",
+      "word_count": 492,
+      "tags": [],
+      "headings": [
+        "https://www.philschmid.de/cloud-attention/",
+        "Newsletter",
+        "2024 October",
+        "[Issue 30: NVIDIA's Llama 3.1 Fine-Tune Outperforms GPT-4o and Claude 3.5?October 21, 2024](https://www.philschmid.de/cloud-attention/issue-30) ### [Issue 29: Open LLMs Take Center Stage with AMD GPU Integration and Efficient TPU DeploymentOctober 15, 2024](https://www.philschmid.de/cloud-attention/issue-29) ### [Issue 28: OpenAI DevDay, New Whisper Model, and LLM Price keeps droppingOctober 7, 2024](https://www.philschmid.de/cloud-attention/issue-28)",
+        "2024 September"
+      ]
+    }
+  },
+  "Processed/github_com_abdusabri.md": {
+    "area": "Technology",
+    "service": "GitHub",
+    "status": "active",
+    "_context": {
+      "title": "github_com_abdusabri",
+      "word_count": 2915,
+      "tags": [],
+      "headings": [
+        "https://github.com/abdusabri",
+        "Navigation Menu",
+        "Search code, repositories, users, issues, pull requests...",
+        "Provide feedback",
+        "Saved searches"
+      ]
+    }
+  },
+  "Processed/Archon/Knowledge/Synergyspanish/pages/membership_synergyspanish_com_topic_synergy-spanish-8x-session-1-step-1_.md": {
+    "area": "Education",
+    "service": "Synergy Spanish Membership",
+    "status": "active",
+    "_context": {
+      "title": "membership_synergyspanish_com_topic_synergy-spanish-8x-session-1-step-1_",
+      "word_count": 430,
+      "tags": [],
+      "headings": [
+        "https://membership.synergyspanish.com/topic/synergy-spanish-8x-session-1-step-1/",
+        "Synergy Spanish 8x",
+        "Course Content",
+        "Start Here",
+        "About Instructor"
+      ]
+    }
+  },
+  "Processed/Company BIM Policy.md": {
+    "area": "Construction",
+    "service": "Building Information Modelling (BIM)",
+    "status": "active",
+    "_context": {
+      "title": "Company BIM Policy",
+      "word_count": 382,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Processed/checkout_synergyspanish_com_sg-ai-fluency-coach_.md": {
+    "area": "Business",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "checkout_synergyspanish_com_sg-ai-fluency-coach_",
+      "word_count": 594,
+      "tags": [],
+      "headings": [
+        "https://checkout.synergyspanish.com/sg-ai-fluency-coach/",
+        "Your details:",
+        "Billing address",
+        "Your payment details:"
+      ]
+    }
+  },
+  "Processed/Archon/Knowledge/Philschmid_De_-_Philipp-Schmid/code_examples/www_philschmid_de_gptj-deepspeed-inference_.md": {
+    "area": "AI",
+    "service": "DeepSpeed",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_gptj-deepspeed-inference_",
+      "word_count": 203,
+      "tags": [],
+      "headings": [
+        "Code Example",
+        "generation arguments",
+        "Payload sequence length is: 128",
+        "DeepSpeed model: P95 latency (ms) - 6577.044982599967; Average latency (ms) - 6569.11 +\\- 6.57;"
+      ]
+    }
+  },
+  "Processed/checkout_synergyspanish_com_shortcut-to-spanish-audio_ref_fb.md": {
+    "area": "Marketing",
+    "service": "Online Course Sales Page",
+    "status": "active",
+    "_context": {
+      "title": "checkout_synergyspanish_com_shortcut-to-spanish-audio_ref_fb",
+      "word_count": 767,
+      "tags": [],
+      "headings": [
+        "https://checkout.synergyspanish.com/shortcut-to-spanish-audio/?ref=fb",
+        "Easy to Speak Spanish For Real-Life",
+        "Easy to Speak Spanish For Real-Life",
+        "Contact information:",
+        "Choose your price:"
+      ]
+    }
+  },
+  "Processed/www_philschmid_de_fine-tuning-lilt_.md": {
+    "area": "AI",
+    "service": "Hugging Face blog",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_fine-tuning-lilt_",
+      "word_count": 1712,
+      "tags": [
+        "dataset_id",
+        "lilt",
+        "or-generate-your-own-checkpoint-optional"
+      ],
+      "headings": [
+        "https://www.philschmid.de/fine-tuning-lilt/",
+        "Document AI: LiLT a better language agnostic LayoutLM model",
+        "Quick intro: LiLT Language-independent Layout Transformer",
+        "1. Setup Development Environment",
+        "python"
+      ]
+    }
+  },
+  "Archon/Knowledge/Philschmid_De_-_Philipp-Schmid/code_examples/www_philschmid_de_bert-text-classification-in-a-different-language_.md": {
+    "area": "Technology",
+    "service": "Natural Language Processing (NLP)",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_bert-text-classification-in-a-different-language_",
+      "word_count": 101,
+      "tags": [],
+      "headings": [
+        "Code Example",
+        "OTHER",
+        "INSULT"
+      ]
+    }
+  },
+  "Archon/Knowledge/Revitapidocs/pages/www_revitapidocs_com_2026_news.md": {
+    "area": "Architecture",
+    "service": "Autodesk Revit API",
+    "status": "active",
+    "_context": {
+      "title": "www_revitapidocs_com_2026_news",
+      "word_count": 5005,
+      "tags": [],
+      "headings": [
+        "https://www.revitapidocs.com/2026/news",
+        "API Changes 2026 ",
+        "Major changes and renovations to the Revit API   "
+      ]
+    }
+  },
+  "Archon/Knowledge/GitHub_-_dynamous-community_context-engineering-hub/pages/github_com_dynamous-community_context-engineering-hub.md": {
+    "area": "Technology",
+    "service": "GitHub",
+    "status": "active",
+    "_context": {
+      "title": "github_com_dynamous-community_context-engineering-hub",
+      "word_count": 1314,
+      "tags": [],
+      "headings": [
+        "https://github.com/dynamous-community/context-engineering-hub",
+        "Navigation Menu",
+        "Search code, repositories, users, issues, pull requests...",
+        "Provide feedback ",
+        "Saved searches "
+      ]
+    }
+  },
+  "Processed/github_com_enterprise_contact_ref_cta_Contact_sales_ref_loc_hero_ref_page_2Fsolutions_industries_healthcare.md": {
+    "area": "Developer Tools",
+    "service": "GitHub Enterprise",
+    "status": "active",
+    "_context": {
+      "title": "github_com_enterprise_contact_ref_cta_Contact_sales_ref_loc_hero_ref_page_2Fsolutions_industries_healthcare",
+      "word_count": 1274,
+      "tags": [],
+      "headings": [
+        "https://github.com/enterprise/contact?ref\\_cta=Contact+sales&amp;ref\\_loc=hero&amp;ref\\_page=%2Fsolutions\\_industries\\_healthcare",
+        "Navigation Menu",
+        "Search code, repositories, users, issues, pull requests...",
+        "Explore",
+        "Provide feedback"
+      ]
+    }
+  },
+  "Archon/Knowledge/Philschmid_De_-_Philipp-Schmid/pages/www_philschmid_de_cloud-attention_issue-0.md": {
+    "area": "Technology",
+    "service": "Newsletter Cloud Attention",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_cloud-attention_issue-0",
+      "word_count": 275,
+      "tags": [],
+      "headings": [
+        "https://www.philschmid.de/cloud-attention/issue-0",
+        "What is Cloud Attention? -  December 29, 2022",
+        "News & Announcements 📣",
+        "Tutorials & Demos 📝",
+        "Reads & Papers 📚"
+      ]
+    }
+  },
+  "Processed/docs_github_com_get-started_exploring-integrations_about-building-integrations.md": {
+    "area": "Developer Docs",
+    "service": "GitHub documentation",
+    "status": "active",
+    "_context": {
+      "title": "docs_github_com_get-started_exploring-integrations_about-building-integrations",
+      "word_count": 936,
+      "tags": [],
+      "headings": [
+        "https://docs.github.com/get-started/exploring-integrations/about-building-integrations",
+        "[Get started](https://docs.github.com/en/get-started)",
+        "About building integrations",
+        "Help and support",
+        "Get quick answers!"
+      ]
+    }
+  },
+  "ai-agent-mastery-main/7_Agent_Architecture/7.7-SupervisorAgent/PRPs/EXAMPLE_sequential-research-outreach-agents.md": {
+    "area": "AI Agents",
+    "service": "LangGraph workflows",
+    "status": "active",
+    "_context": {
+      "title": "EXAMPLE_sequential-research-outreach-agents",
+      "word_count": 2745,
+      "tags": [],
+      "headings": [
+        "Purpose",
+        "Core Principles",
+        "Goal",
+        "Why",
+        "What"
+      ]
+    }
+  },
+  "Processed/synergyspanish_com_5-keys-to-speaking-spanish-at-any-age_.md": {
+    "area": "Language Learning",
+    "service": "Spanish courses",
+    "status": "active",
+    "_context": {
+      "title": "synergyspanish_com_5-keys-to-speaking-spanish-at-any-age_",
+      "word_count": 3132,
+      "tags": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5"
+      ],
+      "headings": [
+        "https://synergyspanish.com/5-keys-to-speaking-spanish-at-any-age/",
+        "5 keys to speaking Spanish at any age",
+        "**Spanish Speaking Secret #1**",
+        "**Spanish Speaking Secret #2**",
+        "**Frustration-Busting Spanish Speaking Secret #3**"
+      ]
+    }
+  },
+  "Archon/Knowledge/Philschmid_De_-_Philipp-Schmid/pages/www_philschmid_de_huggingface-transformers-keras-tf.md": {
+    "area": "AI",
+    "service": "Hugging Face blog",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_huggingface-transformers-keras-tf",
+      "word_count": 2427,
+      "tags": [],
+      "headings": [
+        "https://www.philschmid.de/huggingface-transformers-keras-tf",
+        "Hugging Face Transformers with Keras: Fine-tune a non-English BERT for Named Entity Recognition",
+        "Installation",
+        "Setup & Configuration",
+        "Dataset & Pre-processing"
+      ]
+    }
+  },
+  "Archon/Knowledge/Community_Dynamous/pages/circle_so_event-hub_life-changing-community-powered-course.md": {
+    "area": "Education",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "circle_so_event-hub_life-changing-community-powered-course",
+      "word_count": 24,
+      "tags": [],
+      "headings": [
+        "https://circle.so/event-hub/life-changing-community-powered-course"
+      ]
+    }
+  },
+  "Processed/checkout_synergyspanish_com_synergy-spanish-upgrade_coupon_NEWSTUDENT5_ref_fb.md": {
+    "area": "Education",
+    "service": "Spanish Language Course",
+    "status": "active",
+    "_context": {
+      "title": "checkout_synergyspanish_com_synergy-spanish-upgrade_coupon_NEWSTUDENT5_ref_fb",
+      "word_count": 1291,
+      "tags": [],
+      "headings": [
+        "https://checkout.synergyspanish.com/synergy-spanish-upgrade/?coupon=NEWSTUDENT5&amp;ref=fb",
+        "Your details:",
+        "Billing address",
+        "Your payment details:"
+      ]
+    }
+  },
+  "Processed/www_philschmid_de_pytorch-distributed-training-transformers_.md": {
+    "area": "Machine Learning",
+    "service": "HuggingFace Transformers, Amazon SageMaker",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_pytorch-distributed-training-transformers_",
+      "word_count": 1516,
+      "tags": [
+        "data-parallelism",
+        "distributed-training",
+        "model-parallelism"
+      ],
+      "headings": [
+        "https://www.philschmid.de/pytorch-distributed-training-transformers/",
+        "Distributed training on multilingual BERT with Hugging Face Transformers &amp; Amazon SageMaker",
+        "Installation",
+        "Setup &amp; Configuration",
+        "sagemaker session bucket -> used for uploading data, models and logs"
+      ]
+    }
+  },
+  "Archon/Knowledge/Philschmid_De_-_Philipp-Schmid/pages/www_philschmid_de_cloud-attention_issue-29_.md": {
+    "area": "Technology",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_cloud-attention_issue-29_",
+      "word_count": 505,
+      "tags": [],
+      "headings": [
+        "https://www.philschmid.de/cloud-attention/issue-29/",
+        "Issue 29: Open LLMs Take Center Stage with AMD GPU Integration and Efficient TPU Deployment -  October 15, 2024",
+        "News",
+        "Open-Source LLMs Now Powered by AMD GPUs!",
+        "One-Click Deployment of Local GGUF Models to the Cloud"
+      ]
+    }
+  },
+  "Archon/Knowledge/Philschmid_De_-_Philipp-Schmid/pages/www_philschmid_de_optimizing-transformers-with-optimum-gpu_.md": {
+    "area": "AI",
+    "service": "Hugging Face blog",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_optimizing-transformers-with-optimum-gpu_",
+      "word_count": 2352,
+      "tags": [
+        "map",
+        "optimum"
+      ],
+      "headings": [
+        "https://www.philschmid.de/optimizing-transformers-with-optimum-gpu/",
+        "Optimizing Transformers for GPUs with Optimum",
+        "1. Setup Development Environment",
+        "check available providers",
+        "asser version due to bug in 1.11.1"
+      ]
+    }
+  },
+  "Archon/Knowledge/GitHub_-_coleam00_ottomator-agents/pages/github_com_coleam00_local-ai-packaged_stargazers.md": {
+    "area": "AI",
+    "service": "GitHub community metrics",
+    "status": "active",
+    "_context": {
+      "title": "github_com_coleam00_local-ai-packaged_stargazers",
+      "word_count": 895,
+      "tags": [],
+      "headings": [
+        "https://github.com/coleam00/local-ai-packaged/stargazers",
+        "Navigation Menu",
+        "Search code, repositories, users, issues, pull requests...",
+        "Provide feedback ",
+        "Saved searches "
+      ]
+    }
+  },
+  "Processed/www_philschmid_de_huggingface-amazon-sagemaker-training-compiler.md": {
+    "area": "DevOps",
+    "service": "Amazon SageMaker, Hugging Face Transformers, PyTorch, Tensorflow",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_huggingface-amazon-sagemaker-training-compiler",
+      "word_count": 1764,
+      "tags": [],
+      "headings": [
+        "https://www.philschmid.de/huggingface-amazon-sagemaker-training-compiler",
+        "Hugging Face Transformers BERT fine-tuning using Amazon SageMaker and Training Compiler",
+        "Development Environment and Permissions",
+        "using older dataset due to incompatibility of sagemaker notebook & aws-cli with > s3fs and fsspec to >= 2021.10",
+        "Permissions"
+      ]
+    }
+  },
+  "Processed/BIm/Tritex24-229/01-10-2025  Design/1.02 Inputs/Consulant - ARUP/1.01 Drawings & Documents/25.01.23 ICT Dwgs/SHS-ARUP-XX-ZZ-DR-YI-0004 Rev 01.md": {
+    "area": "Architecture",
+    "service": "",
+    "status": "complete",
+    "_context": {
+      "title": "SHS-ARUP-XX-ZZ-DR-YI-0004 Rev 01",
+      "word_count": 1382,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Processed/Archon/Knowledge/Philschmid_De_-_Philipp-Schmid/pages/www_philschmid_de_cloud-attention_issue-13.md": {
+    "area": "AI",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_cloud-attention_issue-13",
+      "word_count": 597,
+      "tags": [
+        "5-delete-model-and-endpoint",
+        "leaderboard"
+      ],
+      "headings": [
+        "https://www.philschmid.de/cloud-attention/issue-13",
+        "Issue 13: WEBINSTRUCT and Qwen2 Revolutionize Instruction Data and Multilingual Models -  June 9, 2024",
+        "News",
+        "WEBINSTRUCT: A New Frontier in Instruction Data",
+        "Qwen2: Multilingual LLM Excellence"
+      ]
+    }
+  },
+  "Processed/www_philschmid_de_deepspeed-lora-flash-attention_.md": {
+    "area": "AI",
+    "service": "Hugging Face Transformers, Falcon-180B model training",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_deepspeed-lora-flash-attention_",
+      "word_count": 1653,
+      "tags": [
+        "configuration"
+      ],
+      "headings": [
+        "https://www.philschmid.de/deepspeed-lora-flash-attention/",
+        "Fine-tune Falcon 180B with DeepSpeed ZeRO, LoRA &amp; Flash Attention",
+        "What is DeepSpeed ZeRO?",
+        "What is LoRA?",
+        "What is Flash Attention?"
+      ]
+    }
+  },
+  "Processed/QF 4.1.91 DB-56 Cabling.md": {
+    "area": "Architecture",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "QF 4.1.91 DB-56 Cabling",
+      "word_count": 556,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Archon/Knowledge/Philschmid_De_-_Philipp-Schmid/pages/www_philschmid_de_pytorch-distributed-training-transformers_scripts_train_py.md": {
+    "area": "DevOps",
+    "service": "AWS, SageMaker, Hugging Face, Docker, PyTorch, Transformers, Presidio",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_pytorch-distributed-training-transformers_scripts_train_py",
+      "word_count": 491,
+      "tags": [],
+      "headings": [
+        "https://www.philschmid.de/pytorch-distributed-training-transformers/scripts/train.py",
+        "404 - Page Not Found"
+      ]
+    }
+  },
+  "Processed/Archon/Knowledge/Synergyspanish/pages/checkout_synergyspanish_com_synergy-spanish-with-shortcut-cds_ref_ema.md": {
+    "area": "E-commerce",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "checkout_synergyspanish_com_synergy-spanish-with-shortcut-cds_ref_ema",
+      "word_count": 819,
+      "tags": [],
+      "headings": [
+        "https://checkout.synergyspanish.com/synergy-spanish-with-shortcut-cds/?ref=ema",
+        "Your details:",
+        "Billing address",
+        "Shipping address *Cancel*",
+        "Choose shipping"
+      ]
+    }
+  },
+  "Processed/www_philschmid_de_page_7.md": {
+    "area": "Technology",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_page_7",
+      "word_count": 321,
+      "tags": [],
+      "headings": [
+        "https://www.philschmid.de/?page=7",
+        "Index",
+        "2022 December",
+        "[Managed Transcription with OpenAI Whisper and Hugging Face Inference EndpointsDecember 20, 2022 — Whisper, Transcription, HuggingFace, Inference](https://www.philschmid.de/whisper-inference-endpoints) ### [Stable Diffusion Inpainting example with Hugging Face inference EndpointsDecember 15, 2022 — Diffusion, Inference, HuggingFace, Generation](https://www.philschmid.de/stable-diffusion-inpainting-inference-endpoints)",
+        "2022 November"
+      ]
+    }
+  },
+  "Archon/Knowledge/Unknown_Service_File/pages/Makefile.md": {
+    "area": "DevOps",
+    "service": "Makefile",
+    "status": "active",
+    "_context": {
+      "title": "Makefile",
+      "word_count": 176,
+      "tags": [],
+      "headings": [
+        "file://Makefile",
+        "Note: Slash-commands are executed inside your Claude/agent environment.",
+        "These make targets focus on repo hygiene and bundle utilities.",
+        "Lint the universal memory file",
+        "Create a new context bundle and append a PRIME event"
+      ]
+    }
+  },
+  "Processed/Archon/Knowledge/Philschmid_De_-_Philipp-Schmid/code_examples/www_philschmid_de_fine-tune-flan-t5.md": {
+    "area": "Technology",
+    "service": "Hugging Face Transformers",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_fine-tune-flan-t5",
+      "word_count": 170,
+      "tags": [],
+      "headings": [
+        "Code Example",
+        "load model and tokenizer from huggingface hub with pipeline",
+        "select a random test sample",
+        "summarize dialogue"
+      ]
+    }
+  },
+  "Archon/Knowledge/GitHub_-_dynamous-community_context-engineering-hub/pages/docs_github_com_en_enterprise-cloud_latest_enterprise-onboarding.md": {
+    "area": "Business",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "docs_github_com_en_enterprise-cloud_latest_enterprise-onboarding",
+      "word_count": 577,
+      "tags": [],
+      "headings": [
+        "https://docs.github.com/en/enterprise-cloud@latest/enterprise-onboarding",
+        "[Enterprise onboarding](https://docs.github.com/en/enterprise-cloud@latest/enterprise-onboarding)",
+        "Enterprise onboarding ",
+        "Start here",
+        "Popular"
+      ]
+    }
+  },
+  "Processed/www_philschmid_de_agentic-pattern_.md": {
+    "area": "AI",
+    "service": "Hugging Face blog",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_agentic-pattern_",
+      "word_count": 3249,
+      "tags": [],
+      "headings": [
+        "https://www.philschmid.de/agentic-pattern/",
+        "Zero to One: Learning Agentic Patterns",
+        "Pattern Overview",
+        "Workflow: Prompt Chaining",
+        "Configure the client (ensure GEMINI_API_KEY is set in your environment)"
+      ]
+    }
+  },
+  "Processed/www_philschmid_de_philipp-schmid.md": {
+    "area": "Technology",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_philipp-schmid",
+      "word_count": 906,
+      "tags": [],
+      "headings": [
+        "https://www.philschmid.de/philipp-schmid",
+        "Philipp Schmid",
+        "Philipp Schmid",
+        "Technologies"
+      ]
+    }
+  },
+  "Archon/Knowledge/Synergyspanish/pages/synergyspanish_com_100-commonly-used-spanish-words_.md": {
+    "area": "Language Learning",
+    "service": "Spanish courses",
+    "status": "active",
+    "_context": {
+      "title": "synergyspanish_com_100-commonly-used-spanish-words_",
+      "word_count": 749,
+      "tags": [
+        "respond"
+      ],
+      "headings": [
+        "https://synergyspanish.com/100-commonly-used-spanish-words/",
+        "The 100 most commonly used Spanish words",
+        "The 100 most commonly used Spanish words",
+        "Share This Story, Choose Your Platform!",
+        "Related Posts "
+      ]
+    }
+  },
+  "Processed/Archon/Knowledge/Community_Dynamous/pages/circle_so_affiliate-program.md": {
+    "area": "Marketing",
+    "service": "Affiliate Programs",
+    "status": "active",
+    "_context": {
+      "title": "circle_so_affiliate-program",
+      "word_count": 683,
+      "tags": [],
+      "headings": [
+        "https://circle.so/affiliate-program",
+        "Earn more money by sharing Circle",
+        "Earn a one-time $120 commission for referring customers to Circle.",
+        "How to become a Circle affiliate",
+        "Apply"
+      ]
+    }
+  },
+  "Processed/Archon/Knowledge/Philschmid_De_-_Philipp-Schmid/pages/www_philschmid_de_mcp-introduction.md": {
+    "area": "AI",
+    "service": "",
+    "status": "complete",
+    "_context": {
+      "title": "www_philschmid_de_mcp-introduction",
+      "word_count": 1911,
+      "tags": [
+        "conclusion"
+      ],
+      "headings": [
+        "https://www.philschmid.de/mcp-introduction",
+        "Model Context Protocol (MCP) an overview",
+        "How does MCP work?",
+        "MCP servers",
+        "Create an MCP server"
+      ]
+    }
+  },
+  "Processed/www_philschmid_de_instruction-tune-llama-2.md": {
+    "area": "AI",
+    "service": "AutoML, Language Models",
+    "status": "",
+    "_context": {
+      "title": "www_philschmid_de_instruction-tune-llama-2",
+      "word_count": 1877,
+      "tags": [],
+      "headings": [
+        "https://www.philschmid.de/instruction-tune-llama-2",
+        "Extended Guide: Instruction-tune Llama 2",
+        "1. Define the use case and create a prompt template for instructions",
+        "Input:",
+        "Response:"
+      ]
+    }
+  },
+  "Processed/BIm/Tritex24-229/01-10-2025  Design/1.02 Inputs/Architect - BDP/1.01 Drawings & Documents/2025.06.12/4657-BDP-XX-XX-DR-A-3200_Typical Door Types.md": {
+    "area": "Architecture",
+    "service": "",
+    "status": "complete",
+    "_context": {
+      "title": "4657-BDP-XX-XX-DR-A-3200_Typical Door Types",
+      "word_count": 1358,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Processed/Archon/Knowledge/Unknown_Source_Code/pages/context_bundle_writer_py.md": {
+    "area": "DevOps",
+    "service": "context_bundle_writer.py",
+    "status": "active",
+    "_context": {
+      "title": "context_bundle_writer_py",
+      "word_count": 204,
+      "tags": [],
+      "headings": [
+        "file://context\\_bundle\\_writer.py"
+      ]
+    }
+  },
+  "Processed/Archon/Knowledge/GitHub_-_dynamous-community_context-engineering-hub/pages/github_com_enterprise_premium-support.md": {
+    "area": "Developer Tools",
+    "service": "GitHub Enterprise",
+    "status": "active",
+    "_context": {
+      "title": "github_com_enterprise_premium-support",
+      "word_count": 3412,
+      "tags": [],
+      "headings": [
+        "https://github.com/enterprise/premium-support",
+        "Navigation Menu",
+        "Search code, repositories, users, issues, pull requests...",
+        "Explore",
+        "Provide feedback"
+      ]
+    }
+  },
+  "Processed/BIm/Tritex24-229/01-10-2025-eh/4.03 Health & Safety Files/3.00 Inductions/Quality Induction Sign Off Sheet/2025/08. August/2025.08.04 Quality Induction Sign Off.md": {
+    "area": "HR",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "2025.08.04 Quality Induction Sign Off",
+      "word_count": 45,
+      "tags": [],
+      "headings": []
+    }
+  },
+  "Processed/www_philschmid_de_cloud-attention_issue-30_.md": {
+    "area": "AI",
+    "service": "",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_cloud-attention_issue-30_",
+      "word_count": 1127,
+      "tags": [
+        "deploy-llama-32-11b-vision-with-tgi-dlc-on-gke"
+      ],
+      "headings": [
+        "https://www.philschmid.de/cloud-attention/issue-30/",
+        "Issue 30: NVIDIA's Llama 3.1 Fine-Tune Outperforms GPT-4o and Claude 3.5? -  October 21, 2024",
+        "News",
+        "NVIDIA's Llama 3.1 Nemotron 70B Achieves State-of-the-Art Performance",
+        "Zyphra Releases Zamba2, a 7B LLM with Hybrid Architecture"
+      ]
+    }
+  },
+  "Processed/Archon/Knowledge/Philschmid_De_-_Philipp-Schmid/code_examples/www_philschmid_de_fine-tuning-layoutlm_.md": {
+    "area": "AI",
+    "service": "LayoutLM model",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_fine-tuning-layoutlm_",
+      "word_count": 329,
+      "tags": [],
+      "headings": [
+        "Code Example",
+        "load model and processor from huggingface hub",
+        "helper function to unnormalize bboxes for drawing onto the image",
+        "draw results onto the image",
+        "run inference"
+      ]
+    }
+  },
+  "Archon/Knowledge/Philschmid_De_-_Philipp-Schmid/pages/www_philschmid_de_custom-inference-handler.md": {
+    "area": "AI",
+    "service": "Hugging Face Inference Endpoints",
+    "status": "active",
+    "_context": {
+      "title": "www_philschmid_de_custom-inference-handler",
+      "word_count": 1519,
+      "tags": [],
+      "headings": [
+        "https://www.philschmid.de/custom-inference-handler",
+        "Custom Inference with Hugging Face Inference Endpoints",
+        "What is Hugging Face Inference Endpoints?",
+        "Tutorial: Create a custom inference handler",
+        "1. Set up Development Environment"
+      ]
+    }
+  },
+  "Archon/Knowledge/Philschmid_De_-_Philipp-Schmid/pages/www_philschmid_de_gemini-pdf-to-data.md": {
+    "area": "Technology",
+    "service": "Google Gemini API",
+    "status": "Completed",
+    "_context": {
+      "title": "www_philschmid_de_gemini-pdf-to-data",
+      "word_count": 2115,
+      "tags": [
+        "2_0flash",
+        "create-a-client",
+        "delete",
+        "genai",
+        "image-input",
+        "upload"
+      ],
+      "headings": [
+        "https://www.philschmid.de/gemini-pdf-to-data",
+        "From PDFs to Insights: Structured Outputs from PDFs with Gemini 2.0",
+        "1. Set up Environment and create inference Client",
+        "Create a client",
+        "Define the model you are going to use"
+      ]
+    }
+  },
+  "Archon/Knowledge/Synergyspanish/pages/synergyspanish_com_ancient-philosopher-teaches-spanish-secret_.md": {
+    "area": "Language Learning",
+    "service": "Spanish courses",
+    "status": "active",
+    "_context": {
+      "title": "synergyspanish_com_ancient-philosopher-teaches-spanish-secret_",
+      "word_count": 1672,
+      "tags": [
+        "respond"
+      ],
+      "headings": [
+        "https://synergyspanish.com/ancient-philosopher-teaches-spanish-secret/",
+        "Ancient philosopher teaches you his Spanish secret",
+        "Ancient philosopher teaches you his Spanish secret",
+        "Share This Story, Choose Your Platform!",
+        "Related Posts "
+      ]
+    }
+  }
+}

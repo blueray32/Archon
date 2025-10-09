@@ -1,0 +1,12 @@
+diff --git a/artifacts/feature-weekly-review/001/notes.md b/artifacts/feature-weekly-review/001/notes.md
+index 03f5b0a..66449b3 100644
+--- a/artifacts/feature-weekly-review/001/notes.md
++++ b/artifacts/feature-weekly-review/001/notes.md
+@@ -1,5 +1,4 @@
+ # Dev run for feature-weekly-review/001
+-2025-09-26T23:51:36Z
++2025-09-26T23:56:21Z
+ - PRP: ai_docs/PRPs/feature-weekly-review/001/PRP.md
+-- Executor: Claude Code
+-- Artifacts: artifacts/feature-weekly-review/001
++- Executor: Claude CLI detected (auto-run disabled for portability; use your IDE/CLI to edit per PRP, then re-run)

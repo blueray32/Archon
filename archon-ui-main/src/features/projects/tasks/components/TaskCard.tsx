@@ -1,21 +1,23 @@
 import { Tag } from "lucide-react";
 import type React from "react";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useDrag, useDrop } from "react-dnd";
-import { isOptimistic } from "../../../shared/optimistic";
-import { OptimisticIndicator } from "../../../ui/primitives/OptimisticIndicator";
 import { useTaskActions } from "../hooks";
-import type { Assignee, Task, TaskPriority } from "../types";
+import type { Assignee, Task } from "../types";
 import { getOrderColor, getOrderGlow, ItemTypes } from "../utils/task-styles";
-import { TaskPriorityComponent } from ".";
 import { TaskAssignee } from "./TaskAssignee";
 import { TaskCardActions } from "./TaskCardActions";
+import { type Priority, TaskPriority } from "./TaskPriority";
 
 export interface TaskCardProps {
   task: Task;
   index: number;
   projectId: string; // Need this for mutations
-  onTaskReorder: (taskId: string, targetIndex: number, status: Task["status"]) => void;
+  onTaskReorder: (
+    taskId: string,
+    targetIndex: number,
+    status: Task["status"],
+  ) => void;
   onEdit?: (task: Task) => void; // Optional edit handler
   onDelete?: (task: Task) => void; // Optional delete handler
   hoveredTaskId?: string | null;
@@ -36,11 +38,12 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   selectedTasks,
   onTaskSelect,
 }) => {
-  // Check if task is optimistic
-  const optimistic = isOptimistic(task);
+  // Local state for frontend-only priority
+  // NOTE: Priority is display-only and doesn't sync with backend yet
+  const [localPriority, setLocalPriority] = useState<Priority>("medium");
 
-  // Use business logic hook with changePriority
-  const { changeAssignee, changePriority, isUpdating } = useTaskActions(projectId);
+  // Use business logic hook
+  const { changeAssignee, isUpdating } = useTaskActions(projectId);
 
   // Handlers - now just call hook methods
   const handleEdit = useCallback(() => {
@@ -60,12 +63,10 @@ export const TaskCard: React.FC<TaskCardProps> = ({
     }
   }, [onDelete, task]);
 
-  const handlePriorityChange = useCallback(
-    (priority: TaskPriority) => {
-      changePriority(task.id, priority);
-    },
-    [changePriority, task.id],
-  );
+  const handlePriorityChange = useCallback((priority: Priority) => {
+    // Frontend-only priority change
+    setLocalPriority(priority);
+  }, []);
 
   const handleAssigneeChange = useCallback(
     (newAssignee: Assignee) => {
@@ -84,7 +85,10 @@ export const TaskCard: React.FC<TaskCardProps> = ({
 
   const [, drop] = useDrop({
     accept: ItemTypes.TASK,
-    hover: (draggedItem: { id: string; status: Task["status"]; index: number }, monitor) => {
+    hover: (
+      draggedItem: { id: string; status: Task["status"]; index: number },
+      monitor,
+    ) => {
       if (!monitor.isOver({ shallow: true })) return;
       if (draggedItem.id === task.id) return;
       if (draggedItem.status !== task.status) return;
@@ -126,7 +130,9 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   const transitionStyles = "transition-all duration-200 ease-in-out";
 
   // Subtle highlight effect for related tasks
-  const highlightGlow = isHighlighted ? "border-cyan-400/50 shadow-[0_0_8px_rgba(34,211,238,0.2)]" : "";
+  const highlightGlow = isHighlighted
+    ? "border-cyan-400/50 shadow-[0_0_8px_rgba(34,211,238,0.2)]"
+    : "";
 
   // Selection styling with glassmorphism
   const selectionGlow = isSelected
@@ -157,7 +163,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
       }}
     >
       <div
-        className={`${cardBaseStyles} ${transitionStyles} ${hoverEffectClasses} ${highlightGlow} ${selectionGlow} ${optimistic ? "opacity-80 ring-1 ring-cyan-400/30" : ""} w-full min-h-[140px] h-full`}
+        className={`${cardBaseStyles} ${transitionStyles} ${hoverEffectClasses} ${highlightGlow} ${selectionGlow} w-full min-h-[140px] h-full`}
       >
         {/* Priority indicator with beautiful glow */}
         <div
@@ -182,11 +188,8 @@ export const TaskCard: React.FC<TaskCardProps> = ({
               </div>
             )}
 
-            {/* Optimistic indicator */}
-            <OptimisticIndicator isOptimistic={optimistic} className="ml-auto" />
-
             {/* Action buttons group */}
-            <div className={`${optimistic ? "" : "ml-auto"} flex items-center gap-1.5`}>
+            <div className="ml-auto flex items-center gap-1.5">
               <TaskCardActions
                 taskId={task.id}
                 taskTitle={task.title}
@@ -222,13 +225,17 @@ export const TaskCard: React.FC<TaskCardProps> = ({
 
           {/* Footer with assignee - glassmorphism styling */}
           <div className="flex items-center justify-between mt-auto pt-2 pl-1.5 pr-3">
-            <TaskAssignee assignee={task.assignee} onAssigneeChange={handleAssigneeChange} isLoading={isUpdating} />
-
-            {/* Priority display connected to database */}
-            <TaskPriorityComponent
-              priority={task.priority}
-              onPriorityChange={handlePriorityChange}
+            <TaskAssignee
+              assignee={task.assignee}
+              onAssigneeChange={handleAssigneeChange}
               isLoading={isUpdating}
+            />
+
+            {/* Priority display (frontend-only for now) */}
+            <TaskPriority
+              priority={localPriority}
+              onPriorityChange={handlePriorityChange}
+              isLoading={false}
             />
           </div>
         </div>

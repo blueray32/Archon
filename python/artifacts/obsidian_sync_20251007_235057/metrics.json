@@ -1,0 +1,15 @@
+{
+  "start_time": "2025-10-07T23:50:57.152280",
+  "end_time": "2025-10-07T23:57:21.078475",
+  "duration_s": 383.926195,
+  "notes_scanned": 6635,
+  "notes_processed": 0,
+  "notes_skipped_unchanged": 0,
+  "notes_skipped_rules": 0,
+  "notes_failed": 0,
+  "tags_applied": 0,
+  "durations": {
+    "scan": 2.362264
+  },
+  "errors": []
+}

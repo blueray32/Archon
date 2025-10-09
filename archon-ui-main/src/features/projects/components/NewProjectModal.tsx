@@ -21,7 +21,11 @@ interface NewProjectModalProps {
   onSuccess?: () => void;
 }
 
-export const NewProjectModal: React.FC<NewProjectModalProps> = ({ open, onOpenChange, onSuccess }) => {
+export const NewProjectModal: React.FC<NewProjectModalProps> = ({
+  open,
+  onOpenChange,
+  onSuccess,
+}) => {
   const projectNameId = useId();
   const projectDescriptionId = useId();
 
@@ -61,7 +65,9 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ open, onOpenCh
             <DialogTitle className="text-xl font-bold bg-gradient-to-r from-purple-400 to-fuchsia-500 text-transparent bg-clip-text">
               Create New Project
             </DialogTitle>
-            <DialogDescription>Start a new project to organize your tasks and documents.</DialogDescription>
+            <DialogDescription>
+              Start a new project to organize your tasks and documents.
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 my-6">
@@ -77,9 +83,14 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ open, onOpenCh
                 type="text"
                 placeholder="Enter project name..."
                 value={formData.title}
-                onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, title: e.target.value }))
+                }
                 disabled={createProjectMutation.isPending}
-                className={cn("w-full", "focus:border-purple-400 focus:shadow-[0_0_10px_rgba(168,85,247,0.2)]")}
+                className={cn(
+                  "w-full",
+                  "focus:border-purple-400 focus:shadow-[0_0_10px_rgba(168,85,247,0.2)]",
+                )}
                 autoFocus
               />
             </div>
@@ -119,13 +130,20 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ open, onOpenCh
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="ghost" onClick={handleClose} disabled={createProjectMutation.isPending}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={handleClose}
+              disabled={createProjectMutation.isPending}
+            >
               Cancel
             </Button>
             <Button
               type="submit"
               variant="default"
-              disabled={createProjectMutation.isPending || !formData.title.trim()}
+              disabled={
+                createProjectMutation.isPending || !formData.title.trim()
+              }
               className="shadow-lg shadow-purple-500/20"
             >
               {createProjectMutation.isPending ? (

@@ -20,7 +20,10 @@ const clientIcons: Record<string, string> = {
   Unknown: "❓",
 };
 
-export const McpClientList: React.FC<McpClientListProps> = ({ clients, className }) => {
+export const McpClientList: React.FC<McpClientListProps> = ({
+  clients,
+  className,
+}) => {
   const formatDuration = (connectedAt: string): string => {
     const now = new Date();
     const connected = new Date(connectedAt);
@@ -44,14 +47,21 @@ export const McpClientList: React.FC<McpClientListProps> = ({ clients, className
 
   if (clients.length === 0) {
     return (
-      <div className={cn(compoundStyles.card, "p-6 text-center rounded-lg relative overflow-hidden", className)}>
+      <div
+        className={cn(
+          compoundStyles.card,
+          "p-6 text-center rounded-lg relative overflow-hidden",
+          className,
+        )}
+      >
         <div className="absolute top-3 right-3 px-2 py-1 bg-cyan-500/20 text-cyan-400 text-xs font-semibold rounded-full border border-cyan-500/30">
           Coming Soon
         </div>
         <Monitor className="w-12 h-12 mx-auto mb-3 text-zinc-500" />
         <p className="text-zinc-400">Client detection coming soon</p>
         <p className="text-sm text-zinc-500 mt-2">
-          We'll automatically detect when AI assistants connect to the MCP server
+          We'll automatically detect when AI assistants connect to the MCP
+          server
         </p>
       </div>
     );
@@ -69,26 +79,39 @@ export const McpClientList: React.FC<McpClientListProps> = ({ clients, className
             "flex items-center justify-between p-4 rounded-lg",
             glassmorphism.background.card,
             glassmorphism.border.default,
-            client.status === "active" ? "border-green-500/50 shadow-[0_0_15px_rgba(34,197,94,0.2)]" : "",
+            client.status === "active"
+              ? "border-green-500/50 shadow-[0_0_15px_rgba(34,197,94,0.2)]"
+              : "",
           )}
         >
           <div className="flex items-center gap-3">
-            <span className="text-2xl">{clientIcons[client.client_type] || "❓"}</span>
+            <span className="text-2xl">
+              {clientIcons[client.client_type] || "❓"}
+            </span>
             <div>
               <p className="font-medium text-white">{client.client_type}</p>
-              <p className="text-xs text-zinc-400">Session: {client.session_id.slice(0, 8)}</p>
+              <p className="text-xs text-zinc-400">
+                Session: {client.session_id.slice(0, 8)}
+              </p>
             </div>
           </div>
 
           <div className="flex items-center gap-4 text-sm">
             <div className="flex items-center gap-1">
               <Clock className="w-3 h-3 text-blue-400" />
-              <span className="text-zinc-400">{formatDuration(client.connected_at)}</span>
+              <span className="text-zinc-400">
+                {formatDuration(client.connected_at)}
+              </span>
             </div>
 
             <div className="flex items-center gap-1">
               <Activity className="w-3 h-3 text-green-400" />
-              <span className={cn("text-zinc-400", client.status === "active" && "text-green-400")}>
+              <span
+                className={cn(
+                  "text-zinc-400",
+                  client.status === "active" && "text-green-400",
+                )}
+              >
                 {formatLastActivity(client.last_activity)}
               </span>
             </div>

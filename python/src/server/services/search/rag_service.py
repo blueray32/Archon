@@ -128,6 +128,20 @@ class RAGService:
                         filter_metadata=filter_metadata,
                     )
                     span.set_attribute("search_mode", "hybrid")
+
+                    # Fallback to vector search if hybrid yields no results
+                    if not results:
+                        logger.warning(
+                            "Hybrid search returned 0 results; falling back to vector search. "
+                            "If this persists, apply migration/fix_hybrid_search_types.sql to fix DB function types."
+                        )
+                        span.set_attribute("fallback_used", True)
+                        span.set_attribute("fallback_reason", "hybrid_zero_results")
+                        results = await self.base_strategy.vector_search(
+                            query_embedding=query_embedding,
+                            match_count=match_count,
+                            filter_metadata=filter_metadata,
+                        )
                 else:
                     # Use basic vector search from base strategy
                     results = await self.base_strategy.vector_search(
@@ -343,6 +357,21 @@ class RAGService:
                         filter_metadata=filter_metadata,
                         source_id=source_id,
                     )
+
+                    # Fallback when hybrid yields no results
+                    if not results:
+                        logger.warning(
+                            "Hybrid code search returned 0 results; falling back to agentic/vector search. "
+                            "If this persists, apply migration/fix_hybrid_search_types.sql to fix DB function types."
+                        )
+                        span.set_attribute("fallback_used", True)
+                        span.set_attribute("fallback_reason", "hybrid_zero_results")
+                        results = await self.agentic_strategy.search_code_examples(
+                            query=query,
+                            match_count=search_match_count,
+                            filter_metadata=filter_metadata,
+                            source_id=source_id,
+                        )
                 else:
                     # Use standard agentic search
                     results = await self.agentic_strategy.search_code_examples(

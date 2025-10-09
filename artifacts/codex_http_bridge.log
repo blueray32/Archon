@@ -1,0 +1,51 @@
+
+> obsidian-codex-http-bridge@0.1.0 dev /Users/ciarancox/Archon/plugin-obsidian-claude-code/http-bridge
+> tsx watch src/index.ts
+
+Codex HTTP bridge listening on http://localhost:8787
+00:12:56 [tsx] change in ./src/index.ts Restarting...
+cCodex HTTP bridge listening on http://localhost:8787
+00:13:06 [tsx] change in ./src/index.ts Restarting...
+cCodex HTTP bridge listening on http://localhost:8787
+[Bridge] Received request: prompt="test..." agentType=rag
+[Bridge] Forwarding to http://localhost:8052/agents/run
+[Bridge] Received 7027 chars from Agents
+[Bridge] Sending response: It seems that there were no results found for your query "test". Here are some suggestions to improv...
+[Bridge] Received request: prompt="bim..." agentType=rag
+[Bridge] Forwarding to http://localhost:8052/agents/run
+[Bridge] Received 12432 chars from Agents
+[Bridge] Sending response: It appears that the search for "bim" and "Building Information Modeling (BIM)" yielded no results in...
+[Bridge] Received request: prompt="bim..." agentType=rag
+[Bridge] Forwarding to http://localhost:8052/agents/run
+[Bridge] Received 10621 chars from Agents
+[Bridge] Sending response: It seems that the search for the term "bim" and its contextual variations did not return any results...
+[Bridge] Received request: prompt="test..." agentType=rag
+[Bridge] Forwarding to http://localhost:8052/agents/run
+[Bridge] Received 7786 chars from Agents
+[Bridge] Sending response: It seems that there were no results found for the query "test." Here are some suggestions for improv...
+[Bridge] Received request: prompt="hi..." agentType=rag
+[Bridge] Forwarding to http://localhost:8052/agents/run
+[Bridge] Received 4199 chars from Agents
+[Bridge] Sending response: Hello! How can I assist you today?...
+[Bridge] Received request: prompt="hi..." agentType=rag
+[Bridge] Forwarding to http://localhost:8052/agents/run
+[Bridge] Received 4199 chars from Agents
+[Bridge] Sending response: Hello! How can I assist you today?...
+[Bridge] Received request: prompt="hola..." agentType=spanish_tutor
+[Bridge] Forwarding to http://localhost:8052/agents/run
+[Bridge] Received 4113 chars from Agents
+[Bridge] Sending response: ¡Hola! ¿Cómo estás?...
+[Bridge] Received request: prompt="tell me about short cut to spanish..." agentType=spanish_tutor
+[Bridge] Forwarding to http://localhost:8052/agents/run
+[Bridge] Received 4406 chars from Agents
+[Bridge] Sending response: Lo siento, no puedo proporcionar información sobre eso. ¿Te gustaría practicar algo específico en es...
+[Bridge] Received request: prompt="ai..." agentType=rag
+[Bridge] Forwarding to http://localhost:8052/agents/run
+[Bridge] Received 12350 chars from Agents
+[Bridge] Sending response: It seems that searches for "ai," "artificial intelligence," and "machine learning" returned no resul...
+[Bridge] Received request: prompt="hi..." agentType=rag
+[Bridge] Forwarding to http://localhost:8052/agents/run
+[Bridge] Received request: prompt="hi..." agentType=spanish_tutor
+[Bridge] Forwarding to http://localhost:8052/agents/run
+[Bridge] Received request: prompt="hi..." agentType=spanish_tutor
+[Bridge] Forwarding to http://localhost:8052/agents/run

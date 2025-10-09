@@ -1,0 +1,15 @@
+family_prefixes:
+  - Doors
+  - Windows
+  - Walls
+
+type_patterns:
+  - category: Doors
+    pattern: '^D_[A-Za-z]+(_Fire_(30|60))?$'
+    example_types: ['D_Internal_Fire_30', 'D_External']
+  - category: Windows
+    pattern: '^W_[A-Za-z]+(_Double|_Triple)?$'
+    example_types: ['W_Alu_Double', 'W_Timber_Triple']
+  - category: Walls
+    pattern: '^Wall_[A-Za-z0-9_]+$'
+    example_types: ['Wall_Partition_92', 'Wall_External_215']

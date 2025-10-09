@@ -75,13 +75,14 @@ src/
 │   ├── crawlProgressService.ts
 │   ├── credentialsService.ts
 │   ├── knowledgeBaseService.ts
-│   ├── mcpClientService.ts
-│   ├── mcpServerService.ts
-│   ├── mcpService.ts
 │   ├── projectCreationProgressService.ts
 │   ├── projectService.ts
 │   ├── testService.ts
 │   └── webSocketService.ts
+├── features/
+│   └── mcp/
+│       └── services/
+│           └── mcpApi.ts
 └── types/
     ├── knowledge.ts
     └── project.ts
@@ -149,7 +150,7 @@ Archon UI provides a comprehensive dashboard for managing your AI's knowledge ba
 - **📊 MCP Dashboard**: Monitor and control the MCP server
 - **⚙️ Settings Management**: Configure credentials and RAG strategies
 - **📚 Knowledge Management**: Browse, search, and organize knowledge items
-- **📈 Real-time Updates**: Socket.IO-based live updates across the UI
+- **📈 Real-time Updates**: HTTP polling with ETag caching across the UI
 
 ## 🏗️ Architecture
 
@@ -174,12 +175,12 @@ Browse and manage your knowledge items with multiple view modes.
 - **Knowledge Grid**: Card-based knowledge display with domain grouping
 - **Knowledge Table**: Full-width table view with sortable columns
 - **Search/Filter**: Search by title, type, tags
-- **Crawling Progress**: Real-time progress tracking for URL crawling
+- **Crawling Progress**: Progress tracking for URL crawling
 - **Actions**: Delete, add sources, file upload
 
 **Features:**
 - Grid and table view modes
-- Real-time updates via Socket.IO
+- Updates via HTTP polling
 - Type-based filtering (technical/business)
 - Domain-based grouping for URLs
 - Tag tooltips for overflow
@@ -192,12 +193,12 @@ Project dashboard with task management and documentation tabs.
 **Components:**
 - **Project List**: Create and select projects
 - **Task Tabs**: Manage tasks, features, docs and data
-- **Progress Cards**: Real-time project creation status
+- **Progress Cards**: Project creation status
 
 **Features:**
 - Hierarchical tasks
 - GitHub repository links
-- Socket.IO project progress
+- HTTP polling for project progress
 
 ### 3. Settings (`/settings`)
 
@@ -224,7 +225,7 @@ Comprehensive configuration management with organized sections.
 
 **Features:**
 - Secure credential storage with encryption
-- Real-time test execution and monitoring
+- Test execution and monitoring
 - Toast notifications for actions
 - Collapsible test section (collapsed by default)
 
@@ -234,14 +235,14 @@ Central control panel for the MCP server.
 
 **Components:**
 - **Server Control Panel**: Start/stop server, view status, select transport mode
-- **Server Logs Viewer**: Real-time log streaming with auto-scroll
+- **Server Logs Viewer**: Status and configuration panels
 - **Available Tools Table**: Dynamic tool discovery and documentation
 - **MCP Test Panel**: Interactive tool testing interface
 
 **Features:**
 - Dual transport support (SSE/stdio)
-- Real-time status polling (5-second intervals)
-- Socket.IO-based log streaming
+- Status polling (5-second intervals)
+- HTTP-based status queries
 - Copy-to-clipboard configuration
 - Tool parameter validation
 
@@ -255,7 +256,7 @@ Browse and manage your knowledge items.
 
 **Features:**
 - Pagination support
-- Real-time updates via Socket.IO
+- Updates via HTTP polling
 - Type-based filtering (technical/business)
 - Metadata display
 
@@ -312,7 +313,9 @@ Wraps pages with smooth fade/slide animations:
 </PageTransition>
 ```
 
-## 🔌 Socket.IO Integration
+## 🔌 Legacy: Socket.IO Integration
+
+> Note: Archon Beta uses HTTP polling with ETag caching for live updates. The Socket.IO content below is kept for legacy reference. See the Polling & Caching guide for current patterns.
 
 All real-time connections use **Socket.IO** with a room-based architecture on the default namespace for improved reliability and organization:
 
@@ -438,13 +441,12 @@ const subscribeToProjectList = () => {
 
 ## 🔌 Services
 
-### mcpService
-Handles all MCP server communication:
-- `startServer()`: Start the MCP server
-- `stopServer()`: Stop the MCP server
+### mcpApi
+Handles all MCP server communication (HTTP):
 - `getStatus()`: Get current server status
-- `streamLogs()`: Socket.IO log streaming
-- `getAvailableTools()`: Fetch MCP tools
+- `getConfig()`: Get server configuration (transport, port)
+- `getSessionInfo()`: Get session/uptime information
+- `getClients()`: List connected MCP clients
 
 ### api
 Base API configuration with:
@@ -826,4 +828,3 @@ Based on code analysis, these components need performance improvements:
 4. **APIKeysSection** - Dynamic list with multiple input fields
 5. **ToolTestingPanel** - Complex parameter inputs
 6. **ArchonChatPanel** - Consider virtualization for long chat histories
-

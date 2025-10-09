@@ -80,16 +80,30 @@ async def get_agent_credentials(request: Request) -> dict[str, Any]:
             "OPENAI_MODEL": await credential_service.get_credential(
                 "OPENAI_MODEL", default="gpt-4o-mini"
             ),
-            # Model configurations
+            # Model configurations - Use OpenAI for reliable tool calling
             "DOCUMENT_AGENT_MODEL": await credential_service.get_credential(
-                "DOCUMENT_AGENT_MODEL", default="openai:gpt-4o"
+                "DOCUMENT_AGENT_MODEL", default="gpt-4o-mini"
             ),
             "RAG_AGENT_MODEL": await credential_service.get_credential(
-                "RAG_AGENT_MODEL", default="openai:gpt-4o-mini"
+                "RAG_AGENT_MODEL", default="gpt-4o-mini"
             ),
             "TASK_AGENT_MODEL": await credential_service.get_credential(
-                "TASK_AGENT_MODEL", default="openai:gpt-4o"
+                "TASK_AGENT_MODEL", default="gpt-4o-mini"
             ),
+            "SPANISH_TUTOR_AGENT_MODEL": await credential_service.get_credential(
+                "SPANISH_TUTOR_AGENT_MODEL", default="gpt-4o-mini"
+            ),
+            "RESEARCHER_AGENT_MODEL": await credential_service.get_credential(
+                "RESEARCHER_AGENT_MODEL", default="gpt-4o-mini"
+            ),
+            "PYDANTIC_AI_AGENT_MODEL": await credential_service.get_credential(
+                "PYDANTIC_AI_AGENT_MODEL", default="gpt-4o-mini"
+            ),
+            "PRP_AGENT_MODEL": await credential_service.get_credential(
+                "PRP_AGENT_MODEL", default="gpt-4o-mini"
+            ),
+            # Use OpenAI API for agents (not Ollama)
+            "OPENAI_BASE_URL": "https://api.openai.com/v1",
             # Rate limiting settings
             "AGENT_RATE_LIMIT_ENABLED": await credential_service.get_credential(
                 "AGENT_RATE_LIMIT_ENABLED", default="true"

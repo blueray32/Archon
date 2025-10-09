@@ -1,0 +1,6 @@
+file_path,change_type,description
+data/bim/standards/naming.yml,created,BIM family and type naming patterns
+data/bim/standards/sheets.yml,created,Sheet numbering and title standards
+scripts/revit/validate_naming.py,created,Naming validation tool stub
+ai_docs/PRDs/feature-bim-demo/ARCH.md,modified,Added Naming Standards section
+README.md,modified,Added BIM Standards link

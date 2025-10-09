@@ -1,15 +1,37 @@
 import { LayoutGrid, Plus, Table } from "lucide-react";
-import { useCallback, useState } from "react";
+import { lazy, Suspense, useCallback, useState } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import { DeleteConfirmModal } from "../../ui/components/DeleteConfirmModal";
+
+const DeleteConfirmModal = lazy(() =>
+  import("../../ui/components/DeleteConfirmModal").then((m) => ({
+    default: m.DeleteConfirmModal,
+  })),
+);
+
 import { Button } from "../../ui/primitives";
 import { cn, glassmorphism } from "../../ui/primitives/styles";
-import { TaskEditModal } from "./components/TaskEditModal";
+
+const TaskEditModal = lazy(() =>
+  import("./components/TaskEditModal").then((m) => ({
+    default: m.TaskEditModal,
+  })),
+);
+
 import { useDeleteTask, useProjectTasks, useUpdateTask } from "./hooks";
 import type { Task } from "./types";
-import { getReorderTaskOrder, ORDER_INCREMENT, validateTaskOrder } from "./utils";
-import { BoardView, TableView } from "./views";
+import {
+  getReorderTaskOrder,
+  ORDER_INCREMENT,
+  validateTaskOrder,
+} from "./utils";
+
+const BoardView = lazy(() =>
+  import("./views/BoardView").then((m) => ({ default: m.BoardView })),
+);
+const TableView = lazy(() =>
+  import("./views/TableView").then((m) => ({ default: m.TableView })),
+);
 
 interface TasksTabProps {
   projectId: string;
@@ -23,7 +45,8 @@ export const TasksTab = ({ projectId }: TasksTabProps) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // Fetch tasks using TanStack Query
-  const { data: tasks = [], isLoading: isLoadingTasks } = useProjectTasks(projectId);
+  const { data: tasks = [], isLoading: isLoadingTasks } =
+    useProjectTasks(projectId);
 
   // Mutations for task operations
   const updateTaskMutation = useUpdateTask(projectId);
@@ -84,8 +107,15 @@ export const TasksTab = ({ projectId }: TasksTabProps) => {
         .filter((task) => task.status === status)
         .sort((a, b) => a.task_order - b.task_order);
 
-      const movingTaskIndex = statusTasks.findIndex((task) => task.id === taskId);
-      if (movingTaskIndex === -1 || targetIndex < 0 || targetIndex > statusTasks.length) return;
+      const movingTaskIndex = statusTasks.findIndex(
+        (task) => task.id === taskId,
+      );
+      if (
+        movingTaskIndex === -1 ||
+        targetIndex < 0 ||
+        targetIndex > statusTasks.length
+      )
+        return;
       if (movingTaskIndex === targetIndex) return;
 
       // Calculate new position using battle-tested utility
@@ -118,7 +148,9 @@ export const TasksTab = ({ projectId }: TasksTabProps) => {
 
       try {
         // Calculate position for new status
-        const tasksInNewStatus = (tasks as Task[]).filter((t) => t.status === newStatus);
+        const tasksInNewStatus = (tasks as Task[]).filter(
+          (t) => t.status === newStatus,
+        );
         const newOrder = getDefaultTaskOrder(tasksInNewStatus);
 
         // Update via mutation (handles optimistic updates)
@@ -152,7 +184,9 @@ export const TasksTab = ({ projectId }: TasksTabProps) => {
       // Validate task_order if present (ensures integer precision)
       const processedUpdates = { ...updates };
       if (processedUpdates.task_order !== undefined) {
-        processedUpdates.task_order = validateTaskOrder(processedUpdates.task_order);
+        processedUpdates.task_order = validateTaskOrder(
+          processedUpdates.task_order,
+        );
       }
 
       await updateTaskMutation.mutateAsync({
@@ -179,43 +213,67 @@ export const TasksTab = ({ projectId }: TasksTabProps) => {
         {/* Main content - Table or Board view */}
         <div className="relative h-[calc(100vh-220px)] overflow-auto">
           {viewMode === "table" ? (
-            <TableView
-              tasks={tasks as Task[]}
-              projectId={projectId}
-              onTaskView={openEditModal}
-              onTaskComplete={completeTask}
-              onTaskDelete={openDeleteModal}
-              onTaskReorder={handleTaskReorder}
-              onTaskUpdate={updateTaskInline}
-            />
+            <Suspense
+              fallback={
+                <div className="p-4 text-sm text-zinc-500">Loading table…</div>
+              }
+            >
+              <TableView
+                tasks={tasks as Task[]}
+                projectId={projectId}
+                onTaskView={openEditModal}
+                onTaskComplete={completeTask}
+                onTaskDelete={openDeleteModal}
+                onTaskReorder={handleTaskReorder}
+                onTaskUpdate={updateTaskInline}
+              />
+            </Suspense>
           ) : (
-            <BoardView
-              tasks={tasks as Task[]}
-              projectId={projectId}
-              onTaskMove={moveTask}
-              onTaskReorder={handleTaskReorder}
-              onTaskEdit={openEditModal}
-              onTaskDelete={openDeleteModal}
-            />
+            <Suspense
+              fallback={
+                <div className="p-4 text-sm text-zinc-500">Loading board…</div>
+              }
+            >
+              <BoardView
+                tasks={tasks as Task[]}
+                projectId={projectId}
+                onTaskMove={moveTask}
+                onTaskReorder={handleTaskReorder}
+                onTaskEdit={openEditModal}
+                onTaskDelete={openDeleteModal}
+              />
+            </Suspense>
           )}
         </div>
 
         {/* Fixed View Controls using Radix primitives */}
-        <ViewControls viewMode={viewMode} onViewChange={setViewMode} onAddTask={openCreateModal} />
+        <ViewControls
+          viewMode={viewMode}
+          onViewChange={setViewMode}
+          onAddTask={openCreateModal}
+        />
 
         {/* Edit/Create Task Modal */}
-        <TaskEditModal isModalOpen={isModalOpen} editingTask={editingTask} projectId={projectId} onClose={closeModal} />
+        <Suspense fallback={null}>
+          <TaskEditModal
+            isModalOpen={isModalOpen}
+            editingTask={editingTask}
+            projectId={projectId}
+            onClose={closeModal}
+          />
+        </Suspense>
 
         {/* Delete Task Modal */}
-        <DeleteConfirmModal
-          open={showDeleteModal}
-          itemName={taskToDelete?.title || ""}
-          onConfirm={confirmDeleteTask}
-          onCancel={closeDeleteModal}
-          onOpenChange={setShowDeleteModal}
-          type="task"
-          size="compact"
-        />
+        <Suspense fallback={null}>
+          <DeleteConfirmModal
+            open={showDeleteModal}
+            itemName={taskToDelete?.title || ""}
+            onConfirm={confirmDeleteTask}
+            onCancel={closeDeleteModal}
+            type="task"
+            size="compact"
+          />
+        </Suspense>
       </div>
     </DndProvider>
   );
@@ -228,7 +286,11 @@ interface ViewControlsProps {
   onAddTask: () => void;
 }
 
-const ViewControls = ({ viewMode, onViewChange, onAddTask }: ViewControlsProps) => {
+const ViewControls = ({
+  viewMode,
+  onViewChange,
+  onAddTask,
+}: ViewControlsProps) => {
   return (
     <div className="fixed bottom-6 left-0 right-0 flex justify-center z-50 pointer-events-none">
       <div className="flex items-center gap-4">

@@ -1,109 +1,91 @@
-# Archon Makefile - Simple, Secure, Cross-Platform
-SHELL := /bin/bash
-.SHELLFLAGS := -ec
+PY=uv run python
+ROOT:=$(CURDIR)
+VAULT?=$(ROOT)/vault
+GOLDEN=$(ROOT)/python/golden_set_archon.json
+PRED=$(ROOT)/artifacts/predictions_golden.json
+API?=http://127.0.0.1:5050
 
-# Docker compose command - prefer newer 'docker compose' plugin over standalone 'docker-compose'
-COMPOSE ?= $(shell docker compose version >/dev/null 2>&1 && echo "docker compose" || echo "docker-compose")
-
-.PHONY: help dev dev-docker stop test test-fe test-be lint lint-fe lint-be clean install check
+.PHONY: help preflight preds unlabeled label label-auto label-csv merge-labels qa qa-seeded playwright api-start api-stop rag
 
 help:
-	@echo "Archon Development Commands"
-	@echo "==========================="
-	@echo "  make dev        - Backend in Docker, frontend local (recommended)"
-	@echo "  make dev-docker - Everything in Docker"
-	@echo "  make stop       - Stop all services"
-	@echo "  make test       - Run all tests"
-	@echo "  make test-fe    - Run frontend tests only"
-	@echo "  make test-be    - Run backend tests only"
-	@echo "  make lint       - Run all linters"
-	@echo "  make lint-fe    - Run frontend linter only"
-	@echo "  make lint-be    - Run backend linter only"
-	@echo "  make clean      - Remove containers and volumes"
-	@echo "  make install    - Install dependencies"
-	@echo "  make check      - Check environment setup"
+	@echo "Targets:"
+	@echo "  preflight      - check paths & files"
+	@echo "  preds          - resume predictions for golden"
+	@echo "  unlabeled      - list count/first 50 unlabeled notes in golden"
+	@echo "  label          - interactive CLI to apply labels"
+	@echo "  label-auto     - auto-fill labels from predictions for unlabeled notes"
+	@echo "  label-csv      - write artifacts/golden_label_todo.csv (with suggestions)"
+	@echo "  merge-labels   - merge CSV labels back into $(GOLDEN)"
+	@echo "  qa             - run QA against REAL golden"
+	@echo "  qa-seeded      - sanity QA using predictions-seeded copy"
+	@echo "  playwright     - install chromium for crawler"
+	@echo "  api-start      - start API (uvicorn) on 127.0.0.1:5050"
+	@echo "  api-stop       - stop API"
+	@echo "  rag Q='query'  - run a RAG query (default top_k=25, pass K=... to change)"
 
-# Install dependencies
-install:
-	@echo "Installing dependencies..."
-	@cd archon-ui-main && npm install
-	@cd python && uv sync --group all --group dev
-	@echo "✓ Dependencies installed"
+preflight:
+	@test -f $(GOLDEN) && echo "✓ golden: $(GOLDEN)" || echo "✗ missing golden"
+	@test -f $(PRED)   && echo "✓ predictions: $(PRED)" || echo "✗ missing predictions"
+	@if [ -d "$(VAULT)" ]; then echo "✓ vault: $(VAULT)"; else echo "✗ missing vault (set VAULT=/path/to/vault)"; fi
 
-# Check environment
-check:
-	@echo "Checking environment..."
-	@node -v >/dev/null 2>&1 || { echo "✗ Node.js not found (require Node 18+)."; exit 1; }
-	@node check-env.js
-	@echo "Checking Docker..."
-	@docker --version > /dev/null 2>&1 || { echo "✗ Docker not found"; exit 1; }
-	@$(COMPOSE) version > /dev/null 2>&1 || { echo "✗ Docker Compose not found"; exit 1; }
-	@echo "✓ Environment OK"
+preds:
+	@test -d "$(VAULT)" || { echo "✗ missing vault at $(VAULT) (override with VAULT=/path/to/vault)"; exit 1; }
+	cd $(ROOT)/python && $(PY) src/scripts/predict_for_golden.py \
+	  --vault $(VAULT) --golden $(GOLDEN) --resume --save-every 8 --concurrency 4 \
+	  --out $(PRED)
+	@echo -n "pred count: "; jq 'length' $(PRED)
 
+unlabeled:
+	cd $(ROOT)/python && $(PY) -m src.scripts.golden_tools unlabeled
 
-# Hybrid development (recommended)
-dev: check
-	@echo "Starting hybrid development..."
-	@echo "Backend: Docker | Frontend: Local with hot reload"
-	@$(COMPOSE) --profile backend up -d --build
-	@set -a; [ -f .env ] && . ./.env; set +a; \
-	echo "Backend running at http://$${HOST:-localhost}:$${ARCHON_SERVER_PORT:-8181}"
-	@echo "Starting frontend..."
-	@cd archon-ui-main && \
-	VITE_ARCHON_SERVER_PORT=$${ARCHON_SERVER_PORT:-8181} \
-	VITE_ARCHON_SERVER_HOST=$${HOST:-} \
-	npm run dev
+label:
+	cd $(ROOT)/python && $(PY) -m src.scripts.golden_tools label
 
-# Full Docker development
-dev-docker: check
-	@echo "Starting full Docker environment..."
-	@$(COMPOSE) --profile full up -d --build
-	@echo "✓ All services running"
-	@echo "Frontend: http://localhost:3737"
-	@echo "API: http://localhost:8181"
+label-auto:
+	cd $(ROOT)/python && $(PY) -m src.scripts.golden_tools label-auto
 
-# Stop all services
-stop:
-	@echo "Stopping all services..."
-	@$(COMPOSE) --profile backend --profile frontend --profile full down
-	@echo "✓ Services stopped"
+label-csv:
+	cd $(ROOT)/python && $(PY) -m src.scripts.golden_tools label-csv
+	@echo "→ Fill area/service/status columns, then: make merge-labels"
 
-# Run all tests
-test: test-fe test-be
+merge-labels:
+	cd $(ROOT)/python && $(PY) -m src.scripts.golden_tools merge-labels
 
-# Run frontend tests
-test-fe:
-	@echo "Running frontend tests..."
-	@cd archon-ui-main && npm test
+qa:
+	cd $(ROOT)/python && $(PY) src/scripts/qa_harness.py \
+	  --golden $(ROOT)/python/golden_set_archon.json --predictions $(PRED) --threshold 0.90 || true
 
-# Run backend tests
-test-be:
-	@echo "Running backend tests..."
-	@cd python && uv run pytest
+qa-seeded:
+	cd $(ROOT)/python && $(PY) -m src.scripts.golden_tools seed-golden
+	cd $(ROOT)/python && $(PY) src/scripts/qa_harness.py \
+	  --golden $(ROOT)/python/golden_seeded.json --predictions $(PRED) --threshold 0.90 || true
 
-# Run all linters
-lint: lint-fe lint-be
+playwright:
+	cd $(ROOT)/python && $(PY) -m playwright install chromium || true
 
-# Run frontend linter
-lint-fe:
-	@echo "Linting frontend..."
-	@cd archon-ui-main && npm run lint
-
-# Run backend linter
-lint-be:
-	@echo "Linting backend..."
-	@cd python && uv run ruff check --fix
-
-# Clean everything (with confirmation)
-clean:
-	@echo "⚠️  This will remove all containers and volumes"
-	@read -p "Are you sure? (y/N) " -n 1 -r; \
-	echo; \
-	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
-		$(COMPOSE) down -v --remove-orphans; \
-		echo "✓ Cleaned"; \
-	else \
-		echo "Cancelled"; \
+api-start:
+	@if ! pgrep -f "uvicorn .*src.server.main:app" >/dev/null; then \
+		cd $(ROOT)/python && nohup uv run uvicorn src.server.main:app --host 127.0.0.1 --port 5050 > ../artifacts/uvicorn_5050.log 2>&1 & \
+		echo "API starting on 127.0.0.1:5050 (log: artifacts/uvicorn_5050.log)"; \
 	fi
 
-.DEFAULT_GOAL := help
+api-stop:
+	-pkill -f "uvicorn .*src.server.main:app" || true
+	@echo "API stopped (if it was running)."
+
+# Usage: make rag Q="your query" K=25
+Q ?= Obsidian vault sync
+K ?= 25
+rag: api-start
+	@SESSION=$$(curl -fsS -X POST $(API)/api/agent-chat/sessions \
+	  -H 'Content-Type: application/json' -d '{"agent_type":"rag"}' | jq -r .session_id); \
+	echo "SESSION=$$SESSION"; \
+	curl -fsS -X POST $(API)/api/rag/query \
+	  -H 'Content-Type: application/json' -H "X-Session-Id: $$SESSION" \
+	  -d "$$(jq -nc --arg q '$(Q)' --argjson k $(K) '{query:$$q, top_k:$$k}')" | jq .
+
+moc-plan:
+	@MODE=plan VAULT_DIR="$(VAULT_DIR)" bash scripts/obsidian_moc_ops.sh
+
+moc-apply:
+	@MODE=apply VAULT_DIR="$(VAULT_DIR)" bash scripts/obsidian_moc_ops.sh

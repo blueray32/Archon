@@ -35,13 +35,13 @@ def mock_context():
 
 @pytest.mark.asyncio
 async def test_create_task_with_sources(mock_mcp, mock_context):
-    """Test creating a task using manage_task."""
+    """Test creating a task with sources and code examples."""
     register_task_tools(mock_mcp)
 
-    # Get the manage_task function
-    manage_task = mock_mcp._tools.get("manage_task")
+    # Get the create_task function
+    create_task = mock_mcp._tools.get("create_task")
 
-    assert manage_task is not None, "manage_task tool not registered"
+    assert create_task is not None, "create_task tool not registered"
 
     # Mock HTTP response
     mock_response = MagicMock()
@@ -56,35 +56,36 @@ async def test_create_task_with_sources(mock_mcp, mock_context):
         mock_async_client.post.return_value = mock_response
         mock_client.return_value.__aenter__.return_value = mock_async_client
 
-        result = await manage_task(
+        result = await create_task(
             mock_context,
-            action="create",
             project_id="project-123",
             title="Implement OAuth2",
             description="Add OAuth2 authentication",
             assignee="AI IDE Agent",
+            sources=[{"url": "https://oauth.net", "type": "doc", "relevance": "OAuth spec"}],
+            code_examples=[{"file": "auth.py", "function": "authenticate", "purpose": "Example"}],
         )
 
         result_data = json.loads(result)
         assert result_data["success"] is True
         assert result_data["task_id"] == "task-123"
 
-        # Verify the task was created properly
+        # Verify sources and examples were sent
         call_args = mock_async_client.post.call_args
         sent_data = call_args[1]["json"]
-        assert sent_data["title"] == "Implement OAuth2"
-        assert sent_data["assignee"] == "AI IDE Agent"
+        assert len(sent_data["sources"]) == 1
+        assert len(sent_data["code_examples"]) == 1
 
 
 @pytest.mark.asyncio
-async def test_find_tasks_with_project_filter(mock_mcp, mock_context):
+async def test_list_tasks_with_project_filter(mock_mcp, mock_context):
     """Test listing tasks with project-specific endpoint."""
     register_task_tools(mock_mcp)
 
-    # Get the find_tasks function
-    find_tasks = mock_mcp._tools.get("find_tasks")
+    # Get the list_tasks function
+    list_tasks = mock_mcp._tools.get("list_tasks")
 
-    assert find_tasks is not None, "find_tasks tool not registered"
+    assert list_tasks is not None, "list_tasks tool not registered"
 
     # Mock HTTP response
     mock_response = MagicMock()
@@ -101,7 +102,7 @@ async def test_find_tasks_with_project_filter(mock_mcp, mock_context):
         mock_async_client.get.return_value = mock_response
         mock_client.return_value.__aenter__.return_value = mock_async_client
 
-        result = await find_tasks(mock_context, filter_by="project", filter_value="project-123")
+        result = await list_tasks(mock_context, filter_by="project", filter_value="project-123")
 
         result_data = json.loads(result)
         assert result_data["success"] is True
@@ -113,11 +114,11 @@ async def test_find_tasks_with_project_filter(mock_mcp, mock_context):
 
 
 @pytest.mark.asyncio
-async def test_find_tasks_with_status_filter(mock_mcp, mock_context):
+async def test_list_tasks_with_status_filter(mock_mcp, mock_context):
     """Test listing tasks with status filter uses generic endpoint."""
     register_task_tools(mock_mcp)
 
-    find_tasks = mock_mcp._tools.get("find_tasks")
+    list_tasks = mock_mcp._tools.get("list_tasks")
 
     # Mock HTTP response
     mock_response = MagicMock()
@@ -129,7 +130,7 @@ async def test_find_tasks_with_status_filter(mock_mcp, mock_context):
         mock_async_client.get.return_value = mock_response
         mock_client.return_value.__aenter__.return_value = mock_async_client
 
-        result = await find_tasks(
+        result = await list_tasks(
             mock_context, filter_by="status", filter_value="todo", project_id="project-123"
         )
 
@@ -148,10 +149,10 @@ async def test_update_task_status(mock_mcp, mock_context):
     """Test updating task status."""
     register_task_tools(mock_mcp)
 
-    # Get the manage_task function
-    manage_task = mock_mcp._tools.get("manage_task")
+    # Get the update_task function
+    update_task = mock_mcp._tools.get("update_task")
 
-    assert manage_task is not None, "manage_task tool not registered"
+    assert update_task is not None, "update_task tool not registered"
 
     # Mock HTTP response
     mock_response = MagicMock()
@@ -166,8 +167,8 @@ async def test_update_task_status(mock_mcp, mock_context):
         mock_async_client.put.return_value = mock_response
         mock_client.return_value.__aenter__.return_value = mock_async_client
 
-        result = await manage_task(
-            mock_context, action="update", task_id="task-123", status="doing", assignee="User"
+        result = await update_task(
+            mock_context, task_id="task-123", status="doing", assignee="User"
         )
 
         result_data = json.loads(result)
@@ -186,13 +187,13 @@ async def test_update_task_no_fields(mock_mcp, mock_context):
     """Test updating task with no fields returns validation error."""
     register_task_tools(mock_mcp)
 
-    # Get the manage_task function
-    manage_task = mock_mcp._tools.get("manage_task")
+    # Get the update_task function
+    update_task = mock_mcp._tools.get("update_task")
 
-    assert manage_task is not None, "manage_task tool not registered"
+    assert update_task is not None, "update_task tool not registered"
 
-    # Call manage_task with update action but no fields to update
-    result = await manage_task(mock_context, action="update", task_id="task-123")
+    # Call update_task with no optional fields
+    result = await update_task(mock_context, task_id="task-123")
 
     result_data = json.loads(result)
     assert result_data["success"] is False
@@ -207,10 +208,10 @@ async def test_delete_task_already_archived(mock_mcp, mock_context):
     """Test deleting an already archived task."""
     register_task_tools(mock_mcp)
 
-    # Get the manage_task function
-    manage_task = mock_mcp._tools.get("manage_task")
+    # Get the delete_task function
+    delete_task = mock_mcp._tools.get("delete_task")
 
-    assert manage_task is not None, "manage_task tool not registered"
+    assert delete_task is not None, "delete_task tool not registered"
 
     # Mock 400 response for already archived
     mock_response = MagicMock()
@@ -222,7 +223,7 @@ async def test_delete_task_already_archived(mock_mcp, mock_context):
         mock_async_client.delete.return_value = mock_response
         mock_client.return_value.__aenter__.return_value = mock_async_client
 
-        result = await manage_task(mock_context, action="delete", task_id="task-123")
+        result = await delete_task(mock_context, task_id="task-123")
 
         result_data = json.loads(result)
         assert result_data["success"] is False
@@ -231,5 +232,5 @@ async def test_delete_task_already_archived(mock_mcp, mock_context):
         assert isinstance(result_data["error"], dict), (
             "Error should be structured format, not string"
         )
-        assert result_data["error"]["type"] == "http_error"
-        assert "http 400" in result_data["error"]["message"].lower()
+        assert result_data["error"]["type"] == "already_archived"
+        assert "already archived" in result_data["error"]["message"].lower()

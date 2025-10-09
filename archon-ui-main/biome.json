@@ -1,13 +1,13 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.2.2/schema.json",
   "files": {
-    "includes": ["src/features/**", "src/components/layout/**"]
+    "includes": ["src/features/**"]
   },
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
     "indentWidth": 2,
-    "lineWidth": 120,
+    "lineWidth": 80,
     "bracketSpacing": true,
     "attributePosition": "auto"
   },

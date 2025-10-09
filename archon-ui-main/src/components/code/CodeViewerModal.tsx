@@ -6,7 +6,6 @@ import {
   Copy,
   Check,
   Code as CodeIcon,
-  FileText,
   TagIcon,
   Info,
   Search,
@@ -14,23 +13,9 @@ import {
   FileCode,
 } from 'lucide-react'
 import Prism from 'prismjs'
-import 'prismjs/components/prism-javascript'
-import 'prismjs/components/prism-jsx'
-import 'prismjs/components/prism-typescript'
-import 'prismjs/components/prism-tsx'
-import 'prismjs/components/prism-css'
-import 'prismjs/components/prism-python'
-import 'prismjs/components/prism-java'
-import 'prismjs/components/prism-json'
-import 'prismjs/components/prism-markdown'
-import 'prismjs/components/prism-yaml'
-import 'prismjs/components/prism-bash'
-import 'prismjs/components/prism-sql'
-import 'prismjs/components/prism-graphql'
 import 'prismjs/themes/prism-tomorrow.css'
 import { Button } from '../ui/Button'
 import { Badge } from '../ui/Badge'
-import { copyToClipboard } from '../../features/shared/utils/clipboard'
 
 export interface CodeExample {
   id: string
@@ -91,10 +76,42 @@ export const CodeViewerModal: React.FC<CodeViewerModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [onClose, activeExampleIndex, filteredExamples.length])
 
-  // Apply syntax highlighting
+  // Dynamically load Prism language definitions based on active example
   useEffect(() => {
-    if (activeExample) {
-      Prism.highlightAll()
+    let cancelled = false
+    const lang = (activeExample?.language || '').toLowerCase()
+    const loaders: Record<string, () => Promise<unknown>> = {
+      javascript: () => import('prismjs/components/prism-javascript'),
+      js: () => import('prismjs/components/prism-javascript'),
+      jsx: () => import('prismjs/components/prism-jsx'),
+      typescript: () => import('prismjs/components/prism-typescript'),
+      ts: () => import('prismjs/components/prism-typescript'),
+      tsx: () => import('prismjs/components/prism-tsx'),
+      css: () => import('prismjs/components/prism-css'),
+      python: () => import('prismjs/components/prism-python'),
+      java: () => import('prismjs/components/prism-java'),
+      json: () => import('prismjs/components/prism-json'),
+      markdown: () => import('prismjs/components/prism-markdown'),
+      md: () => import('prismjs/components/prism-markdown'),
+      yaml: () => import('prismjs/components/prism-yaml'),
+      yml: () => import('prismjs/components/prism-yaml'),
+      bash: () => import('prismjs/components/prism-bash'),
+      sh: () => import('prismjs/components/prism-bash'),
+      sql: () => import('prismjs/components/prism-sql'),
+      graphql: () => import('prismjs/components/prism-graphql'),
+      gql: () => import('prismjs/components/prism-graphql'),
+    }
+    const ensureHighlight = async () => {
+      try {
+        if (loaders[lang]) {
+          await loaders[lang]()
+        }
+      } catch { /* ignore dynamic import failure */ void 0; }
+      if (!cancelled) Prism.highlightAll()
+    }
+    ensureHighlight()
+    return () => {
+      cancelled = true
     }
   }, [activeExample, activeExampleIndex])
 
@@ -103,15 +120,11 @@ export const CodeViewerModal: React.FC<CodeViewerModalProps> = ({
     setActiveExampleIndex(0)
   }, [searchQuery])
 
-  const handleCopyCode = async () => {
+  const handleCopyCode = () => {
     if (activeExample) {
-      const result = await copyToClipboard(activeExample.code)
-      if (result.success) {
-        setCopied(true)
-        setTimeout(() => setCopied(false), 2000)
-      } else {
-        console.error('Failed to copy to clipboard:', result.error)
-      }
+      navigator.clipboard.writeText(activeExample.code)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
     }
   }
 

@@ -1,4 +1,5 @@
 import { credentialsService } from './credentialsService';
+import { logger } from '../utils/logger';
 
 interface HealthCheckCallback {
   onDisconnected: () => void;
@@ -34,20 +35,24 @@ class ServerHealthService {
       // Use the proxied /api/health endpoint which works in both dev and Docker
       const response = await fetch('/api/health', {
         method: 'GET',
-        signal: AbortSignal.timeout(10000) // 10 second timeout (increased for heavy operations)
+        signal: AbortSignal.timeout(30000) // 30 second timeout for heavy operations (Docling, etc)
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         // Accept healthy, online, or initializing (server is starting up)
         const isHealthy = data.status === 'healthy' || data.status === 'online' || data.status === 'initializing';
         return isHealthy;
       }
-      console.error('🏥 [Health] Response not OK:', response.status);
+      logger.warn('🏥 [Health] Response not OK:', response.status);
       return false;
     } catch (error) {
-      console.error('🏥 [Health] Health check failed:', error);
-      // Health check failed
+      // Only log timeout errors as warnings, not errors (server might be busy)
+      if (error instanceof Error && error.name === 'TimeoutError') {
+        logger.warn('🏥 [Health] Health check timed out (server may be processing heavy operations)');
+      } else {
+        logger.error('🏥 [Health] Health check failed:', error);
+      }
       return false;
     }
   }
@@ -55,7 +60,7 @@ class ServerHealthService {
   startMonitoring(callbacks: HealthCheckCallback) {
     // Guard: Prevent multiple intervals by clearing any existing one
     if (this.healthCheckInterval) {
-      console.warn('🏥 [Health] Health monitoring already active, stopping previous monitor');
+      logger.warn('🏥 [Health] Health monitoring already active, stopping previous monitor');
       this.stopMonitoring();
     }
 
@@ -128,12 +133,12 @@ class ServerHealthService {
    * Used when services detect immediate disconnection (e.g., polling failures, fetch errors)
    */
   handleImmediateDisconnect() {
-    console.log('🏥 [Health] Immediate disconnect triggered');
+    logger.warn('🏥 [Health] Immediate disconnect triggered');
     this.isConnected = false;
     this.missedChecks = this.maxMissedChecks; // Set to max to ensure disconnect screen shows
     
     if (this.disconnectScreenEnabled && this.callbacks) {
-      console.log('🏥 [Health] Triggering disconnect screen immediately');
+      logger.warn('🏥 [Health] Triggering disconnect screen immediately');
       this.callbacks.onDisconnected();
     }
   }
@@ -142,7 +147,7 @@ class ServerHealthService {
    * Handle when connection reconnects - reset state but let health check confirm
    */
   handleConnectionReconnect() {
-    console.log('🏥 [Health] Connection reconnected, resetting missed checks');
+    logger.info('🏥 [Health] Connection reconnected, resetting missed checks');
     this.missedChecks = 0;
     // Don't immediately mark as connected - let health check confirm server is actually healthy
   }

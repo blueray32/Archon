@@ -50,6 +50,9 @@ server = [
     "pdfplumber>=0.11.6",
     "python-docx>=1.1.2",
     "markdown>=3.8",
+    "docling>=2.21.0",
+    "pyyaml>=6.0.0",
+    "watchdog>=3.0.0",
     # Security and utilities
     "python-jose[cryptography]>=3.3.0",
     "cryptography>=41.0.0",
@@ -94,6 +97,10 @@ agents = [
     "httpx>=0.24.0",
     "python-dotenv>=1.0.0",
     "structlog>=23.1.0",
+    # For Researcher agent
+    "RestrictedPython>=6.2",
+    "openai>=1.0.0",
+    "supabase>=2.15.1",
 ]
 
 # All dependencies for running unit tests locally
@@ -112,6 +119,7 @@ all = [
     "pdfplumber>=0.11.6",
     "python-docx>=1.1.2",
     "markdown>=3.8",
+    "docling>=2.21.0",
     "python-jose[cryptography]>=3.3.0",
     "cryptography>=41.0.0",
     "slowapi>=0.1.9",
@@ -122,6 +130,7 @@ all = [
     # Agents specific
     "pydantic-ai>=0.0.13",
     "structlog>=23.1.0",
+    "RestrictedPython>=6.2",
     # Shared utilities
     "httpx>=0.24.0",
     "pydantic>=2.0.0",

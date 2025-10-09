@@ -2,9 +2,16 @@ import { Copy, ExternalLink } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
 import { useToast } from "../../ui/hooks";
-import { Button, cn, glassmorphism, Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/primitives";
+import {
+  Button,
+  cn,
+  glassmorphism,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "../../ui/primitives";
 import type { McpServerConfig, McpServerStatus, SupportedIDE } from "../types";
-import { copyToClipboard } from "../../shared/utils/clipboard";
 
 interface McpConfigSectionProps {
   config?: McpServerConfig;
@@ -23,7 +30,10 @@ const ideConfigurations: Record<
 > = {
   claudecode: {
     title: "Claude Code Configuration",
-    steps: ["Open a terminal and run the following command:", "The connection will be established automatically"],
+    steps: [
+      "Open a terminal and run the following command:",
+      "The connection will be established automatically",
+    ],
     configGenerator: (config) =>
       JSON.stringify(
         {
@@ -114,7 +124,11 @@ const ideConfigurations: Record<
           mcpServers: {
             archon: {
               command: "npx",
-              args: ["mcp-remote", `http://${config.host}:${config.port}/mcp`, "--allow-http"],
+              args: [
+                "mcp-remote",
+                `http://${config.host}:${config.port}/mcp`,
+                "--allow-http",
+              ],
             },
           },
         },
@@ -136,7 +150,11 @@ const ideConfigurations: Record<
           mcpServers: {
             archon: {
               command: "npx",
-              args: ["mcp-remote", `http://${config.host}:${config.port}/mcp`, "--allow-http"],
+              args: [
+                "mcp-remote",
+                `http://${config.host}:${config.port}/mcp`,
+                "--allow-http",
+              ],
             },
           },
         },
@@ -167,7 +185,11 @@ const ideConfigurations: Record<
   },
 };
 
-export const McpConfigSection: React.FC<McpConfigSectionProps> = ({ config, status, className }) => {
+export const McpConfigSection: React.FC<McpConfigSectionProps> = ({
+  config,
+  status,
+  className,
+}) => {
   const [selectedIDE, setSelectedIDE] = useState<SupportedIDE>("claudecode");
   const { showToast } = useToast();
 
@@ -181,21 +203,17 @@ export const McpConfigSection: React.FC<McpConfigSectionProps> = ({ config, stat
           className,
         )}
       >
-        <p className="text-zinc-400">Start the MCP server to see configuration options</p>
+        <p className="text-zinc-400">
+          Start the MCP server to see configuration options
+        </p>
       </div>
     );
   }
 
-  const handleCopyConfig = async () => {
+  const handleCopyConfig = () => {
     const configText = ideConfigurations[selectedIDE].configGenerator(config);
-    const result = await copyToClipboard(configText);
-    
-    if (result.success) {
-      showToast("Configuration copied to clipboard", "success");
-    } else {
-      console.error("Failed to copy config:", result.error);
-      showToast("Failed to copy configuration", "error");
-    }
+    navigator.clipboard.writeText(configText);
+    showToast("Configuration copied to clipboard", "success");
   };
 
   const handleCursorOneClick = () => {
@@ -209,16 +227,10 @@ export const McpConfigSection: React.FC<McpConfigSectionProps> = ({ config, stat
     showToast("Opening Cursor with Archon MCP configuration...", "info");
   };
 
-  const handleClaudeCodeCommand = async () => {
+  const handleClaudeCodeCommand = () => {
     const command = `claude mcp add --transport http archon http://${config.host}:${config.port}/mcp`;
-    const result = await copyToClipboard(command);
-    
-    if (result.success) {
-      showToast("Command copied to clipboard", "success");
-    } else {
-      console.error("Failed to copy command:", result.error);
-      showToast("Failed to copy command", "error");
-    }
+    navigator.clipboard.writeText(command);
+    showToast("Command copied to clipboard", "success");
   };
 
   const selectedConfig = ideConfigurations[selectedIDE];
@@ -227,10 +239,17 @@ export const McpConfigSection: React.FC<McpConfigSectionProps> = ({ config, stat
   return (
     <div className={cn("space-y-6", className)}>
       {/* Universal MCP Note */}
-      <div className={cn("p-3 rounded-lg", glassmorphism.background.blue, glassmorphism.border.blue)}>
+      <div
+        className={cn(
+          "p-3 rounded-lg",
+          glassmorphism.background.blue,
+          glassmorphism.border.blue,
+        )}
+      >
         <p className="text-sm text-blue-700 dark:text-blue-300">
-          <span className="font-semibold">Note:</span> Archon works with any application that supports MCP. Below are
-          instructions for common tools, but these steps can be adapted for any MCP-compatible client.
+          <span className="font-semibold">Note:</span> Archon works with any
+          application that supports MCP. Below are instructions for common
+          tools, but these steps can be adapted for any MCP-compatible client.
         </p>
       </div>
 
@@ -253,7 +272,9 @@ export const McpConfigSection: React.FC<McpConfigSectionProps> = ({ config, stat
         <TabsContent value={selectedIDE} className="mt-6 space-y-4">
           {/* Configuration Title and Steps */}
           <div>
-            <h4 className="text-lg font-semibold text-gray-800 dark:text-white mb-3">{selectedConfig.title}</h4>
+            <h4 className="text-lg font-semibold text-gray-800 dark:text-white mb-3">
+              {selectedConfig.title}
+            </h4>
             <ol className="list-decimal list-inside space-y-2 text-sm text-gray-600 dark:text-zinc-400">
               {selectedConfig.steps.map((step) => (
                 <li key={step}>{step}</li>
@@ -271,9 +292,14 @@ export const McpConfigSection: React.FC<McpConfigSectionProps> = ({ config, stat
               )}
             >
               <code className="text-sm font-mono text-cyan-600 dark:text-cyan-400">
-                claude mcp add --transport http archon http://{config.host}:{config.port}/mcp
+                claude mcp add --transport http archon http://{config.host}:
+                {config.port}/mcp
               </code>
-              <Button variant="outline" size="sm" onClick={handleClaudeCodeCommand}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleClaudeCodeCommand}
+              >
                 <Copy className="w-3 h-3 mr-1" />
                 Copy
               </Button>
@@ -281,9 +307,17 @@ export const McpConfigSection: React.FC<McpConfigSectionProps> = ({ config, stat
           )}
 
           {/* Configuration Display */}
-          <div className={cn("relative rounded-lg p-4", glassmorphism.background.subtle, glassmorphism.border.default)}>
+          <div
+            className={cn(
+              "relative rounded-lg p-4",
+              glassmorphism.background.subtle,
+              glassmorphism.border.default,
+            )}
+          >
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Configuration</span>
+              <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                Configuration
+              </span>
               <Button variant="outline" size="sm" onClick={handleCopyConfig}>
                 <Copy className="w-3 h-3 mr-1" />
                 Copy
@@ -297,11 +331,17 @@ export const McpConfigSection: React.FC<McpConfigSectionProps> = ({ config, stat
           {/* One-Click Install for Cursor */}
           {selectedIDE === "cursor" && selectedConfig.supportsOneClick && (
             <div className="flex items-center gap-3">
-              <Button variant="cyan" onClick={handleCursorOneClick} className="shadow-lg">
+              <Button
+                variant="cyan"
+                onClick={handleCursorOneClick}
+                className="shadow-lg"
+              >
                 <ExternalLink className="w-4 h-4 mr-2" />
                 One-Click Install for Cursor
               </Button>
-              <span className="text-xs text-zinc-500">Opens Cursor with configuration</span>
+              <span className="text-xs text-zinc-500">
+                Opens Cursor with configuration
+              </span>
             </div>
           )}
         </TabsContent>

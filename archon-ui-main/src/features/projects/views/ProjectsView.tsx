@@ -1,17 +1,51 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useStaggeredEntrance } from "../../../hooks/useStaggeredEntrance";
-import { DeleteConfirmModal } from "../../ui/components/DeleteConfirmModal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/primitives";
-import { NewProjectModal } from "../components/NewProjectModal";
-import { ProjectHeader } from "../components/ProjectHeader";
-import { ProjectList } from "../components/ProjectList";
-import { DocsTab } from "../documents/DocsTab";
-import { projectKeys, useDeleteProject, useProjects, useUpdateProject } from "../hooks/useProjectQueries";
-import { useTaskCounts } from "../tasks/hooks";
-import { TasksTab } from "../tasks/TasksTab";
+
+const DeleteConfirmModal = lazy(() =>
+  import("../../ui/components/DeleteConfirmModal").then((m) => ({
+    default: m.DeleteConfirmModal,
+  })),
+);
+const NewProjectModal = lazy(() =>
+  import("../components/NewProjectModal").then((m) => ({
+    default: m.NewProjectModal,
+  })),
+);
+const ProjectHeader = lazy(() =>
+  import("../components/ProjectHeader").then((m) => ({
+    default: m.ProjectHeader,
+  })),
+);
+const ProjectList = lazy(() =>
+  import("../components/ProjectList").then((m) => ({ default: m.ProjectList })),
+);
+const DocsTab = lazy(() =>
+  import("../documents/DocsTab").then((m) => ({ default: m.DocsTab })),
+);
+
+import {
+  projectKeys,
+  useDeleteProject,
+  useProjects,
+  useTaskCounts,
+  useUpdateProject,
+} from "../hooks/useProjectQueries";
+
+const TasksTab = lazy(() =>
+  import("../tasks/TasksTab").then((m) => ({ default: m.TasksTab })),
+);
+
 import type { Project } from "../types";
 
 interface ProjectsViewProps {
@@ -36,7 +70,10 @@ const itemVariants = {
   },
 };
 
-export function ProjectsView({ className = "", "data-id": dataId }: ProjectsViewProps) {
+export function ProjectsView({
+  className = "",
+  "data-id": dataId,
+}: ProjectsViewProps) {
   const { projectId } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -52,7 +89,11 @@ export function ProjectsView({ className = "", "data-id": dataId }: ProjectsView
   } | null>(null);
 
   // React Query hooks
-  const { data: projects = [], isLoading: isLoadingProjects, error: projectsError } = useProjects();
+  const {
+    data: projects = [],
+    isLoading: isLoadingProjects,
+    error: projectsError,
+  } = useProjects();
   const { data: taskCounts = {}, refetch: refetchTaskCounts } = useTaskCounts();
 
   // Mutations
@@ -94,7 +135,10 @@ export function ProjectsView({ className = "", "data-id": dataId }: ProjectsView
     }
 
     // Otherwise, select the first (leftmost) project
-    if (!selectedProject || !sortedProjects.find((p) => p.id === selectedProject.id)) {
+    if (
+      !selectedProject ||
+      !sortedProjects.find((p) => p.id === selectedProject.id)
+    ) {
       const defaultProject = sortedProjects[0];
       setSelectedProject(defaultProject);
       navigate(`/projects/${defaultProject.id}`, { replace: true });
@@ -121,7 +165,11 @@ export function ProjectsView({ className = "", "data-id": dataId }: ProjectsView
   };
 
   // Handle delete project
-  const handleDeleteProject = (e: React.MouseEvent, projectId: string, title: string) => {
+  const handleDeleteProject = (
+    e: React.MouseEvent,
+    projectId: string,
+    title: string,
+  ) => {
     e.stopPropagation();
     setProjectToDelete({ id: projectId, title });
     setShowDeleteConfirm(true);
@@ -138,7 +186,9 @@ export function ProjectsView({ className = "", "data-id": dataId }: ProjectsView
 
         // If we deleted the selected project, select another one
         if (selectedProject?.id === projectToDelete.id) {
-          const remainingProjects = (projects as Project[]).filter((p) => p.id !== projectToDelete.id);
+          const remainingProjects = (projects as Project[]).filter(
+            (p) => p.id !== projectToDelete.id,
+          );
           if (remainingProjects.length > 0) {
             const nextProject = remainingProjects[0];
             setSelectedProject(nextProject);
@@ -168,29 +218,52 @@ export function ProjectsView({ className = "", "data-id": dataId }: ProjectsView
       className={`max-w-full mx-auto ${className}`}
       data-id={dataId}
     >
-      <ProjectHeader onNewProject={() => setIsNewProjectModalOpen(true)} />
+      <Suspense
+        fallback={<div className="p-2 text-sm text-zinc-500">Loading…</div>}
+      >
+        <ProjectHeader onNewProject={() => setIsNewProjectModalOpen(true)} />
+      </Suspense>
 
-      <ProjectList
-        projects={sortedProjects}
-        selectedProject={selectedProject}
-        taskCounts={taskCounts}
-        isLoading={isLoadingProjects}
-        error={projectsError as Error | null}
-        onProjectSelect={handleProjectSelect}
-        onPinProject={handlePinProject}
-        onDeleteProject={handleDeleteProject}
-        onRetry={() => queryClient.invalidateQueries({ queryKey: projectKeys.lists() })}
-      />
+      <Suspense
+        fallback={<div className="p-2 text-sm text-zinc-500">Loading…</div>}
+      >
+        <ProjectList
+          projects={sortedProjects}
+          selectedProject={selectedProject}
+          taskCounts={taskCounts}
+          isLoading={isLoadingProjects}
+          error={projectsError as Error | null}
+          onProjectSelect={handleProjectSelect}
+          onPinProject={handlePinProject}
+          onDeleteProject={handleDeleteProject}
+          onRetry={() =>
+            queryClient.invalidateQueries({ queryKey: projectKeys.lists() })
+          }
+        />
+      </Suspense>
 
       {/* Project Details Section */}
       {selectedProject && (
         <motion.div variants={itemVariants} className="relative">
-          <Tabs defaultValue="tasks" value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <Tabs
+            defaultValue="tasks"
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="w-full"
+          >
             <TabsList>
-              <TabsTrigger value="docs" className="py-3 font-mono transition-all duration-300" color="blue">
+              <TabsTrigger
+                value="docs"
+                className="py-3 font-mono transition-all duration-300"
+                color="blue"
+              >
                 Docs
               </TabsTrigger>
-              <TabsTrigger value="tasks" className="py-3 font-mono transition-all duration-300" color="orange">
+              <TabsTrigger
+                value="tasks"
+                className="py-3 font-mono transition-all duration-300"
+                color="orange"
+              >
                 Tasks
               </TabsTrigger>
             </TabsList>
@@ -199,12 +272,28 @@ export function ProjectsView({ className = "", "data-id": dataId }: ProjectsView
             <div>
               {activeTab === "docs" && (
                 <TabsContent value="docs" className="mt-0">
-                  <DocsTab project={selectedProject} />
+                  <Suspense
+                    fallback={
+                      <div className="p-4 text-sm text-zinc-500">
+                        Loading docs…
+                      </div>
+                    }
+                  >
+                    <DocsTab project={selectedProject} />
+                  </Suspense>
                 </TabsContent>
               )}
               {activeTab === "tasks" && (
                 <TabsContent value="tasks" className="mt-0">
-                  <TasksTab projectId={selectedProject.id} />
+                  <Suspense
+                    fallback={
+                      <div className="p-4 text-sm text-zinc-500">
+                        Loading tasks…
+                      </div>
+                    }
+                  >
+                    <TasksTab projectId={selectedProject.id} />
+                  </Suspense>
                 </TabsContent>
               )}
             </div>
@@ -213,21 +302,25 @@ export function ProjectsView({ className = "", "data-id": dataId }: ProjectsView
       )}
 
       {/* Modals */}
-      <NewProjectModal
-        open={isNewProjectModalOpen}
-        onOpenChange={setIsNewProjectModalOpen}
-        onSuccess={() => refetchTaskCounts()}
-      />
+      <Suspense fallback={null}>
+        <NewProjectModal
+          open={isNewProjectModalOpen}
+          onOpenChange={setIsNewProjectModalOpen}
+          onSuccess={() => refetchTaskCounts()}
+        />
+      </Suspense>
 
       {showDeleteConfirm && projectToDelete && (
-        <DeleteConfirmModal
-          itemName={projectToDelete.title}
-          onConfirm={confirmDeleteProject}
-          onCancel={cancelDeleteProject}
-          type="project"
-          open={showDeleteConfirm}
-          onOpenChange={setShowDeleteConfirm}
-        />
+        <Suspense fallback={null}>
+          <DeleteConfirmModal
+            itemName={projectToDelete.title}
+            onConfirm={confirmDeleteProject}
+            onCancel={cancelDeleteProject}
+            type="project"
+            open={showDeleteConfirm}
+            onOpenChange={setShowDeleteConfirm}
+          />
+        </Suspense>
       )}
     </motion.div>
   );

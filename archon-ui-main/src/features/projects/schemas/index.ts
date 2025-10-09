@@ -1,12 +1,25 @@
 import { z } from "zod";
 
 // Base validation schemas
-export const ProjectColorSchema = z.enum(["cyan", "purple", "pink", "blue", "orange", "green"]);
+export const ProjectColorSchema = z.enum([
+  "cyan",
+  "purple",
+  "pink",
+  "blue",
+  "orange",
+  "green",
+]);
 
 // Project schemas
 export const CreateProjectSchema = z.object({
-  title: z.string().min(1, "Project title is required").max(255, "Project title must be less than 255 characters"),
-  description: z.string().max(1000, "Description must be less than 1000 characters").optional(),
+  title: z
+    .string()
+    .min(1, "Project title is required")
+    .max(255, "Project title must be less than 255 characters"),
+  description: z
+    .string()
+    .max(1000, "Description must be less than 1000 characters")
+    .optional(),
   icon: z.string().optional(),
   color: ProjectColorSchema.optional(),
   github_repo: z.string().url("GitHub repo must be a valid URL").optional(),

@@ -1,6 +1,6 @@
 /// <reference types="vitest" />
 import path from "path";
-import { defineConfig, loadEnv } from "vite";
+import { defineConfig, loadEnv, splitVendorChunkPlugin } from "vite";
 import react from "@vitejs/plugin-react";
 import { exec } from 'child_process';
 import { readFile } from 'fs/promises';
@@ -18,14 +18,14 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
   const isDocker = process.env.DOCKER_ENV === 'true' || existsSync('/.dockerenv');
   const internalHost = 'archon-server';  // Docker service name for internal communication
   const externalHost = process.env.HOST || 'localhost';  // Host for external access
-  // CRITICAL: For proxy target, always use internal host in Docker
-  const proxyHost = isDocker ? internalHost : externalHost;
   const host = isDocker ? internalHost : externalHost;
   const port = process.env.ARCHON_SERVER_PORT || env.ARCHON_SERVER_PORT || '8181';
   
   return {
     plugins: [
       react(),
+      // Split large vendor chunks automatically to reduce initial bundle size
+      splitVendorChunkPlugin(),
       // Custom plugin to add test endpoint
       {
         name: 'test-runner',
@@ -294,38 +294,55 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
       })(),
       proxy: {
         '/api': {
-          target: `http://${proxyHost}:${port}`,
+          target: `http://${host}:${port}`,
           changeOrigin: true,
           secure: false,
           configure: (proxy, options) => {
             proxy.on('error', (err, req, res) => {
               console.log('🚨 [VITE PROXY ERROR]:', err.message);
-              console.log('🚨 [VITE PROXY ERROR] Target:', `http://${proxyHost}:${port}`);
+              console.log('🚨 [VITE PROXY ERROR] Target:', `http://${host}:${port}`);
               console.log('🚨 [VITE PROXY ERROR] Request:', req.url);
             });
             proxy.on('proxyReq', (proxyReq, req, res) => {
-              console.log('🔄 [VITE PROXY] Forwarding:', req.method, req.url, 'to', `http://${proxyHost}:${port}${req.url}`);
+              console.log('🔄 [VITE PROXY] Forwarding:', req.method, req.url, 'to', `http://${host}:${port}${req.url}`);
             });
           }
-        },
-        // Health check endpoint proxy
-        '/health': {
-          target: `http://${host}:${port}`,
-          changeOrigin: true,
-          secure: false
-        },
-        // Socket.IO specific proxy configuration
-        '/socket.io': {
-          target: `http://${host}:${port}`,
-          changeOrigin: true,
-          ws: true
         }
       },
     },
+    build: {
+      // Keep warning threshold, but route-based lazy loading + vendor split
+      // should reduce the main chunk below this in production builds.
+      chunkSizeWarningLimit: 700,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+                return 'react-vendor';
+              }
+              if (id.includes('@tanstack')) {
+                return 'tanstack';
+              }
+              if (id.includes('framer-motion')) {
+                return 'framer-motion';
+              }
+              if (id.includes('lucide-react')) {
+                return 'icons';
+              }
+            }
+            return undefined;
+          },
+        },
+      },
+      // Drop console/debugger in production builds for smaller bundles
+      minify: 'esbuild',
+      esbuild: {
+        drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : [],
+      },
+    },
     define: {
-      // CRITICAL: Don't inject Docker internal hostname into the build
-      // The browser can't resolve 'archon-server'
-      'import.meta.env.VITE_HOST': JSON.stringify(isDocker ? 'localhost' : host),
+      'import.meta.env.VITE_HOST': JSON.stringify(host),
       'import.meta.env.VITE_PORT': JSON.stringify(port),
       'import.meta.env.PROD': env.PROD === 'true',
     },

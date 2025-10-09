@@ -20,12 +20,17 @@ export const DocumentViewer = ({ document }: DocumentViewerProps) => {
     // Handle string content
     if (typeof document.content === "string") {
       return (
-        <pre className="whitespace-pre-wrap font-sans text-sm text-gray-700 dark:text-gray-300">{document.content}</pre>
+        <pre className="whitespace-pre-wrap font-sans text-sm text-gray-700 dark:text-gray-300">
+          {document.content}
+        </pre>
       );
     }
 
     // Handle markdown field
-    if ("markdown" in document.content && typeof document.content.markdown === "string") {
+    if (
+      "markdown" in document.content &&
+      typeof document.content.markdown === "string"
+    ) {
       return (
         <div className="prose prose-sm dark:prose-invert max-w-none">
           <pre className="whitespace-pre-wrap font-sans text-sm text-gray-700 dark:text-gray-300">
@@ -36,7 +41,10 @@ export const DocumentViewer = ({ document }: DocumentViewerProps) => {
     }
 
     // Handle text field
-    if ("text" in document.content && typeof document.content.text === "string") {
+    if (
+      "text" in document.content &&
+      typeof document.content.text === "string"
+    ) {
       return (
         <pre className="whitespace-pre-wrap font-sans text-sm text-gray-700 dark:text-gray-300">
           {document.content.text}
@@ -48,18 +56,26 @@ export const DocumentViewer = ({ document }: DocumentViewerProps) => {
     return (
       <div className="space-y-4">
         {Object.entries(document.content).map(([key, value]) => (
-          <div key={key} className="border-l-2 border-gray-300 dark:border-gray-700 pl-4">
+          <div
+            key={key}
+            className="border-l-2 border-gray-300 dark:border-gray-700 pl-4"
+          >
             <h3 className="font-semibold text-gray-700 dark:text-gray-300 mb-2">
-              {key.replace(/_/g, " ").charAt(0).toUpperCase() + key.replace(/_/g, " ").slice(1)}
+              {key.replace(/_/g, " ").charAt(0).toUpperCase() +
+                key.replace(/_/g, " ").slice(1)}
             </h3>
             <div className="text-sm text-gray-600 dark:text-gray-400">
               {typeof value === "string" ? (
                 <p>{value}</p>
               ) : Array.isArray(value) ? (
                 <ul className="list-disc pl-5">
-                  {value.map((item, i) => (
-                    <li key={`${key}-${typeof item === "object" ? JSON.stringify(item) : String(item)}-${i}`}>
-                      {typeof item === "object" ? JSON.stringify(item, null, 2) : String(item)}
+                  {value.map((item) => (
+                    <li
+                      key={`${key}-${typeof item === "object" ? JSON.stringify(item) : String(item)}`}
+                    >
+                      {typeof item === "object"
+                        ? JSON.stringify(item, null, 2)
+                        : String(item)}
                     </li>
                   ))}
                 </ul>
@@ -82,7 +98,9 @@ export const DocumentViewer = ({ document }: DocumentViewerProps) => {
         <div className="flex items-center gap-3">
           <FileText className="w-5 h-5 text-gray-500" />
           <div className="flex-1">
-            <h2 className="text-lg font-semibold text-gray-800 dark:text-white">{document.title}</h2>
+            <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
+              {document.title}
+            </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Type: {document.document_type || "document"} • Last updated:{" "}
               {new Date(document.updated_at).toLocaleDateString()}
@@ -109,7 +127,9 @@ export const DocumentViewer = ({ document }: DocumentViewerProps) => {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-auto p-6 bg-white dark:bg-gray-900">{renderContent()}</div>
+      <div className="flex-1 overflow-auto p-6 bg-white dark:bg-gray-900">
+        {renderContent()}
+      </div>
     </div>
   );
 };

@@ -29,6 +29,7 @@ class KnowledgeItemService:
         per_page: int = 20,
         knowledge_type: str | None = None,
         search: str | None = None,
+        tags: list[str] | None = None,
     ) -> dict[str, Any]:
         """
         List knowledge items with pagination and filtering.
@@ -38,6 +39,7 @@ class KnowledgeItemService:
             per_page: Items per page
             knowledge_type: Filter by knowledge type
             search: Search term for filtering
+            tags: List of tags to filter by (items must contain at least one tag)
 
         Returns:
             Dict containing items, pagination info, and total count
@@ -48,7 +50,7 @@ class KnowledgeItemService:
 
             # Apply knowledge type filter at database level if provided
             if knowledge_type:
-                query = query.contains("metadata", {"knowledge_type": knowledge_type})
+                query = query.eq("metadata->>knowledge_type", knowledge_type)
 
             # Apply search filter at database level if provided
             if search:
@@ -57,32 +59,32 @@ class KnowledgeItemService:
                     f"title.ilike.{search_pattern},summary.ilike.{search_pattern},source_id.ilike.{search_pattern}"
                 )
 
-            # Get total count before pagination
-            # Clone the query for counting
-            count_query = self.supabase.from_("archon_sources").select(
-                "*", count="exact", head=True
-            )
+            # Execute query first, then filter tags in Python for simplicity
+            # Get all items matching other filters
+            all_query_sources = query.execute()
+            all_sources = all_query_sources.data if all_query_sources.data else []
 
-            # Apply same filters to count query
-            if knowledge_type:
-                count_query = count_query.contains("metadata", {"knowledge_type": knowledge_type})
+            # Apply tag filter in Python if provided
+            if tags and len(tags) > 0:
+                # Filter sources that have at least one matching tag
+                filtered_sources = []
+                for source in all_sources:
+                    source_tags = source.get("metadata", {}).get("tags", [])
+                    # Check if any tag in the filter list is in the source's tags
+                    if any(tag in source_tags for tag in tags):
+                        filtered_sources.append(source)
 
-            if search:
-                search_pattern = f"%{search}%"
-                count_query = count_query.or_(
-                    f"title.ilike.{search_pattern},summary.ilike.{search_pattern},source_id.ilike.{search_pattern}"
-                )
+                sources = filtered_sources
+            else:
+                sources = all_sources
 
-            count_result = count_query.execute()
-            total = count_result.count if hasattr(count_result, "count") else 0
+            # Get total count after filtering
+            total = len(sources)
 
-            # Apply pagination at database level
+            # Apply pagination in Python
             start_idx = (page - 1) * per_page
-            query = query.range(start_idx, start_idx + per_page - 1)
-
-            # Execute query
-            result = query.execute()
-            sources = result.data if result.data else []
+            end_idx = start_idx + per_page
+            sources = sources[start_idx:end_idx]
 
             # Get source IDs for batch queries
             source_ids = [source["source_id"] for source in sources]
@@ -136,26 +138,19 @@ class KnowledgeItemService:
                 source_id = source["source_id"]
                 source_metadata = source.get("metadata", {})
 
-                # Use the original source_url from the source record (the URL the user entered)
-                # Fall back to first crawled page URL, then to source:// format as last resort
-                source_url = source.get("source_url")
-                if source_url:
-                    display_url = source_url
-                else:
-                    display_url = first_urls.get(source_id, f"source://{source_id}")
-                
+                # Use batched data instead of individual queries
+                first_page_url = first_urls.get(source_id, f"source://{source_id}")
                 code_examples_count = code_example_counts.get(source_id, 0)
                 chunks_count = chunk_counts.get(source_id, 0)
 
-                # Determine source type - use display_url for type detection
-                source_type = self._determine_source_type(source_metadata, display_url)
+                # Determine source type
+                source_type = self._determine_source_type(source_metadata, first_page_url)
 
                 item = {
                     "id": source_id,
                     "title": source.get("title", source.get("summary", "Untitled")),
-                    "url": display_url,
+                    "url": first_page_url,
                     "source_id": source_id,
-                    "source_type": source_type,  # Add top-level source_type field
                     "code_examples": [{"count": code_examples_count}]
                     if code_examples_count > 0
                     else [],  # Minimal array just for count display

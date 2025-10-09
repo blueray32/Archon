@@ -33,7 +33,7 @@ Frontend → Server API ← MCP (via HTTP) ← AI Clients
 
 ```yaml
 services:
-  archon-server:     # FastAPI + Socket.IO (port 8080)
+  archon-server:     # FastAPI + HTTP polling (port 8181)
   archon-mcp:        # MCP Server (port 8051)
   archon-agents:     # AI Agents (port 8052)
   archon-frontend:   # React UI (port 3737)
@@ -44,7 +44,7 @@ services:
 
 ### FastAPI Application
 - REST API endpoints
-- Socket.IO server for real-time communication
+- HTTP polling endpoints for live updates
 - Service layer integration
 
 ### Service Layer

@@ -71,13 +71,13 @@ src/components/
 **Purpose**: Real-time crawling progress display
 
 **Features**:
-- Socket.IO connection for live updates
+- HTTP polling for live updates
 - Progress bar with percentage
 - Current URL display
 - Log message stream
 
 **Performance Notes**:
-- Uses Socket.IO room subscription for targeted updates
+- Uses ETag-aware polling for efficient refreshes
 - Minimal re-renders - only updates on progress changes
 - Example of proper real-time pattern
 
@@ -122,7 +122,7 @@ src/components/
 - Context awareness
 
 **Performance Considerations**:
-- Uses Socket.IO for streaming AI responses
+- Uses HTTP for message submission and status polling
 - Consider virtualization for long chat histories
 - Implements proper cleanup in useEffect returns
 
@@ -176,7 +176,7 @@ src/components/
 - Done
 
 **Performance Notes**:
-- Uses Socket.IO for real-time task updates from AI agents
+- Uses HTTP polling for task updates with ETag invalidation
 - Implements React DnD for smooth drag operations
 - Optimized with React.memo to prevent unnecessary re-renders
 
@@ -327,7 +327,7 @@ const buttonClasses = clsx(
 
 ## 🔗 Component Integration
 
-### With Socket.IO
+### With HTTP Polling
 ```jsx
 // Real-time updates in components
 useEffect(() => {
@@ -393,7 +393,7 @@ const TaskComponent = memo(({ task }) => {
 ## 🔗 Related Documentation
 
 - [UI Overview](./ui) - UI architecture, setup, and **performance best practices**
-- [Socket.IO Integration](./socketio) - Real-time features and room patterns
+- [Polling & Caching](./polling) - ETag, intervals, and progress endpoints
 - [Frontend Testing](./testing-vitest-strategy) - Component testing
 - [API Reference](./api-reference) - Backend integration
 - [Coding Best Practices](./coding-best-practices) - React patterns and anti-patterns

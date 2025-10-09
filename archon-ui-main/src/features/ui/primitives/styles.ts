@@ -12,8 +12,10 @@
 export const glassmorphism = {
   // Background variations - matching existing Card.tsx patterns
   background: {
-    subtle: "backdrop-blur-md bg-gradient-to-b from-white/80 to-white/60 dark:from-white/10 dark:to-black/30",
-    strong: "backdrop-blur-md bg-gradient-to-b from-white/95 to-white/90 dark:from-gray-800/95 dark:to-gray-900/95",
+    subtle:
+      "backdrop-blur-md bg-gradient-to-b from-white/80 to-white/60 dark:from-white/10 dark:to-black/30",
+    strong:
+      "backdrop-blur-md bg-gradient-to-b from-white/95 to-white/90 dark:from-gray-800/95 dark:to-gray-900/95",
     card: "backdrop-blur-md bg-gradient-to-b from-white/80 to-white/60 dark:from-white/10 dark:to-black/30",
     // Tron-style colored backgrounds
     cyan: "backdrop-blur-md bg-gradient-to-b from-cyan-100/80 dark:from-cyan-500/20 to-white/60 dark:to-cyan-500/5",
@@ -28,8 +30,10 @@ export const glassmorphism = {
     cyan: "border-cyan-300 dark:border-cyan-500/30",
     blue: "border-blue-300 dark:border-blue-500/30",
     purple: "border-purple-300 dark:border-purple-500/30",
-    focus: "focus:border-cyan-500 focus:shadow-[0_0_20px_5px_rgba(34,211,238,0.5)]",
-    hover: "hover:border-cyan-400/70 hover:shadow-[0_0_15px_rgba(34,211,238,0.4)]",
+    focus:
+      "focus:border-cyan-500 focus:shadow-[0_0_20px_5px_rgba(34,211,238,0.5)]",
+    hover:
+      "hover:border-cyan-400/70 hover:shadow-[0_0_15px_rgba(34,211,238,0.4)]",
   },
 
   // Interactive states
@@ -58,15 +62,19 @@ export const glassmorphism = {
     sm: "shadow-sm dark:shadow-md",
     md: "shadow-md dark:shadow-lg",
     lg: "shadow-lg dark:shadow-2xl",
-    elevated: "shadow-[0_10px_30px_-15px_rgba(0,0,0,0.1)] dark:shadow-[0_10px_30px_-15px_rgba(0,0,0,0.7)]",
+    elevated:
+      "shadow-[0_10px_30px_-15px_rgba(0,0,0,0.1)] dark:shadow-[0_10px_30px_-15px_rgba(0,0,0,0.7)]",
     // Neon glow effects matching Card.tsx
     glow: {
       cyan: "shadow-[0_0_10px_2px_rgba(34,211,238,0.4)] dark:shadow-[0_0_20px_5px_rgba(34,211,238,0.7)]",
       blue: "shadow-[0_0_10px_2px_rgba(59,130,246,0.4)] dark:shadow-[0_0_20px_5px_rgba(59,130,246,0.7)]",
-      purple: "shadow-[0_0_10px_2px_rgba(168,85,247,0.4)] dark:shadow-[0_0_20px_5px_rgba(168,85,247,0.7)]",
-      green: "shadow-[0_0_10px_2px_rgba(16,185,129,0.4)] dark:shadow-[0_0_20px_5px_rgba(16,185,129,0.7)]",
+      purple:
+        "shadow-[0_0_10px_2px_rgba(168,85,247,0.4)] dark:shadow-[0_0_20px_5px_rgba(168,85,247,0.7)]",
+      green:
+        "shadow-[0_0_10px_2px_rgba(16,185,129,0.4)] dark:shadow-[0_0_20px_5px_rgba(16,185,129,0.7)]",
       pink: "shadow-[0_0_10px_2px_rgba(236,72,153,0.4)] dark:shadow-[0_0_20px_5px_rgba(236,72,153,0.7)]",
-      orange: "shadow-[0_0_10px_2px_rgba(251,146,60,0.4)] dark:shadow-[0_0_20px_5px_rgba(251,146,60,0.7)]",
+      orange:
+        "shadow-[0_0_10px_2px_rgba(251,146,60,0.4)] dark:shadow-[0_0_20px_5px_rgba(251,146,60,0.7)]",
     },
   },
 

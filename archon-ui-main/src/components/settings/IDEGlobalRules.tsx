@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { FileCode, Copy, Check } from 'lucide-react';
+import { Copy, Check } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
-import { useToast } from '../../features/ui/hooks/useToast';
-import { copyToClipboard } from '../../features/shared/utils/clipboard';
+import { useToast } from '../../contexts/ToastContext';
 
 type RuleType = 'claude' | 'universal';
 
@@ -387,15 +386,16 @@ archon:manage_task(
     const elements: JSX.Element[] = [];
     let inCodeBlock = false;
     let codeBlockContent: string[] = [];
-    let codeBlockLang = '';
-    const listStack: string[] = [];
+    // Language hint for fenced code blocks (currently unused)
+    const _listStack: string[] = [];
 
     lines.forEach((line, index) => {
       // Code blocks
       if (line.startsWith('```')) {
         if (!inCodeBlock) {
           inCodeBlock = true;
-          codeBlockLang = line.slice(3).trim();
+          // Language hint captured but not used
+          /* const _lang = */ line.slice(3).trim();
           codeBlockContent = [];
         } else {
           inCodeBlock = false;
@@ -473,9 +473,8 @@ archon:manage_task(
   };
 
   const handleCopyToClipboard = async () => {
-    const result = await copyToClipboard(currentRules);
-    
-    if (result.success) {
+    try {
+      await navigator.clipboard.writeText(currentRules);
       setCopied(true);
       showToast(`${selectedRuleType === 'claude' ? 'Claude Code' : 'Universal'} rules copied to clipboard!`, 'success');
       
@@ -483,8 +482,8 @@ archon:manage_task(
       setTimeout(() => {
         setCopied(false);
       }, 2000);
-    } else {
-      console.error('Failed to copy text:', result.error);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
       showToast('Failed to copy to clipboard', 'error');
     }
   };

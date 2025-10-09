@@ -1,0 +1,244 @@
+
+> obsidian-claude-code-sdk@1.0.0 dev /Users/ciarancox/Archon/plugin-obsidian-claude-code/sdk-server
+> tsx watch src/index.ts
+
+🚀 Claude Code SDK Server for Obsidian
+📡 WebSocket server listening on port 7860
+🤝 Provider: http
+⏳ Waiting for Obsidian to connect...
+
+✅ Obsidian connected (ID: xj6i89)
+   Session state: New (no active conversation)
+📨 Received: init
+📁 Vault path set: /Users/ciarancox/Documents/ArchonVault
+🤝 Provider for xj6i89: http
+📨 Received: set_provider
+📨 Received: set_agent_type
+📨 Received: chat
+🤖 Processing chat message...
+   Prompt: "hi..."
+   Working directory: /Users/ciarancox/Documents/ArchonVault
+   Session state: New conversation
+   Using continue: false
+   Provider: http
+🌐 Fetching from HTTP provider: http://localhost:8787/chat
+📡 HTTP provider response: 200 OK
+✅ Received content (34 chars)
+📤 Sent chat_complete to Obsidian
+👋 Obsidian disconnected (ID: xj6i89)
+✅ Obsidian connected (ID: 6sz)
+   Session state: New (no active conversation)
+📨 Received: init
+📁 Vault path set: /Users/ciarancox/Documents/ArchonVault
+🤝 Provider for 6sz: http
+📨 Received: set_provider
+📨 Received: set_agent_type
+📨 Received: chat
+🤖 Processing chat message...
+   Prompt: "test..."
+   Working directory: /Users/ciarancox/Documents/ArchonVault
+   Session state: New conversation
+   Using continue: false
+   Provider: http
+🌐 Fetching from HTTP provider: http://localhost:8787/chat
+📡 HTTP provider response: 200 OK
+✅ Received content (227 chars)
+📤 Sent chat_complete to Obsidian
+📨 Received: chat
+🤖 Processing chat message...
+   Prompt: "bim..."
+   Working directory: /Users/ciarancox/Documents/ArchonVault
+   Session state: New conversation
+   Using continue: false
+   Provider: http
+🌐 Fetching from HTTP provider: http://localhost:8787/chat
+📡 HTTP provider response: 200 OK
+✅ Received content (1134 chars)
+📤 Sent chat_complete to Obsidian
+📨 Received: chat
+🤖 Processing chat message...
+   Prompt: "bim..."
+   Working directory: /Users/ciarancox/Documents/ArchonVault
+   Session state: New conversation
+   Using continue: false
+   Provider: http
+🌐 Fetching from HTTP provider: http://localhost:8787/chat
+📡 HTTP provider response: 200 OK
+✅ Received content (641 chars)
+📤 Sent chat_complete to Obsidian
+📨 Received: set_provider
+📨 Received: chat
+🤖 Processing chat message...
+   Prompt: "hi..."
+   Working directory: /Users/ciarancox/Documents/ArchonVault
+   Session state: New conversation
+   Using continue: false
+   Provider: openai
+❌ Query error: OPENAI_API_KEY missing. Set env var to use OpenAI provider.
+📨 Received: set_provider
+📨 Received: chat
+🤖 Processing chat message...
+   Prompt: "hi..."
+   Working directory: /Users/ciarancox/Documents/ArchonVault
+   Session state: New conversation
+   Using continue: false
+   Provider: anthropic
+📝 New session established: 1cb1449c-c877-49ab-a34a-c5ecd57a4fac
+✅ Query completed
+   Tools used: none
+   Success: true
+📊 Token usage: 33/200,000 (0.0%)
+   Input: 4 | Output: 29 | Cache saved: 12079
+📨 Received: set_provider
+📨 Received: chat
+🤖 Processing chat message...
+   Prompt: "hi..."
+   Working directory: /Users/ciarancox/Documents/ArchonVault
+   Session state: New conversation
+   Using continue: false
+   Provider: http
+🌐 Fetching from HTTP provider: http://localhost:8787/chat
+📡 HTTP provider response: 200 OK
+✅ Received content (34 chars)
+📤 Sent chat_complete to Obsidian
+📨 Received: set_provider
+📨 Received: set_provider
+📨 Received: chat
+🔄 Clearing conversation history for connection 6sz
+📨 Received: chat
+🤖 Processing chat message...
+   Prompt: "hi..."
+   Working directory: /Users/ciarancox/Documents/ArchonVault
+   Session state: New conversation
+   Using continue: false
+   Provider: http
+🌐 Fetching from HTTP provider: http://localhost:8787/chat
+📡 HTTP provider response: 200 OK
+✅ Received content (34 chars)
+📤 Sent chat_complete to Obsidian
+📨 Received: set_agent_type
+📨 Received: chat
+🤖 Processing chat message...
+   Prompt: "hola..."
+   Working directory: /Users/ciarancox/Documents/ArchonVault
+   Session state: New conversation
+   Using continue: false
+   Provider: http
+🌐 Fetching from HTTP provider: http://localhost:8787/chat
+📡 HTTP provider response: 200 OK
+✅ Received content (19 chars)
+📤 Sent chat_complete to Obsidian
+📨 Received: chat
+🤖 Processing chat message...
+   Prompt: "tell me about short cut to spanish..."
+   Working directory: /Users/ciarancox/Documents/ArchonVault
+   Session state: New conversation
+   Using continue: false
+   Provider: http
+🌐 Fetching from HTTP provider: http://localhost:8787/chat
+📡 HTTP provider response: 200 OK
+✅ Received content (106 chars)
+📤 Sent chat_complete to Obsidian
+📨 Received: set_agent_context
+📨 Received: set_agent_type
+📨 Received: chat
+🤖 Processing chat message...
+   Prompt: "ai..."
+   Working directory: /Users/ciarancox/Documents/ArchonVault
+   Session state: New conversation
+   Using continue: false
+   Provider: http
+🌐 Fetching from HTTP provider: http://localhost:8787/chat
+📡 HTTP provider response: 200 OK
+✅ Received content (784 chars)
+📤 Sent chat_complete to Obsidian
+📨 Received: chat
+🔄 Clearing conversation history for connection 6sz
+👋 Obsidian disconnected (ID: 6sz)
+✅ Obsidian connected (ID: usa2w8)
+   Session state: New (no active conversation)
+📨 Received: init
+📁 Vault path set: /Users/ciarancox/Documents/ArchonVault
+🤝 Provider for usa2w8: http
+📨 Received: set_provider
+📨 Received: set_agent_type
+👋 Obsidian disconnected (ID: usa2w8)
+✅ Obsidian connected (ID: 1ottcr)
+   Session state: New (no active conversation)
+📨 Received: init
+📁 Vault path set: /Users/ciarancox/Documents/ArchonVault
+🤝 Provider for 1ottcr: http
+📨 Received: set_provider
+📨 Received: set_agent_type
+👋 Obsidian disconnected (ID: 1ottcr)
+✅ Obsidian connected (ID: ir1b9a)
+   Session state: New (no active conversation)
+📨 Received: init
+📁 Vault path set: /Users/ciarancox/Documents/ArchonVault
+🤝 Provider for ir1b9a: http
+📨 Received: set_provider
+📨 Received: set_agent_type
+👋 Obsidian disconnected (ID: ir1b9a)
+✅ Obsidian connected (ID: lghzre)
+   Session state: New (no active conversation)
+📨 Received: init
+📁 Vault path set: /Users/ciarancox/Documents/ArchonVault
+🤝 Provider for lghzre: http
+📨 Received: set_provider
+📨 Received: set_agent_type
+👋 Obsidian disconnected (ID: lghzre)
+✅ Obsidian connected (ID: y9xs2a)
+   Session state: New (no active conversation)
+📨 Received: init
+📁 Vault path set: /Users/ciarancox/Documents/ArchonVault
+🤝 Provider for y9xs2a: http
+📨 Received: set_provider
+📨 Received: set_agent_type
+📨 Received: chat
+🤖 Processing chat message...
+   Prompt: "hi..."
+   Working directory: /Users/ciarancox/Documents/ArchonVault
+   Session state: New conversation
+   Using continue: false
+   Provider: http
+🌐 Fetching from HTTP provider: http://localhost:8787/chat
+📡 HTTP provider response: 502 Bad Gateway
+❌ Query error: HTTP provider error: 502 Bad Gateway - {"error":"Agents forward failed: AggregateError"}
+📨 Received: set_agent_type
+📨 Received: chat
+🤖 Processing chat message...
+   Prompt: "hi..."
+   Working directory: /Users/ciarancox/Documents/ArchonVault
+   Session state: New conversation
+   Using continue: false
+   Provider: http
+🌐 Fetching from HTTP provider: http://localhost:8787/chat
+📡 HTTP provider response: 502 Bad Gateway
+❌ Query error: HTTP provider error: 502 Bad Gateway - {"error":"Agents forward failed: AggregateError"}
+👋 Obsidian disconnected (ID: y9xs2a)
+✅ Obsidian connected (ID: pfceb)
+   Session state: New (no active conversation)
+📨 Received: init
+📁 Vault path set: /Users/ciarancox/Documents/ArchonVault
+🤝 Provider for pfceb: http
+📨 Received: set_provider
+📨 Received: set_agent_type
+📨 Received: chat
+🤖 Processing chat message...
+   Prompt: "hi..."
+   Working directory: /Users/ciarancox/Documents/ArchonVault
+   Session state: New conversation
+   Using continue: false
+   Provider: http
+🌐 Fetching from HTTP provider: http://localhost:8787/chat
+📡 HTTP provider response: 502 Bad Gateway
+❌ Query error: HTTP provider error: 502 Bad Gateway - {"error":"Agents forward failed: AggregateError"}
+👋 Obsidian disconnected (ID: pfceb)
+✅ Obsidian connected (ID: itcxc)
+   Session state: New (no active conversation)
+📨 Received: init
+📁 Vault path set: /Users/ciarancox/Documents/ArchonVault
+🤝 Provider for itcxc: http
+📨 Received: set_provider
+📨 Received: set_agent_type
+👋 Obsidian disconnected (ID: itcxc)

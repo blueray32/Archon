@@ -3,7 +3,6 @@ Sitemap Crawling Strategy
 
 Handles crawling of URLs from XML sitemaps.
 """
-import asyncio
 from collections.abc import Callable
 from xml.etree import ElementTree
 
@@ -33,11 +32,7 @@ class SitemapCrawlStrategy:
         try:
             # Check for cancellation before making the request
             if cancellation_check:
-                try:
-                    cancellation_check()
-                except asyncio.CancelledError:
-                    logger.info("Sitemap parsing cancelled by user")
-                    raise  # Re-raise to let the caller handle progress reporting
+                cancellation_check()
 
             logger.info(f"Parsing sitemap: {sitemap_url}")
             resp = requests.get(sitemap_url, timeout=30)

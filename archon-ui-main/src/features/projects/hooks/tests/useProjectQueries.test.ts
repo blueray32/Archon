@@ -3,7 +3,13 @@ import { renderHook, waitFor } from "@testing-library/react";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Project } from "../../types";
-import { projectKeys, useCreateProject, useDeleteProject, useProjects, useUpdateProject } from "../useProjectQueries";
+import {
+  projectKeys,
+  useCreateProject,
+  useDeleteProject,
+  useProjects,
+  useUpdateProject,
+} from "../useProjectQueries";
 
 // Mock the services
 vi.mock("../../services", () => ({
@@ -26,13 +32,19 @@ vi.mock("../../../ui/hooks/useToast", () => ({
   }),
 }));
 
-// Mock smart polling
-vi.mock("../../../ui/hooks", () => ({
-  useSmartPolling: () => ({
-    refetchInterval: 5000,
-    isPaused: false,
-  }),
-}));
+// Mock UI hooks module, preserving actual exports and overriding only what we need
+vi.mock("../../../ui/hooks", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../../ui/hooks")>();
+  return {
+    ...actual,
+    useSmartPolling: () => ({
+      refetchInterval: 5000,
+      isActive: true,
+      isVisible: true,
+      hasFocus: true,
+    }),
+  };
+});
 
 // Test wrapper with QueryClient
 const createWrapper = () => {
@@ -57,7 +69,24 @@ describe("useProjectQueries", () => {
       expect(projectKeys.all).toEqual(["projects"]);
       expect(projectKeys.lists()).toEqual(["projects", "list"]);
       expect(projectKeys.detail("123")).toEqual(["projects", "detail", "123"]);
-      expect(projectKeys.features("123")).toEqual(["projects", "123", "features"]);
+      expect(projectKeys.tasks("123")).toEqual([
+        "projects",
+        "detail",
+        "123",
+        "tasks",
+      ]);
+      expect(projectKeys.features("123")).toEqual([
+        "projects",
+        "detail",
+        "123",
+        "features",
+      ]);
+      expect(projectKeys.documents("123")).toEqual([
+        "projects",
+        "detail",
+        "123",
+        "documents",
+      ]);
     });
   });
 
@@ -107,9 +136,7 @@ describe("useProjectQueries", () => {
 
       const { projectService } = await import("../../services");
       vi.mocked(projectService.createProject).mockResolvedValue({
-        project_id: "new-project-id",
         project: newProject,
-        status: "success",
         message: "Created",
       });
 
@@ -132,7 +159,9 @@ describe("useProjectQueries", () => {
 
     it("should rollback on error", async () => {
       const { projectService } = await import("../../services");
-      vi.mocked(projectService.createProject).mockRejectedValue(new Error("Network error"));
+      vi.mocked(projectService.createProject).mockRejectedValue(
+        new Error("Network error"),
+      );
 
       const wrapper = createWrapper();
       const { result } = renderHook(() => useCreateProject(), { wrapper });
@@ -172,7 +201,9 @@ describe("useProjectQueries", () => {
 
       await waitFor(() => {
         expect(result.current.isSuccess).toBe(true);
-        expect(projectService.updateProject).toHaveBeenCalledWith("1", { pinned: true });
+        expect(projectService.updateProject).toHaveBeenCalledWith("1", {
+          pinned: true,
+        });
       });
     });
   });
@@ -189,18 +220,24 @@ describe("useProjectQueries", () => {
 
       await waitFor(() => {
         expect(result.current.isSuccess).toBe(true);
-        expect(projectService.deleteProject).toHaveBeenCalledWith("project-to-delete");
+        expect(projectService.deleteProject).toHaveBeenCalledWith(
+          "project-to-delete",
+        );
       });
     });
 
     it("should rollback on delete error", async () => {
       const { projectService } = await import("../../services");
-      vi.mocked(projectService.deleteProject).mockRejectedValue(new Error("Permission denied"));
+      vi.mocked(projectService.deleteProject).mockRejectedValue(
+        new Error("Permission denied"),
+      );
 
       const wrapper = createWrapper();
       const { result } = renderHook(() => useDeleteProject(), { wrapper });
 
-      await expect(result.current.mutateAsync("project-to-delete")).rejects.toThrow("Permission denied");
+      await expect(
+        result.current.mutateAsync("project-to-delete"),
+      ).rejects.toThrow("Permission denied");
     });
   });
 });

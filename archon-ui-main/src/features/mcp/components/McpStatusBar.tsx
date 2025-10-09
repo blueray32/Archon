@@ -1,7 +1,11 @@
 import { AlertCircle, CheckCircle, Clock, Server, Users } from "lucide-react";
 import type React from "react";
 import { cn, glassmorphism } from "../../ui/primitives";
-import type { McpServerConfig, McpServerStatus, McpSessionInfo } from "../types";
+import type {
+  McpServerConfig,
+  McpServerStatus,
+  McpSessionInfo,
+} from "../types";
 
 interface McpStatusBarProps {
   status: McpServerStatus;
@@ -10,7 +14,12 @@ interface McpStatusBarProps {
   className?: string;
 }
 
-export const McpStatusBar: React.FC<McpStatusBarProps> = ({ status, sessionInfo, config, className }) => {
+export const McpStatusBar: React.FC<McpStatusBarProps> = ({
+  status,
+  sessionInfo,
+  config,
+  className,
+}) => {
   const formatUptime = (seconds: number): string => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -50,7 +59,9 @@ export const McpStatusBar: React.FC<McpStatusBarProps> = ({ status, sessionInfo,
       {/* Status Indicator */}
       <div className="flex items-center gap-2">
         {getStatusIcon()}
-        <span className={cn("font-semibold", getStatusColor())}>{status.status.toUpperCase()}</span>
+        <span className={cn("font-semibold", getStatusColor())}>
+          {status.status.toUpperCase()}
+        </span>
       </div>
 
       {/* Separator */}

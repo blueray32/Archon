@@ -33,7 +33,11 @@ export const Toast = React.forwardRef<
   }
 >(({ className, variant = "default", ...props }, ref) => {
   const variantStyles = {
-    default: cn(glassmorphism.background.card, glassmorphism.border.default, glassmorphism.shadow.elevated),
+    default: cn(
+      glassmorphism.background.card,
+      glassmorphism.border.default,
+      glassmorphism.shadow.elevated,
+    ),
     success: cn(
       "backdrop-blur-md bg-gradient-to-b from-green-100/80 dark:from-green-500/20 to-white/60 dark:to-green-500/5",
       "border-green-300 dark:border-green-500/30",
@@ -127,7 +131,10 @@ export const ToastTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <ToastPrimitive.Title
     ref={ref}
-    className={cn("text-sm font-semibold text-gray-900 dark:text-white", className)}
+    className={cn(
+      "text-sm font-semibold text-gray-900 dark:text-white",
+      className,
+    )}
     {...props}
   />
 ));
@@ -150,12 +157,16 @@ ToastDescription.displayName = ToastPrimitive.Description.displayName;
 export function getToastIcon(type: "success" | "error" | "info" | "warning") {
   switch (type) {
     case "success":
-      return <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />;
+      return (
+        <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+      );
     case "error":
       return <XCircle className="h-5 w-5 text-red-600 dark:text-red-400" />;
     case "info":
       return <Info className="h-5 w-5 text-blue-600 dark:text-blue-400" />;
     case "warning":
-      return <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-400" />;
+      return (
+        <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+      );
   }
 }

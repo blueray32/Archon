@@ -5,4 +5,8 @@
  */
 
 // Document types
-export type { DocumentCardProps, DocumentType, ProjectDocument } from "./document";
+export type {
+  DocumentCardProps,
+  DocumentType,
+  ProjectDocument,
+} from "./document";

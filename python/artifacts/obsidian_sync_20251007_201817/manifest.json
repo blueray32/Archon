@@ -1,0 +1,52 @@
+{
+  "run_id": "20251007_201817",
+  "vault_path": "/Users/ciarancox/Documents/ArchonVault",
+  "config": {
+    "auto_tag": true,
+    "create_embeddings": false,
+    "concurrency": 8,
+    "shard_size": 500,
+    "dry_run": false
+  },
+  "results": {
+    "notes_scanned": 6635,
+    "notes_processed": 0,
+    "notes_skipped_unchanged": 6635,
+    "notes_skipped_rules": 0,
+    "notes_failed": 0,
+    "tags_applied": 0
+  },
+  "artifacts": {
+    "vault_index": "artifacts/obsidian_sync_20251007_201817/vault_index.json",
+    "tag_suggestions": null,
+    "changes_log": null,
+    "metrics": "artifacts/obsidian_sync_20251007_201817/metrics.json",
+    "index_note": "/Users/ciarancox/Documents/ArchonVault/Archon/index.md"
+  },
+  "metrics": {
+    "start_time": "2025-10-07T20:18:17.936773",
+    "end_time": "2025-10-07T20:24:18.994659",
+    "duration_s": 361.057886,
+    "notes_scanned": 6635,
+    "notes_processed": 0,
+    "notes_skipped_unchanged": 6635,
+    "notes_skipped_rules": 0,
+    "notes_failed": 0,
+    "tags_applied": 0,
+    "durations": {
+      "scan": 1.628841,
+      "auto_tag": 0.456489
+    },
+    "errors": []
+  },
+  "archon_sync": {
+    "vault_path": "/Users/ciarancox/Documents/ArchonVault",
+    "synced_at": "2025-10-07T20:24:18.985669",
+    "total_notes": 6635,
+    "synced_notes": 0,
+    "failed_notes": 6635,
+    "created_embeddings": 0,
+    "tags_count": 783,
+    "areas_count": 0
+  }
+}

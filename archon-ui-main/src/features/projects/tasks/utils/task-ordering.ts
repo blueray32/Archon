@@ -17,11 +17,15 @@ export function getDefaultTaskOrder(existingTasks: Task[]): number {
   }
 
   // Find the maximum order in the existing tasks
-  const maxOrder = Math.max(...existingTasks.map((task) => task.task_order || 0));
+  const maxOrder = Math.max(
+    ...existingTasks.map((task) => task.task_order || 0),
+  );
 
   // Ensure we don't exceed safe integer limits
   if (maxOrder >= MAX_ORDER) {
-    throw new Error(`Task order limit exceeded. Maximum safe order is ${MAX_ORDER}, got ${maxOrder}`);
+    throw new Error(
+      `Task order limit exceeded. Maximum safe order is ${MAX_ORDER}, got ${maxOrder}`,
+    );
   }
 
   return maxOrder + ORDER_INCREMENT;
@@ -31,7 +35,10 @@ export function getDefaultTaskOrder(existingTasks: Task[]): number {
  * Calculate task order when inserting between two tasks
  * Returns an integer that maintains proper ordering
  */
-export function getInsertTaskOrder(beforeTask: Task | null, afterTask: Task | null): number {
+export function getInsertTaskOrder(
+  beforeTask: Task | null,
+  afterTask: Task | null,
+): number {
   const beforeOrder = beforeTask?.task_order || 0;
   const afterOrder = afterTask?.task_order || beforeOrder + ORDER_INCREMENT * 2;
 
@@ -50,7 +57,11 @@ export function getInsertTaskOrder(beforeTask: Task | null, afterTask: Task | nu
  * Reorder a task within the same status column
  * Ensures integer precision and proper spacing
  */
-export function getReorderTaskOrder(tasks: Task[], taskId: string, newIndex: number): number {
+export function getReorderTaskOrder(
+  tasks: Task[],
+  taskId: string,
+  newIndex: number,
+): number {
   const filteredTasks = tasks.filter((t) => t.id !== taskId);
 
   if (filteredTasks.length === 0) {
@@ -58,7 +69,9 @@ export function getReorderTaskOrder(tasks: Task[], taskId: string, newIndex: num
   }
 
   // Sort tasks by current order
-  const sortedTasks = [...filteredTasks].sort((a, b) => (a.task_order || 0) - (b.task_order || 0));
+  const sortedTasks = [...filteredTasks].sort(
+    (a, b) => (a.task_order || 0) - (b.task_order || 0),
+  );
 
   // Handle edge cases
   if (newIndex <= 0) {
@@ -86,12 +99,16 @@ export function getReorderTaskOrder(tasks: Task[], taskId: string, newIndex: num
  */
 export function validateTaskOrder(order: number): number {
   if (!Number.isInteger(order)) {
-    console.warn(`Task order ${order} is not an integer, rounding to ${Math.round(order)}`);
+    console.warn(
+      `Task order ${order} is not an integer, rounding to ${Math.round(order)}`,
+    );
     return Math.round(order);
   }
 
   if (order > MAX_ORDER || order < 0) {
-    throw new Error(`Task order ${order} is outside safe range [0, ${MAX_ORDER}]`);
+    throw new Error(
+      `Task order ${order} is outside safe range [0, ${MAX_ORDER}]`,
+    );
   }
 
   return order;
