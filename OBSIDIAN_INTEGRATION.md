@@ -91,6 +91,101 @@ tail -f /tmp/archon_obsidian_sync.log
 - **Write permissions:** Restricted to `Logs/Agents` and `Tasks`
 - Point any MCP-capable client (Claude Code, Cursor, Windsurf, etc.) at this file to mount the vault through Archon.
 
+## Templater Templates
+
+Archon provides pre-configured Templater templates for structured note-taking with proper metadata governance.
+
+### Available Templates
+
+**Location:** `templates/obsidian/`
+
+1. **Agent Log.md** - Full-featured daily agent session logs
+   - Auto-filled frontmatter: `area: archon`, `service: ops`, `status: active`
+   - Timestamped sections for tracking progress
+   - Structured sections: Objectives, Progress, Insights, Issues, Completed, Notes
+   - Suggested filename: `Logs/Agents/YYYY-MM-DD.md`
+
+2. **Quick Agent Note.md** - Minimal template for quick capture
+   - Cursor placeholders for title and service
+   - Pre-filled `area: archon` and `status: draft`
+
+### Installation
+
+```bash
+# Option 1: Copy templates to vault
+cp templates/obsidian/*.md "/Users/ciarancox/Documents/ArchonVault/.templates/"
+
+# Option 2: Symlink (recommended - stays updated)
+ln -s "/Users/ciarancox/Archon/templates/obsidian" "/Users/ciarancox/Documents/ArchonVault/.templates/archon"
+```
+
+### Templater Configuration
+
+In Obsidian Settings → Templater:
+
+1. **Template folder location:** `.templates` (or `.templates/archon` if using symlink)
+2. **Trigger Templater on new file creation:** Optional
+3. **Enable Folder Templates:** Recommended for `Logs/Agents/` folder
+
+**Auto-apply Agent Log template:**
+- Settings → Templater → Folder Templates
+- Add: Folder = `Logs/Agents`, Template = `.templates/Agent Log.md`
+- Now any new note in `Logs/Agents/` automatically uses the template
+
+### Frontmatter Schema
+
+All templates follow the Archon metadata schema for RAG integration:
+
+```yaml
+---
+title: Note title
+date: YYYY-MM-DD
+area: archon | personal | client-x
+service: ops | research | docs | sales | crawler | mcp | ui | database | embedding | search
+status: active | draft | review | published | archived
+tags:
+  - archon
+  - other-tags
+---
+```
+
+**Benefits:**
+- **area**: Top-level categorization for RAG filtering
+- **service**: Archon service/component association
+- **status**: Lifecycle state tracking
+- **tags**: Flexible tagging (scalar or array, auto-normalized)
+
+### Metadata Management Tools
+
+Use Archon MCP tools or API routes to audit and maintain frontmatter:
+
+**MCP Tools:**
+```bash
+# Find notes missing required metadata
+list_obsidian_metadata_gaps
+
+# Update frontmatter on specific notes
+update_obsidian_frontmatter path="Daily/2025-10-09.md" updates='{"area":"archon","status":"active"}'
+```
+
+**API Routes:**
+```bash
+# Audit missing metadata
+curl http://localhost:8181/api/obsidian/review/missing-tags | jq
+
+# Batch update frontmatter
+curl -X POST http://localhost:8181/api/obsidian/frontmatter/update \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "path": "Daily/2025-10-09.md",
+    "updates": {"area": "archon", "service": "ops", "status": "active"},
+    "merge": true,
+    "preserve_existing": true
+  }' | jq
+```
+
+See `templates/obsidian/README.md` for detailed documentation.
+
 ## File Tracking
 
 Each uploaded file maintains traceability:
