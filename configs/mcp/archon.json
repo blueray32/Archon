@@ -1,0 +1,29 @@
+{
+  "mcpServers": {
+    "archon": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--directory",
+        "/Users/ciarancox/Archon/python",
+        "python",
+        "-m",
+        "src.mcp_server"
+      ],
+      "env": {
+        "OBSIDIAN_VAULT": "/Users/ciarancox/Documents/ArchonVault"
+      }
+    },
+    "obsidian": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/Users/ciarancox/Documents/ArchonVault"
+      ],
+      "env": {
+        "ALLOWED_WRITE_DIRS": "Logs/Agents,Tasks"
+      }
+    }
+  }
+}

@@ -5,10 +5,18 @@ GOLDEN=$(ROOT)/python/golden_set_archon.json
 PRED=$(ROOT)/artifacts/predictions_golden.json
 API?=http://127.0.0.1:5050
 
-.PHONY: help preflight preds unlabeled label label-auto label-csv merge-labels qa qa-seeded playwright api-start api-stop rag
+.PHONY: help preflight preds unlabeled label label-auto label-csv merge-labels qa qa-seeded playwright api-start api-stop rag api mcp daily-log obsidian-audit
 
 help:
 	@echo "Targets:"
+	@echo ""
+	@echo "Daily Operations:"
+	@echo "  api            - start API server on 8181 (standard port)"
+	@echo "  mcp            - start MCP server on 8051"
+	@echo "  daily-log      - create/update today's agent log"
+	@echo "  obsidian-audit - audit vault for missing metadata"
+	@echo ""
+	@echo "Golden Set / Predictions:"
 	@echo "  preflight      - check paths & files"
 	@echo "  preds          - resume predictions for golden"
 	@echo "  unlabeled      - list count/first 50 unlabeled notes in golden"
@@ -18,8 +26,10 @@ help:
 	@echo "  merge-labels   - merge CSV labels back into $(GOLDEN)"
 	@echo "  qa             - run QA against REAL golden"
 	@echo "  qa-seeded      - sanity QA using predictions-seeded copy"
+	@echo ""
+	@echo "Legacy/Tools:"
 	@echo "  playwright     - install chromium for crawler"
-	@echo "  api-start      - start API (uvicorn) on 127.0.0.1:5050"
+	@echo "  api-start      - start API (uvicorn) on 127.0.0.1:5050 [legacy port]"
 	@echo "  api-stop       - stop API"
 	@echo "  rag Q='query'  - run a RAG query (default top_k=25, pass K=... to change)"
 
@@ -89,3 +99,43 @@ moc-plan:
 
 moc-apply:
 	@MODE=apply VAULT_DIR="$(VAULT_DIR)" bash scripts/obsidian_moc_ops.sh
+
+# Standard API server on port 8181
+api:
+	@echo "🚀 Starting Archon API server on http://127.0.0.1:8181"
+	@if pgrep -f "uvicorn .*src.server.main:app.*8181" >/dev/null; then \
+		echo "⚠️  API already running on port 8181"; \
+		exit 0; \
+	fi
+	@export OBSIDIAN_VAULT="$(VAULT)" && \
+		cd $(ROOT)/python && \
+		nohup uv run uvicorn src.server.main:app --host 127.0.0.1 --port 8181 --reload \
+		> ../artifacts/uvicorn_8181.log 2>&1 & \
+		echo "✅ API started (log: artifacts/uvicorn_8181.log)"
+	@sleep 2
+	@curl -s http://127.0.0.1:8181/health | jq -r '.status' && echo "✅ Health check passed" || echo "⚠️  Health check failed"
+
+# MCP server on port 8051
+mcp:
+	@echo "🔌 Starting Archon MCP server on http://127.0.0.1:8051"
+	@if pgrep -f "python.*mcp_server" >/dev/null; then \
+		echo "⚠️  MCP server already running"; \
+		exit 0; \
+	fi
+	@cd $(ROOT)/python && \
+		nohup uv run python -m src.mcp_server \
+		> ../artifacts/mcp_server.log 2>&1 & \
+		echo "✅ MCP server started (log: artifacts/mcp_server.log)"
+	@sleep 2
+	@curl -s http://127.0.0.1:8051/health && echo "" && echo "✅ MCP health check passed" || echo "⚠️  MCP health check failed"
+
+# Create or update today's agent log
+daily-log:
+	@export OBSIDIAN_VAULT="$(VAULT)" && bash $(ROOT)/scripts/daily_agent_log.sh
+
+# Audit Obsidian vault for missing metadata
+obsidian-audit:
+	@echo "📊 Auditing Obsidian vault for missing metadata..."
+	@curl -s http://127.0.0.1:8181/api/obsidian/review/missing-tags | jq -r '"Total notes missing metadata: \(.total)"'
+	@echo ""
+	@echo "Run 'curl http://127.0.0.1:8181/api/obsidian/review/missing-tags | jq' for full list"
