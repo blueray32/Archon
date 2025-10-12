@@ -149,7 +149,7 @@ export function Navigation({ className }: NavigationProps) {
             >
               <img
                 src="/logo-neon.png"
-                alt="Archon"
+                alt="Nexarch"
                 className={cn(
                   "w-8 h-8 transition-all duration-300",
                   isProjectsActive && "filter drop-shadow-[0_0_8px_rgba(59,130,246,0.7)]",
@@ -165,7 +165,7 @@ export function Navigation({ className }: NavigationProps) {
             </Link>
           ) : (
             <div className="p-2 rounded-lg opacity-50 cursor-not-allowed">
-              <img src="/logo-neon.png" alt="Archon" className="w-8 h-8 grayscale" />
+              <img src="/logo-neon.png" alt="Nexarch" className="w-8 h-8 grayscale" />
             </div>
           )}
         </TooltipTrigger>

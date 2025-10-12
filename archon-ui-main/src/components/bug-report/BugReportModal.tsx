@@ -176,7 +176,7 @@ export const BugReportModal: React.FC<BugReportModalProps> = ({
                   Bug Report Submitted!
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  Thank you for helping improve Archon. Maintainers will review
+                  Thank you for helping improve Nexarch. Maintainers will review
                   your report and may comment @claude to trigger automatic
                   analysis and fixes.
                 </p>

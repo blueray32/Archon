@@ -459,7 +459,7 @@ export const SettingsPage = () => {
             >
               <div className="space-y-4">
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Found a bug or issue? Report it to help improve Archon Beta.
+                  Found a bug or issue? Report it to help improve Nexarch Beta.
                 </p>
                 <div className="flex justify-start">
                   <Suspense fallback={<div className="text-sm text-zinc-500">Loading…</div>}>

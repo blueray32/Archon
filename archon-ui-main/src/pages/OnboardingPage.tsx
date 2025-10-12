@@ -77,9 +77,9 @@ export const OnboardingPage = (): JSX.Element => {
               </div>
               
               <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-4">
-                Welcome to Archon
+                Welcome to Nexarch
               </h1>
-              
+
               <p className="text-lg text-gray-600 dark:text-zinc-400 mb-8 max-w-md mx-auto">
                 Let's get you set up with your AI provider in just a few steps. This will enable intelligent knowledge retrieval and code assistance.
               </p>
@@ -143,16 +143,16 @@ export const OnboardingPage = (): JSX.Element => {
               </h1>
               
               <p className="text-lg text-gray-600 dark:text-zinc-400 mb-8 max-w-md mx-auto">
-                You're ready to start using Archon. Begin by adding knowledge sources through website crawling or document uploads.
+                You're ready to start using Nexarch. Begin by adding knowledge sources through website crawling or document uploads.
               </p>
-              
+
               <Button
                 variant="primary"
                 size="lg"
                 onClick={handleComplete}
                 className="min-w-[200px]"
               >
-                Start Using Archon
+                Start Using Nexarch
               </Button>
             </Card>
           </motion.div>

@@ -193,7 +193,7 @@ export const ObsidianSyncPage = () => {
                     Obsidian Vault Sync
                   </h1>
                   <p className="text-gray-600 dark:text-gray-400">
-                    Sync your Obsidian vault with Archon's knowledge base
+                    Sync your Obsidian vault with Nexarch's knowledge base
                   </p>
                 </div>
               </div>
@@ -328,7 +328,7 @@ export const ObsidianSyncPage = () => {
                 </Button>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                Index your Obsidian vault into Archon's knowledge base for AI search
+                Index your Obsidian vault into Nexarch's knowledge base for AI search
               </p>
             </div>
 

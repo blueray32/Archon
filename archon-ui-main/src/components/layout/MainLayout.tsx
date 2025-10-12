@@ -204,7 +204,7 @@ export function MainLayout({ children, className }: MainLayoutProps) {
           >
             <img
               src="/logo-neon.png"
-              alt="Archon"
+              alt="Nexarch"
               className="w-7 h-7"
             />
           </button>
