@@ -43,12 +43,12 @@ jobs:
           node-version: '20'
 
       - name: Install deps (frontend)
-        working-directory: archon-ui-main
+        working-directory: nexarch-ui-main
         run: |
           npm ci
 
       - name: Biome CI
-        working-directory: archon-ui-main
+        working-directory: nexarch-ui-main
         run: |
           npm run biome:ci
 

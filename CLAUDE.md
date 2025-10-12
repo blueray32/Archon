@@ -105,7 +105,7 @@ def process_batch(items):
 
 ## Development Commands
 
-### Frontend (archon-ui-main/)
+### Frontend (nexarch-ui-main/)
 
 ```bash
 npm run dev              # Start development server on port 3737
@@ -157,7 +157,7 @@ docker compose down -v   # Stop and remove volumes
 
 ```bash
 # Hybrid development (recommended) - backend in Docker, frontend local
-make dev                 # Or manually: docker compose --profile backend up -d && cd archon-ui-main && npm run dev
+make dev                 # Or manually: docker compose --profile backend up -d && cd nexarch-ui-main && npm run dev
 
 # Full Docker mode
 make dev-docker          # Or: docker compose up --build -d
@@ -373,7 +373,7 @@ ARCHON_UI_PORT=3737                  # Frontend port
 1. Create route handler in `python/src/server/api_routes/`
 2. Add service logic in `python/src/server/services/`
 3. Include router in `python/src/server/main.py`
-4. Update frontend service in `archon-ui-main/src/features/[feature]/services/`
+4. Update frontend service in `nexarch-ui-main/src/features/[feature]/services/`
 
 ### Add a new UI component in features directory
 

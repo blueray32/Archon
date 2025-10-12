@@ -176,7 +176,7 @@ services:
 
   # Frontend
   nexarch-frontend:
-    build: ./archon-ui-main
+    build: ./nexarch-ui-main
     container_name: nexarch-ui
     ports:
       - "${ARCHON_UI_PORT:-3737}:3737"
@@ -196,8 +196,8 @@ services:
       timeout: 10s
       retries: 3
     volumes:
-      - ./archon-ui-main/src:/app/src
-      - ./archon-ui-main/public:/app/public
+      - ./nexarch-ui-main/src:/app/src
+      - ./nexarch-ui-main/public:/app/public
     depends_on:
       nexarch-server:
         condition: service_healthy

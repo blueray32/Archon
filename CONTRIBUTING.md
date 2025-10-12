@@ -36,7 +36,7 @@ Archon uses true microservices architecture with clear separation of concerns:
 
 | Service        | Location             | Purpose                      | Key Features                                                               |
 | -------------- | -------------------- | ---------------------------- | -------------------------------------------------------------------------- |
-| **Frontend**   | `archon-ui-main/`    | Web interface and dashboard  | React, TypeScript, TailwindCSS, Socket.IO client                           |
+| **Frontend**   | `nexarch-ui-main/`    | Web interface and dashboard  | React, TypeScript, TailwindCSS, Socket.IO client                           |
 | **Server**     | `python/src/server/` | Core business logic and APIs | FastAPI, service layer, Socket.IO broadcasts, all LLM/embedding operations |
 | **MCP Server** | `python/src/mcp/`    | MCP protocol interface       | Lightweight HTTP wrapper, 14 MCP tools, session management                 |
 | **Agents**     | `python/src/agents/` | PydanticAI agent hosting     | Document and RAG agents, streaming responses                               |
@@ -225,7 +225,7 @@ Test these things using both the UI and the MCP server. This process will be sim
    
    # Or manually
    cd python && python -m pytest       # Backend tests
-   cd archon-ui-main && npm run test   # Frontend tests
+   cd nexarch-ui-main && npm run test   # Frontend tests
 
    # Full integration test
    docker compose --profile full up --build -d
@@ -272,10 +272,10 @@ Test these things using both the UI and the MCP server. This process will be sim
 
 **Key locations:**
 
-- **Components**: `archon-ui-main/src/components/` - Reusable UI components organized by feature
-- **Pages**: `archon-ui-main/src/pages/` - Main application routes
-- **Services**: `archon-ui-main/src/services/` - API communication and business logic
-- **Contexts**: `archon-ui-main/src/contexts/` - React context providers for global state
+- **Components**: `nexarch-ui-main/src/components/` - Reusable UI components organized by feature
+- **Pages**: `nexarch-ui-main/src/pages/` - Main application routes
+- **Services**: `nexarch-ui-main/src/services/` - API communication and business logic
+- **Contexts**: `nexarch-ui-main/src/contexts/` - React context providers for global state
 
 **Development patterns:**
 
@@ -345,6 +345,8 @@ Test these things using both the UI and the MCP server. This process will be sim
    python -m pytest -m integration  # Integration tests only
    ```
 
+   - ChatKit beta: `POST /api/chatkit/session` should return 500 with a descriptive error until `CHATKIT_WORKFLOW_ID` and `OPENAI_API_KEY` are set.
+
 3. **Code Quality**
    ```bash
    # Follow service patterns from existing code
@@ -357,10 +359,10 @@ Test these things using both the UI and the MCP server. This process will be sim
 
    ```bash
    # Create in appropriate category
-   archon-ui-main/src/components/your-category/YourComponent.tsx
+   nexarch-ui-main/src/components/your-category/YourComponent.tsx
 
    # Add to appropriate page or parent component
-   archon-ui-main/src/pages/YourPage.tsx
+   nexarch-ui-main/src/pages/YourPage.tsx
    ```
 
 2. **Testing Your Changes**
@@ -370,7 +372,7 @@ Test these things using both the UI and the MCP server. This process will be sim
    make test-fe
    
    # Or manually
-   cd archon-ui-main && npm run test
+   cd nexarch-ui-main && npm run test
 
    # Run with coverage
    npm run test:coverage
@@ -385,8 +387,9 @@ Test these things using both the UI and the MCP server. This process will be sim
    make dev  # Backend in Docker, frontend local
    
    # Or manually for faster iteration
-   cd archon-ui-main && npm run dev
+   cd nexarch-ui-main && npm run dev
    # Still connects to Docker backend services
+   # When VITE_ENABLE_CHATKIT=1 visit http://localhost:3737/assistant to smoke-test ChatKit
    ```
 
 ## ✅ Quality Standards

@@ -39,7 +39,7 @@
 <!-- Provide specific test commands run and their results -->
 ```bash
 # Example: python -m pytest tests/
-# Example: cd archon-ui-main && npm run test
+# Example: cd nexarch-ui-main && npm run test
 ```
 
 ## Checklist

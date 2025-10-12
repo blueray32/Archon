@@ -145,6 +145,37 @@ Configure in **Settings → RAG Settings → LLM Provider**
 - **Models**: Each provider has different model naming conventions
 </Admonition>
 
+### ChatKit (Beta)
+
+<Admonition type="info" title="Optional Assistant UI">
+ChatKit is an experimental web component from OpenAI. Nexarch exposes it behind a feature flag so you can trial it without impacting the legacy chat stack.
+</Admonition>
+
+When enabled, the `/assistant` route renders the `<openai-chatkit>` custom element and proxies session creation through the backend.
+
+**Environment variables**
+
+```bash
+# Frontend
+VITE_ENABLE_CHATKIT=1                     # toggles the Assistant route
+VITE_CHATKIT_WORKFLOW_ID=wf_123...        # workflow configured in OpenAI ChatKit
+
+# Backend
+CHATKIT_WORKFLOW_ID=wf_123...             # matches the frontend workflow
+OPENAI_API_BASE=https://api.openai.com    # override for regional deployments (optional)
+CHATKIT_SESSION_PATH=/v1/chatkits/sessions
+```
+
+**Domain allowlist**
+
+- Add your Nexarch origin (dev and staging) to the ChatKit domain allowlist in the OpenAI dashboard
+- Staging deployments usually require both `https://app.your-domain` and the static asset host if different
+
+**Error handling**
+
+- Missing env vars raise a 500 with a descriptive error
+- Network failures are proxied as `502` with the upstream response body for fast debugging
+
 ### Socket.IO Configuration
 
 Archon uses Socket.IO for all real-time features. The default configuration works out of the box:
@@ -287,7 +318,7 @@ The frontend performs automatic health checks to detect server disconnections. C
 - **Check Interval**: 30 seconds (defined in `HEALTH_CHECK_INTERVAL_MS` constant)
 - **Timeout**: 10 seconds per health check request
 - **Disconnect Threshold**: 2 missed checks (60 seconds total)
-- **Location**: `archon-ui-main/src/services/serverHealthService.ts`
+- **Location**: `nexarch-ui-main/src/services/serverHealthService.ts`
 
 To adjust the health check interval, modify the constant at the top of the file:
 ```typescript

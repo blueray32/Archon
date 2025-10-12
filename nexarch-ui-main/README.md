@@ -32,7 +32,7 @@ Archon UI provides a comprehensive dashboard for managing your AI's knowledge ba
 ### Project Structure
 
 ```
-archon-ui-main/
+nexarch-ui-main/
 ├── src/
 │   ├── components/          # Reusable UI components
 │   │   ├── ui/             # Base UI components (Button, Card, etc.)

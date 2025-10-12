@@ -85,7 +85,7 @@ archon/
 │   ├── Dockerfile.agents        # Agents service container
 │   ├── pyproject.toml           # Python project configuration
 │   └── uv.lock                  # Dependency lock file
-├── archon-ui-main/              # React frontend application
+├── nexarch-ui-main/              # React frontend application
 │   ├── src/                     # Frontend source code
 │   │   ├── components/          # React components
 │   │   ├── pages/               # Page components
@@ -189,7 +189,7 @@ services:
 
   # Frontend
   frontend:
-    build: ./archon-ui-main
+    build: ./nexarch-ui-main
     container_name: archon-frontend
     ports:
       - "3737:5173"
@@ -203,8 +203,8 @@ services:
       timeout: 10s
       retries: 3
     volumes:
-      - ./archon-ui-main/src:/app/src
-      - ./archon-ui-main/public:/app/public
+      - ./nexarch-ui-main/src:/app/src
+      - ./nexarch-ui-main/public:/app/public
     depends_on:
       - archon-server
 
