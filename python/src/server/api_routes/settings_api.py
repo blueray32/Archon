@@ -272,7 +272,7 @@ async def _notify_agents_refresh():
     try:
         import httpx, os
         agents_port = os.getenv("ARCHON_AGENTS_PORT", "8052")
-        hosts = [h for h in [os.getenv("ARCHON_AGENTS_HOST"), "archon-agents", "localhost", "127.0.0.1"] if h]
+        hosts = [h for h in [os.getenv("ARCHON_AGENTS_HOST"), "nexarch-agents", "localhost", "127.0.0.1"] if h]
         async with httpx.AsyncClient(timeout=3.0) as client:
             for host in hosts:
                 try:

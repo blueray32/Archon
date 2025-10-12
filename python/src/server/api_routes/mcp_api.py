@@ -24,7 +24,7 @@ def get_container_status() -> dict[str, Any]:
     docker_client = None
     try:
         docker_client = docker.from_env()
-        container = docker_client.containers.get("archon-mcp")
+        container = docker_client.containers.get("nexarch-mcp")
 
         # Get container status
         container_status = container.status
@@ -57,7 +57,7 @@ def get_container_status() -> dict[str, Any]:
             "uptime": None,
             "logs": [],
             "container_status": "not_found",
-            "message": "MCP container not found. Run: docker compose up -d archon-mcp"
+            "message": "MCP container not found. Run: docker compose up -d nexarch-mcp"
         }
     except Exception as e:
         api_logger.error("Failed to get container status", exc_info=True)
@@ -219,7 +219,7 @@ async def init_mcp_session():
     with safe_span("api_mcp_session_init") as span:
         try:
             mcp_port = int(os.getenv("ARCHON_MCP_PORT", "8051"))
-            candidates = [f"http://archon-mcp:{mcp_port}", f"http://localhost:{mcp_port}"]
+            candidates = [f"http://nexarch-mcp:{mcp_port}", f"http://localhost:{mcp_port}"]
 
             payload = {
                 "jsonrpc": "2.0",
@@ -265,7 +265,7 @@ async def get_session_info():
     with safe_span("api_mcp_session_info") as span:
         try:
             mcp_port = int(os.getenv("ARCHON_MCP_PORT", "8051"))
-            candidates = [f"http://archon-mcp:{mcp_port}", f"http://localhost:{mcp_port}"]
+            candidates = [f"http://nexarch-mcp:{mcp_port}", f"http://localhost:{mcp_port}"]
 
             # Step 1: initialize to get a session id
             init_body = {

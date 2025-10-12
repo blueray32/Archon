@@ -123,7 +123,7 @@ async def send_message(session_id: str, request: dict):
 
         agents_port = os.getenv("ARCHON_AGENTS_PORT", "8052")
         agents_host_env = os.getenv("ARCHON_AGENTS_HOST")
-        host_candidates = [h for h in [agents_host_env, "archon-agents", "localhost", "127.0.0.1"] if h]
+        host_candidates = [h for h in [agents_host_env, "nexarch-agents", "localhost", "127.0.0.1"] if h]
 
         # Preflight: check API key presence to avoid long timeouts when not configured
         llm_keys = [
@@ -335,7 +335,7 @@ async def agent_chat_status():
         import os
         agents_port = os.getenv("ARCHON_AGENTS_PORT", "8052")
         agents_host_env = os.getenv("ARCHON_AGENTS_HOST")
-        host_candidates = [h for h in [agents_host_env, "archon-agents", "localhost", "127.0.0.1"] if h]
+        host_candidates = [h for h in [agents_host_env, "nexarch-agents", "localhost", "127.0.0.1"] if h]
         async with httpx.AsyncClient() as client:
             last_error = None
             for host in host_candidates:

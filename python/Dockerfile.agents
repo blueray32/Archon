@@ -12,9 +12,14 @@ COPY pyproject.toml .
 # Install only agents dependencies using uv
 RUN uv pip install --system --group agents
 
-# Copy agents code - no dependencies on server code
-# Agents use MCP tools for all operations
+# Copy agents code and required server dependencies
+# Agents need PRPService and service_discovery from server
 COPY src/agents/ src/agents/
+COPY src/server/services/prp_service.py src/server/services/prp_service.py
+COPY src/server/services/__init__.py src/server/services/__init__.py
+COPY src/server/services/client_manager.py src/server/services/client_manager.py
+COPY src/server/config/ src/server/config/
+COPY src/server/__init__.py src/server/
 COPY src/__init__.py src/
 
 # Set environment variables

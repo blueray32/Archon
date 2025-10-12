@@ -51,7 +51,7 @@ def is_logfire_enabled() -> bool:
 
 
 def setup_logfire(
-    token: str | None = None, environment: str = "development", service_name: str = "archon-server"
+    token: str | None = None, environment: str = "development", service_name: str = "nexarch-server"
 ) -> None:
     """
     Configure logging with optional Logfire integration.

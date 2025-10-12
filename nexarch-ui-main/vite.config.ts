@@ -16,7 +16,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
   // For internal Docker communication, use the service name
   // For external access, use the HOST from environment
   const isDocker = process.env.DOCKER_ENV === 'true' || existsSync('/.dockerenv');
-  const internalHost = 'archon-server';  // Docker service name for internal communication
+  const internalHost = 'nexarch-server';  // Docker service name for internal communication
   const externalHost = process.env.HOST || 'localhost';  // Host for external access
   const host = isDocker ? internalHost : externalHost;
   const port = process.env.ARCHON_SERVER_PORT || env.ARCHON_SERVER_PORT || '8181';

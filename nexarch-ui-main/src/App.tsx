@@ -25,6 +25,7 @@ const OnboardingPage = lazy(() =>
   import('./pages/OnboardingPage').then((m) => ({ default: m.OnboardingPage })),
 );
 import { MainLayout } from './components/layout/MainLayout';
+import { NEXARCH_ENABLE_CHATKIT } from './config/flags';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { ToastProvider as FeaturesToastProvider } from './features/ui/components/ToastProvider';
@@ -33,6 +34,7 @@ import { TooltipProvider } from './features/ui/primitives/tooltip';
 const ProjectPage = lazy(() =>
   import('./pages/ProjectPage').then((m) => ({ default: m.ProjectPage })),
 );
+const AssistantPage = lazy(() => import('./pages/Assistant'));
 import { DisconnectScreenOverlay } from './components/DisconnectScreenOverlay';
 import { ErrorBoundaryWithBugReport } from './components/bug-report/ErrorBoundaryWithBugReport';
 import { MigrationBanner } from './components/ui/MigrationBanner';
@@ -143,6 +145,7 @@ const AppRoutes = (): JSX.Element => {
       <Route path="/obsidian" element={<ObsidianSyncPage />} />
       <Route path="/tags" element={<TagsPage />} />
       <Route path="/eval" element={<EvalPage />} />
+      {NEXARCH_ENABLE_CHATKIT && <Route path="/assistant" element={<AssistantPage />} />}
       {projectsEnabled ? (
         <>
           <Route path="/projects" element={<ProjectPage />} />

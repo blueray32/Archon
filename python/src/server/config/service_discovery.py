@@ -63,12 +63,12 @@ class ServiceDiscovery:
 
     # Service name mappings
     SERVICE_NAMES = {
-        "api": "archon-server",
-        "mcp": "archon-mcp",
-        "agents": "archon-agents",
-        "archon-server": "archon-server",
-        "archon-mcp": "archon-mcp",
-        "archon-agents": "archon-agents",
+        "api": "nexarch-server",
+        "mcp": "nexarch-mcp",
+        "agents": "nexarch-agents",
+        "nexarch-server": "nexarch-server",
+        "nexarch-mcp": "nexarch-mcp",
+        "nexarch-agents": "nexarch-agents",
     }
 
     @staticmethod

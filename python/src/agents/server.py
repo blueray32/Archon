@@ -83,8 +83,8 @@ async def fetch_credentials_from_server():
     if api_service_url:
         candidate_bases.append(api_service_url)
 
-    # Docker compose expects the archon-server hostname
-    candidate_bases.append(f"http://archon-server:{server_port}")
+    # Docker compose expects the nexarch-server hostname
+    candidate_bases.append(f"http://nexarch-server:{server_port}")
 
     # Local development fallback
     candidate_bases.append(f"http://127.0.0.1:{server_port}")
@@ -780,7 +780,7 @@ if __name__ == "__main__":
     port = int(agents_port)
 
     uvicorn.run(
-        "server:app",
+        "src.agents.server:app",
         host="0.0.0.0",
         port=port,
         log_level="info",

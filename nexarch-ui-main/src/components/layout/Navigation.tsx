@@ -1,4 +1,4 @@
-import { BookOpen, Settings, Database, BarChart2, FileText, Tags } from "lucide-react";
+import { BookOpen, Settings, Database, BarChart2, FileText, Tags, Bot } from "lucide-react";
 import type React from "react";
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
@@ -7,6 +7,7 @@ import { useSettings } from "../../contexts/SettingsContext";
 import { glassmorphism } from "../../features/ui/primitives/styles";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../../features/ui/primitives/tooltip";
 import { cn } from "../../lib/utils";
+import { NEXARCH_ENABLE_CHATKIT } from "../../config/flags";
 
 interface NavigationItem {
   path: string;
@@ -115,6 +116,15 @@ export function Navigation({ className }: NavigationProps) {
       enabled: true,
     },
   ];
+
+  if (NEXARCH_ENABLE_CHATKIT) {
+    navigationItems.splice(1, 0, {
+      path: "/assistant",
+      icon: <Bot className="h-5 w-5" />,
+      label: "Assistant (Beta)",
+      enabled: true,
+    });
+  }
 
   const isProjectsActive = location.pathname.startsWith("/projects");
 
