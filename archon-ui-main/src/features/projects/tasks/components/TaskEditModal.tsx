@@ -31,7 +31,7 @@ interface TaskEditModalProps {
   onOpenChange?: (open: boolean) => void;
 }
 
-const ASSIGNEE_OPTIONS = ["User", "Archon", "AI IDE Agent"] as const;
+const ASSIGNEE_OPTIONS = ["User", "Nexarch", "AI IDE Agent"] as const;
 
 export const TaskEditModal = memo(
   ({

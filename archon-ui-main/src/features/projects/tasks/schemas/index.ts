@@ -10,7 +10,7 @@ export const DatabaseTaskStatusSchema = z.enum([
 export const TaskPrioritySchema = z.enum(["low", "medium", "high", "critical"]);
 
 // Assignee schema - simplified to predefined options
-export const AssigneeSchema = z.enum(["User", "Archon", "AI IDE Agent"]);
+export const AssigneeSchema = z.enum(["User", "Nexarch", "AI IDE Agent"]);
 
 // Task schemas
 export const CreateTaskSchema = z.object({

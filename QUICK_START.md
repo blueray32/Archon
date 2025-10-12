@@ -1,6 +1,6 @@
-# Archon Obsidian Integration - Quick Start
+# Nexarch Obsidian Integration - Quick Start
 
-Everything you need to run daily operations with Archon and Obsidian.
+Everything you need to run daily operations with Nexarch and Obsidian.
 
 ## One-Time Setup
 
@@ -30,7 +30,7 @@ Point your MCP client config to:
 ```
 
 This provides both:
-- **archon** MCP server (list_obsidian_metadata_gaps, update_obsidian_frontmatter)
+- **nexarch** MCP server (list_obsidian_metadata_gaps, update_obsidian_frontmatter)
 - **obsidian** filesystem server (read/write vault files)
 
 ## Daily Operations
@@ -115,7 +115,7 @@ make obsidian-audit # Audit vault metadata
 
 - **8181** - Main API server
 - **8051** - MCP server
-- **3737** - Frontend UI (archon-ui-main)
+- **3737** - Frontend UI (nexarch-ui-main)
 
 ## Typical Workflow
 
@@ -154,11 +154,11 @@ curl -X POST http://127.0.0.1:8181/api/obsidian/frontmatter/update ...
 All notes should have:
 ```yaml
 ---
-area: archon | personal | client-x
+area: nexarch | personal | client-x
 service: ops | research | docs | sales | crawler | mcp | ui | database | embedding | search
 status: active | draft | review | published | archived
 tags:
-  - archon
+  - nexarch
   - other-tags
 ---
 ```
@@ -229,7 +229,7 @@ export OBSIDIAN_VAULT="/path/to/your/vault"
 
 ## Support
 
-- GitHub: https://github.com/blueray32/Archon
+- GitHub: https://github.com/blueray32/Nexarch
 - Issues: Create in GitHub repo
 - Docs: http://localhost:3737/ (when frontend running)
 

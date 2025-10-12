@@ -84,7 +84,7 @@ const useConfigCatUser = (): void => {
           email,
         });
       } catch (error) {
-        console.warn('[Archon] Failed to set ConfigCat user', error);
+        console.warn('[Nexarch] Failed to set ConfigCat user', error);
         return false;
       }
 

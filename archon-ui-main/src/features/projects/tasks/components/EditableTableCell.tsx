@@ -24,7 +24,7 @@ interface EditableTableCellProps {
 const STATUS_OPTIONS = ["todo", "doing", "review", "done"] as const;
 
 // Assignee options
-const ASSIGNEE_OPTIONS = ["User", "Archon", "AI IDE Agent"] as const;
+const ASSIGNEE_OPTIONS = ["User", "Nexarch", "AI IDE Agent"] as const;
 
 export const EditableTableCell = ({
   value,

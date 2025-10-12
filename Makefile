@@ -102,7 +102,7 @@ moc-apply:
 
 # Standard API server on port 8181
 api:
-	@echo "🚀 Starting Archon API server on http://127.0.0.1:8181"
+	@echo "🚀 Starting Nexarch API server on http://127.0.0.1:8181"
 	@if pgrep -f "uvicorn .*src.server.main:app.*8181" >/dev/null; then \
 		echo "⚠️  API already running on port 8181"; \
 		exit 0; \
@@ -117,7 +117,7 @@ api:
 
 # MCP server on port 8051
 mcp:
-	@echo "🔌 Starting Archon MCP server on http://127.0.0.1:8051"
+	@echo "🔌 Starting Nexarch MCP server on http://127.0.0.1:8051"
 	@if pgrep -f "python.*mcp_server" >/dev/null; then \
 		echo "⚠️  MCP server already running"; \
 		exit 0; \

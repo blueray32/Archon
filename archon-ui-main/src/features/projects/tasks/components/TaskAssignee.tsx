@@ -15,7 +15,7 @@ interface TaskAssigneeProps {
   isLoading?: boolean;
 }
 
-const ASSIGNEE_OPTIONS: Assignee[] = ["User", "Archon", "AI IDE Agent"];
+const ASSIGNEE_OPTIONS: Assignee[] = ["User", "Nexarch", "AI IDE Agent"];
 
 // Get icon for each assignee type
 const getAssigneeIcon = (assigneeName: Assignee, size: "sm" | "md" = "sm") => {
@@ -26,8 +26,8 @@ const getAssigneeIcon = (assigneeName: Assignee, size: "sm" | "md" = "sm") => {
       return <User className={cn(sizeClass, "text-blue-400")} />;
     case "AI IDE Agent":
       return <Bot className={cn(sizeClass, "text-purple-400")} />;
-    case "Archon":
-      return <img src="/logo-neon.png" alt="Archon" className={sizeClass} />;
+    case "Nexarch":
+      return <img src="/logo-neon.png" alt="Nexarch" className={sizeClass} />;
     default:
       return <User className={cn(sizeClass, "text-blue-400")} />;
   }
@@ -48,7 +48,7 @@ const getAssigneeStyles = (assigneeName: Assignee) => {
         hoverGlow: "hover:shadow-[0_0_12px_rgba(168,85,247,0.5)]",
         color: "text-purple-600 dark:text-purple-400",
       };
-    case "Archon":
+    case "Nexarch":
       return {
         glow: "shadow-[0_0_10px_rgba(34,211,238,0.4)]",
         hoverGlow: "hover:shadow-[0_0_12px_rgba(34,211,238,0.5)]",

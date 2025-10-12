@@ -1,17 +1,17 @@
-# Obsidian → Archon Integration
+# Obsidian → Nexarch Integration
 
 **Status:** ✅ Active - Bulk sync in progress
 
 ## Overview
 
-Your Obsidian vault is now the **source of truth** for your knowledge base, with Archon providing semantic search and AI-powered retrieval capabilities.
+Your Obsidian vault is now the **source of truth** for your knowledge base, with Nexarch providing semantic search and AI-powered retrieval capabilities.
 
 ## Architecture
 
 ```
 ┌──────────────────────────────────────────────┐
 │  Obsidian Vault (Master Copy)               │
-│  /Users/ciarancox/Documents/ArchonVault/     │
+│  /Users/ciarancox/Documents/NexarchVault/     │
 │  - 5,150+ markdown files                     │
 │  - Full editing capabilities                 │
 │  - Version control via Git                   │
@@ -23,7 +23,7 @@ Your Obsidian vault is now the **source of truth** for your knowledge base, with
               │
               ▼
 ┌──────────────────────────────────────────────┐
-│  Archon Knowledge Base (Search Index)        │
+│  Nexarch Knowledge Base (Search Index)        │
 │  - Supabase pgvector for embeddings          │
 │  - Fast semantic search                      │
 │  - RAG for AI agents                         │
@@ -44,10 +44,10 @@ Your Obsidian vault is now the **source of truth** for your knowledge base, with
 
 ### 1. Source of Truth: Obsidian
 - Edit files in Obsidian normally
-- Files live in: `/Users/ciarancox/Documents/ArchonVault/Processed/`
+- Files live in: `/Users/ciarancox/Documents/NexarchVault/Processed/`
 - All changes stay local until you sync
 
-### 2. Sync to Archon
+### 2. Sync to Nexarch
 - Run: `/tmp/upload_obsidian_to_archon.sh`
 - Each file uploaded with metadata:
   - Original filename (preserves path info)
@@ -55,7 +55,7 @@ Your Obsidian vault is now the **source of truth** for your knowledge base, with
   - Timestamp of sync
 - Files are chunked and embedded for semantic search
 
-### 3. Search in Archon
+### 3. Search in Nexarch
 - Open: http://localhost:3737/knowledge-base
 - Semantic search across all 5,150+ documents
 - RAG queries retrieve relevant chunks
@@ -80,20 +80,20 @@ tail -f /tmp/archon_obsidian_sync.log
 
 ### Sync Workflow
 1. **Edit files in Obsidian** - your vault is the master copy
-2. **Run sync script** when you want changes in Archon
+2. **Run sync script** when you want changes in Nexarch
 3. **Wait for completion** (~1.5 hours for full vault)
-4. **Search in Archon** - all changes now searchable
+4. **Search in Nexarch** - all changes now searchable
 
 ## MCP Client Configuration
 
 - **Config path:** `ai_docs/mcp/obsidian.client.json`
-- **Vault root:** `/Users/ciarancox/Documents/ArchonVault`
+- **Vault root:** `/Users/ciarancox/Documents/NexarchVault`
 - **Write permissions:** Restricted to `Logs/Agents` and `Tasks`
-- Point any MCP-capable client (Claude Code, Cursor, Windsurf, etc.) at this file to mount the vault through Archon.
+- Point any MCP-capable client (Claude Code, Cursor, Windsurf, etc.) at this file to mount the vault through Nexarch.
 
 ## Templater Templates
 
-Archon provides pre-configured Templater templates for structured note-taking with proper metadata governance.
+Nexarch provides pre-configured Templater templates for structured note-taking with proper metadata governance.
 
 ### Available Templates
 
@@ -113,10 +113,10 @@ Archon provides pre-configured Templater templates for structured note-taking wi
 
 ```bash
 # Option 1: Copy templates to vault
-cp templates/obsidian/*.md "/Users/ciarancox/Documents/ArchonVault/.templates/"
+cp templates/obsidian/*.md "/Users/ciarancox/Documents/NexarchVault/.templates/"
 
 # Option 2: Symlink (recommended - stays updated)
-ln -s "/Users/ciarancox/Archon/templates/obsidian" "/Users/ciarancox/Documents/ArchonVault/.templates/archon"
+ln -s "/Users/ciarancox/Nexarch/templates/obsidian" "/Users/ciarancox/Documents/NexarchVault/.templates/archon"
 ```
 
 ### Templater Configuration
@@ -134,7 +134,7 @@ In Obsidian Settings → Templater:
 
 ### Frontmatter Schema
 
-All templates follow the Archon metadata schema for RAG integration:
+All templates follow the Nexarch metadata schema for RAG integration:
 
 ```yaml
 ---
@@ -151,13 +151,13 @@ tags:
 
 **Benefits:**
 - **area**: Top-level categorization for RAG filtering
-- **service**: Archon service/component association
+- **service**: Nexarch service/component association
 - **status**: Lifecycle state tracking
 - **tags**: Flexible tagging (scalar or array, auto-normalized)
 
 ### Metadata Management Tools
 
-Use Archon MCP tools or API routes to audit and maintain frontmatter:
+Use Nexarch MCP tools or API routes to audit and maintain frontmatter:
 
 **MCP Tools:**
 ```bash
@@ -193,15 +193,15 @@ Each uploaded file maintains traceability:
 - **Filename:** Original name preserved (e.g., `12.2 - Production hall spotters.md`)
 - **Source Path:** Stored in filename for tracking
 - **Vault Location:** `Processed/filename.md`
-- **Obsidian URI:** `obsidian://open?vault=ArchonVault&file=Processed/filename.md`
+- **Obsidian URI:** `obsidian://open?vault=NexarchVault&file=Processed/filename.md`
 
 ## Future Enhancements
 
 ### Phase 2: Open in Obsidian (Planned)
-Add UI button to open files directly from Archon search results:
+Add UI button to open files directly from Nexarch search results:
 ```javascript
 // In search results
-<button onClick={() => window.open('obsidian://open?vault=ArchonVault&file=...')}>
+<button onClick={() => window.open('obsidian://open?vault=NexarchVault&file=...')}>
   Open in Obsidian
 </button>
 ```
@@ -223,7 +223,7 @@ done
 ```
 
 ### Phase 5: Bidirectional Sync (Advanced)
-- Archon edits write back to Obsidian
+- Nexarch edits write back to Obsidian
 - Conflict resolution
 - Real-time collaboration
 
@@ -236,7 +236,7 @@ done
 - Graph view and backlinks
 - Fast local editing
 
-✅ **Archon Benefits Added:**
+✅ **Nexarch Benefits Added:**
 - Semantic search across 5,150+ files
 - Vector embeddings for similarity
 - RAG for AI agent queries
@@ -245,7 +245,7 @@ done
 
 ✅ **Best of Both Worlds:**
 - Edit in Obsidian (local, fast, powerful)
-- Search in Archon (semantic, AI-powered)
+- Search in Nexarch (semantic, AI-powered)
 - No vendor lock-in (all files are markdown)
 - Supabase handles complex queries
 
@@ -259,7 +259,7 @@ ps aux | grep upload_obsidian_to_archon.sh
 # Check server is healthy
 curl -s http://localhost:8181/health
 
-# Restart Archon server if needed
+# Restart Nexarch server if needed
 docker compose restart archon-server
 ```
 
@@ -271,7 +271,7 @@ docker compose restart archon-server
 
 ### Network Connectivity Issues
 ```bash
-# Restart Archon to fix DNS issues
+# Restart Nexarch to fix DNS issues
 docker compose restart archon-server
 
 # Verify Supabase connection
@@ -347,9 +347,9 @@ find /tmp -name "archon_obsidian_sync*.log" -mtime +7 -delete
 
 ## Resources
 
-- **Archon Docs:** http://localhost:3737/
+- **Nexarch Docs:** http://localhost:3737/
 - **Supabase Dashboard:** (your Supabase URL)
-- **Obsidian Vault:** `/Users/ciarancox/Documents/ArchonVault/`
+- **Obsidian Vault:** `/Users/ciarancox/Documents/NexarchVault/`
 - **Sync Scripts:** `/tmp/upload_obsidian_to_archon.sh`
 
 ---

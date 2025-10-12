@@ -12,7 +12,7 @@ export type { TaskPriority };
 export type DatabaseTaskStatus = "todo" | "doing" | "review" | "done";
 
 // Assignee type - simplified to predefined options
-export type Assignee = "User" | "Archon" | "AI IDE Agent";
+export type Assignee = "User" | "Nexarch" | "AI IDE Agent";
 
 // Task counts for project overview
 export interface TaskCounts {
