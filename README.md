@@ -1,9 +1,9 @@
 # Nexarch
 
-> **Knowledge → Execution Nexus**
-> Production-ready AI development environment combining knowledge management, structured workflows, and autonomous agent execution.
+> **Neural Architecture System**
+> Production-ready AI development infrastructure combining knowledge management, structured workflows, and autonomous agent execution.
 
-Nexarch connects your **knowledge layer** (Obsidian) with **AI execution** (LLM agents) through **structured workflows** (PRP/R-D methodology), creating a seamless nexus from idea to implementation.
+Nexarch is a **neural nexus** that architects the connection between your **knowledge layer** (Obsidian) and **AI execution** (LLM agents) through **structured workflows** (PRP/R-D methodology), creating an intelligent system from idea to implementation.
 
 Originally forked from [Archon](https://github.com/coleam00/Archon), Nexarch extends the core RAG + MCP architecture with production-grade integrations for professional development workflows.
 

@@ -46,6 +46,24 @@ module.exports = {content: [
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        // Nexarch Brand Colors
+        nexarch: {
+          cyan: {
+            DEFAULT: '#00d4ff',
+            light: '#00ffff',
+            dark: '#0099ff',
+          },
+          purple: {
+            DEFAULT: '#cc00ff',
+            light: '#ff00ff',
+            dark: '#9900ff',
+          },
+          pink: {
+            DEFAULT: '#ff0080',
+            light: '#ff00ff',
+            dark: '#ff006b',
+          },
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

@@ -7,7 +7,7 @@ export type Agent = {
 };
 
 export const AGENTS: Agent[] = [
-  { id: "prp", label: "Archon", description: "ChatGPT-style agent with PRP context and persistent memory" },
+  { id: "prp", label: "Nexarch", description: "ChatGPT-style agent with PRP context and persistent memory" },
   { id: "profesora-maria", label: "Profesora María", description: "Spanish tutor agent" },
   { id: "pydantic-ai", label: "Pydantic AI", description: "Expert on Pydantic AI & Pydantic docs (llmstxt)" },
   { id: "researcher", label: "Researcher", description: "R&D context gatherer" },

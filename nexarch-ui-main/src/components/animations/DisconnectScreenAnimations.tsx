@@ -136,7 +136,7 @@ export const DisconnectScreen: React.FC = () => {
           <div className="relative w-96 h-96 flex items-center justify-center">
             <img 
               src="/logo-neon.svg" 
-              alt="Archon" 
+              alt="Nexarch" 
               className="w-64 h-64 z-10"
               style={{
                 filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.4)) drop-shadow(0 -2px 4px rgba(255,255,255,0.3))',

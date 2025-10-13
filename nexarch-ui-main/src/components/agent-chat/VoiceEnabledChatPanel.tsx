@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Send, Mic, Volume2, VolumeX, MicOff, SlidersHorizontal, X } from 'lucide-react';
 import * as Popover from '@radix-ui/react-popover';
 import * as Tooltip from '@radix-ui/react-tooltip';
-import { ArchonLoadingSpinner } from '../animations/Animations';
+import { NexarchLoadingSpinner } from '../animations/Animations';
 import { agentChatService, ChatMessage } from '../../services/agentChatService';
 import { knowledgeBaseService } from '../../services/knowledgeBaseService';
 import { AgentSwitcher } from '../../agents/AgentSwitcher';
@@ -965,7 +965,7 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-black/40">
         <div className="flex items-center gap-3">
-          <img src="/logo-neon.svg" alt="Archon" className="w-6 h-6" />
+          <img src="/logo-neon.svg" alt="Nexarch" className="w-6 h-6" />
           <AgentSwitcher label="Agent" />
           {isVoiceEnabled && (
             <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-1 rounded-full">
@@ -1144,7 +1144,7 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
             }`}>
               <div className="flex items-center mb-1">
                 {message.sender === 'agent' && (
-                  <img src="/logo-neon.svg" alt="Archon" className="w-4 h-4 mr-1" />
+                  <img src="/logo-neon.svg" alt="Nexarch" className="w-4 h-4 mr-1" />
                 )}
                 <span className="text-xs opacity-70">
                   {formatTime(message.timestamp)}
@@ -1169,7 +1169,7 @@ export const VoiceEnabledChatPanel: React.FC<VoiceEnabledChatPanelProps> = props
         {isTyping && (
           <div className="flex justify-start">
             <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-3 mr-auto">
-              <ArchonLoadingSpinner />
+              <NexarchLoadingSpinner />
             </div>
           </div>
         )}

@@ -231,7 +231,7 @@ export const APIKeysSection = () => {
         <div className="space-y-4">
           {/* Description text */}
           <p className="text-sm text-gray-600 dark:text-zinc-400 mb-4">
-            Manage your API keys and credentials for various services used by Archon.
+            Manage your API keys and credentials for various services used by Nexarch.
           </p>
 
           {/* Credentials list */}

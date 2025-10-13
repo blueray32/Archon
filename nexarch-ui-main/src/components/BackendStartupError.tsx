@@ -19,7 +19,7 @@ export const BackendStartupError: React.FC = () => {
               </h2>
               
               <p className="text-red-200">
-                The Archon backend service failed to start. This is typically due to a configuration issue.
+                The Nexarch backend service failed to start. This is typically due to a configuration issue.
               </p>
 
               <div className="bg-black/50 rounded-lg p-4 border border-red-900/50">
@@ -28,12 +28,12 @@ export const BackendStartupError: React.FC = () => {
                   <span className="font-semibold">Check Docker Logs</span>
                 </div>
                 <p className="text-red-100 font-mono text-sm mb-3">
-                  Check the <span className="text-red-400 font-bold">Archon API server</span> container logs in Docker Desktop for detailed error information.
+                  Check the <span className="text-red-400 font-bold">Nexarch API server</span> container logs in Docker Desktop for detailed error information.
                 </p>
                 <div className="space-y-2 text-xs text-red-300">
                   <p>1. Open Docker Desktop</p>
                   <p>2. Go to Containers tab</p>
-                  <p>3. Look for the Archon server container (typically named <span className="text-red-400 font-semibold">archon-server</span> or similar)</p>
+                  <p>3. Look for the Nexarch server container (typically named <span className="text-red-400 font-semibold">archon-server</span> or similar)</p>
                   <p>4. View the logs for the specific error message</p>
                 </div>
               </div>

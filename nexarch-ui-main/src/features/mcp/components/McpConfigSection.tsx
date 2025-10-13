@@ -224,7 +224,7 @@ export const McpConfigSection: React.FC<McpConfigSectionProps> = ({
     const base64Config = btoa(configString);
     const deeplink = `cursor://anysphere.cursor-deeplink/mcp/install?name=archon&config=${base64Config}`;
     window.location.href = deeplink;
-    showToast("Opening Cursor with Archon MCP configuration...", "info");
+    showToast("Opening Cursor with Nexarch MCP configuration...", "info");
   };
 
   const handleClaudeCodeCommand = () => {
@@ -247,7 +247,7 @@ export const McpConfigSection: React.FC<McpConfigSectionProps> = ({
         )}
       >
         <p className="text-sm text-blue-700 dark:text-blue-300">
-          <span className="font-semibold">Note:</span> Archon works with any
+          <span className="font-semibold">Note:</span> Nexarch works with any
           application that supports MCP. Below are instructions for common
           tools, but these steps can be adapted for any MCP-compatible client.
         </p>

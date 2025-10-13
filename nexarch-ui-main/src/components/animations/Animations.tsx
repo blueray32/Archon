@@ -1,8 +1,8 @@
 import React from 'react';
 /**
- * ArchonLoadingSpinner - A loading animation component with neon trail effects
+ * NexarchLoadingSpinner - A loading animation component with neon trail effects
  *
- * This component displays the Archon logo with animated spinning circles
+ * This component displays the Nexarch logo with animated spinning circles
  * that create a neon trail effect. It's used to indicate loading states
  * throughout the application.
  *
@@ -11,7 +11,7 @@ import React from 'react';
  * @param {string} props.logoSrc - Source URL for the logo image
  * @param {string} props.className - Additional CSS classes
  */
-export const ArchonLoadingSpinner: React.FC<{
+export const NexarchLoadingSpinner: React.FC<{
   size?: 'sm' | 'md' | 'lg';
   logoSrc?: string;
   className?: string;

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Send, User, WifiOff, RefreshCw } from 'lucide-react';
-import { ArchonLoadingSpinner, EdgeLitEffect } from '../animations/Animations';
+import { NexarchLoadingSpinner, EdgeLitEffect } from '../animations/Animations';
 import { agentChatService, ChatMessage } from '../../services/agentChatService';
 import { knowledgeBaseService } from '../../services/knowledgeBaseService';
 import { AgentSwitcher } from '../../agents/AgentSwitcher';
@@ -9,18 +9,18 @@ import { getAgentTypeFor } from '../../agents/registry';
 import { logger } from '../../utils/logger';
 
 /**
- * Props for the ArchonChatPanel component
+ * Props for the NexarchChatPanel component
  */
-interface ArchonChatPanelProps {
+interface NexarchChatPanelProps {
   'data-id'?: string;
 }
 /**
- * ArchonChatPanel - A chat interface for the Archon AI assistant
+ * NexarchChatPanel - A chat interface for the Nexarch AI assistant
  *
  * This component provides a resizable chat panel with message history,
  * loading states, and input functionality connected to real AI agents.
  */
-export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
+export const NexarchChatPanel: React.FC<NexarchChatPanelProps> = props => {
   const { selectedAgentId, selectedAgent } = useAgentState();
   // State for messages, session, and other chat functionality
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -346,9 +346,9 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-zinc-800/80">
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-3">
-              {/* Archon Logo - No animation in header */}
+              {/* Nexarch Logo - No animation in header */}
               <div className="relative w-8 h-8 flex items-center justify-center">
-                <img src="/logo-neon.svg" alt="Archon" className="w-6 h-6 z-10 relative" />
+                <img src="/logo-neon.svg" alt="Nexarch" className="w-6 h-6 z-10 relative" />
               </div>
               <AgentSwitcher label="Agent" />
             </div>
@@ -413,7 +413,7 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
                 <div className="flex items-center mb-1">
                   {message.sender === 'agent' ? (
                     <div className="w-4 h-4 mr-1 flex items-center justify-center">
-                      <img src="/logo-neon.svg" alt="Archon" className="w-full h-full" />
+                      <img src="/logo-neon.svg" alt="Nexarch" className="w-full h-full" />
                     </div>
                   ) : (
                     <User className="w-4 h-4 text-purple-500 mr-1" />
@@ -457,7 +457,7 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
               <div className="max-w-[80%] bg-blue-100/80 dark:bg-blue-500/20 border border-blue-200 dark:border-blue-500/30 mr-auto rounded-lg p-3">
                 <div className="flex items-center mb-1">
                   <div className="w-4 h-4 mr-1 flex items-center justify-center">
-                    <img src="/logo-neon.svg" alt="Archon" className="w-full h-full" />
+                    <img src="/logo-neon.svg" alt="Nexarch" className="w-full h-full" />
                   </div>
                   <span className="text-xs text-gray-500 dark:text-zinc-400">
                     {formatTime(new Date())}
@@ -475,7 +475,7 @@ export const ArchonChatPanel: React.FC<ArchonChatPanelProps> = props => {
           {(isTyping && !isStreaming) && (
             <div className="flex justify-start">
               <div className="max-w-[80%] mr-auto flex items-center justify-center py-4">
-                <ArchonLoadingSpinner size="md" />
+                <NexarchLoadingSpinner size="md" />
                 <span className="ml-2 text-sm text-gray-500 dark:text-zinc-400">
                   Agent is typing...
                 </span>

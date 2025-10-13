@@ -24,7 +24,7 @@ export function getApiUrl(): string {
   const port = import.meta.env.VITE_ARCHON_SERVER_PORT || '8181';
   
   if (!import.meta.env.VITE_ARCHON_SERVER_PORT) {
-    console.info('[Archon] Using default ARCHON_SERVER_PORT: 8181');
+    console.info('[Nexarch] Using default ARCHON_SERVER_PORT: 8181');
   }
   
   return `${protocol}//${host}:${port}`;
