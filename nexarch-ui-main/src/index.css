@@ -69,18 +69,128 @@
   }
 }
 @layer components {
-  /* Nexarch Neural Grid Pattern for background (used in MainLayout) */
+  /* Nexarch Neural Grid Pattern with Hexagonal Layout */
   .neon-grid {
+    background-color: #ffffff;
     background-image:
-      linear-gradient(to right, #00d4ff20 1px, transparent 1px),
-      linear-gradient(to bottom, #00d4ff20 1px, transparent 1px);
-    background-size: 40px 40px;
+      linear-gradient(30deg, #00d4ff15 12%, transparent 12.5%, transparent 87%, #00d4ff15 87.5%, #00d4ff15),
+      linear-gradient(150deg, #00d4ff15 12%, transparent 12.5%, transparent 87%, #00d4ff15 87.5%, #00d4ff15),
+      linear-gradient(30deg, #00d4ff15 12%, transparent 12.5%, transparent 87%, #00d4ff15 87.5%, #00d4ff15),
+      linear-gradient(150deg, #00d4ff15 12%, transparent 12.5%, transparent 87%, #00d4ff15 87.5%, #00d4ff15),
+      linear-gradient(60deg, #ff00ff10 25%, transparent 25.5%, transparent 75%, #ff00ff10 75%, #ff00ff10),
+      linear-gradient(60deg, #ff00ff10 25%, transparent 25.5%, transparent 75%, #ff00ff10 75%, #ff00ff10);
+    background-size: 80px 140px;
+    background-position: 0 0, 0 0, 40px 70px, 40px 70px, 0 0, 40px 70px;
   }
 
   .dark .neon-grid {
+    background-color: #000000;
     background-image:
-      linear-gradient(to right, #00d4ff30 1px, transparent 1px),
-      linear-gradient(to bottom, #00d4ff30 1px, transparent 1px);
+      linear-gradient(30deg, #00d4ff25 12%, transparent 12.5%, transparent 87%, #00d4ff25 87.5%, #00d4ff25),
+      linear-gradient(150deg, #00d4ff25 12%, transparent 12.5%, transparent 87%, #00d4ff25 87.5%, #00d4ff25),
+      linear-gradient(30deg, #00d4ff25 12%, transparent 12.5%, transparent 87%, #00d4ff25 87.5%, #00d4ff25),
+      linear-gradient(150deg, #00d4ff25 12%, transparent 12.5%, transparent 87%, #00d4ff25 87.5%, #00d4ff25),
+      linear-gradient(60deg, #ff00ff20 25%, transparent 25.5%, transparent 75%, #ff00ff20 75%, #ff00ff20),
+      linear-gradient(60deg, #ff00ff20 25%, transparent 25.5%, transparent 75%, #ff00ff20 75%, #ff00ff20);
+    background-size: 80px 140px;
+    background-position: 0 0, 0 0, 40px 70px, 40px 70px, 0 0, 40px 70px;
+  }
+
+  /* Hexagonal Clip Path Utilities */
+  .hexagon {
+    clip-path: polygon(30% 0%, 70% 0%, 100% 50%, 70% 100%, 30% 100%, 0% 50%);
+  }
+
+  .hexagon-sm {
+    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+  }
+
+  /* Nexarch Glassmorphism with Hexagonal Accents */
+  .nexarch-glass {
+    background: linear-gradient(135deg,
+      rgba(0, 212, 255, 0.05) 0%,
+      rgba(255, 0, 255, 0.03) 50%,
+      rgba(255, 0, 128, 0.05) 100%
+    );
+    backdrop-filter: blur(12px) saturate(180%);
+    border: 1px solid rgba(0, 212, 255, 0.2);
+    box-shadow:
+      0 8px 32px rgba(0, 212, 255, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .dark .nexarch-glass {
+    background: linear-gradient(135deg,
+      rgba(0, 212, 255, 0.08) 0%,
+      rgba(255, 0, 255, 0.05) 50%,
+      rgba(255, 0, 128, 0.08) 100%
+    );
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    box-shadow:
+      0 8px 32px rgba(0, 212, 255, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  /* Hexagonal Button Base */
+  .hexagon-button {
+    position: relative;
+    clip-path: polygon(30% 0%, 70% 0%, 100% 50%, 70% 100%, 30% 100%, 0% 50%);
+    background: linear-gradient(135deg,
+      rgba(0, 212, 255, 0.2) 0%,
+      rgba(255, 0, 255, 0.2) 100%
+    );
+    border: 2px solid rgba(0, 212, 255, 0.5);
+    transition: all 0.3s ease;
+  }
+
+  .hexagon-button:hover {
+    background: linear-gradient(135deg,
+      rgba(0, 212, 255, 0.4) 0%,
+      rgba(255, 0, 255, 0.4) 100%
+    );
+    box-shadow:
+      0 0 20px rgba(0, 212, 255, 0.6),
+      0 0 40px rgba(255, 0, 255, 0.4);
+    transform: scale(1.05);
+  }
+
+  /* Neural Node Styles */
+  .neural-node {
+    position: relative;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+      rgba(0, 255, 255, 1) 0%,
+      rgba(0, 212, 255, 0.8) 50%,
+      rgba(0, 153, 255, 0) 100%
+    );
+    box-shadow:
+      0 0 10px rgba(0, 255, 255, 0.8),
+      0 0 20px rgba(0, 212, 255, 0.6);
+    animation: pulse-node 2s ease-in-out infinite;
+  }
+
+  .neural-node-purple {
+    background: radial-gradient(circle,
+      rgba(255, 0, 255, 1) 0%,
+      rgba(204, 0, 255, 0.8) 50%,
+      rgba(153, 0, 255, 0) 100%
+    );
+    box-shadow:
+      0 0 10px rgba(255, 0, 255, 0.8),
+      0 0 20px rgba(204, 0, 255, 0.6);
+  }
+
+  .neural-node-pink {
+    background: radial-gradient(circle,
+      rgba(255, 0, 128, 1) 0%,
+      rgba(255, 0, 255, 0.8) 50%,
+      rgba(255, 0, 107, 0) 100%
+    );
+    box-shadow:
+      0 0 10px rgba(255, 0, 128, 0.8),
+      0 0 20px rgba(255, 0, 255, 0.6);
   }
 }
 
@@ -110,8 +220,113 @@
   animation: pulse-glow 2s ease-in-out infinite;
 }
 
+/* Nexarch Neural Node Pulse Animation */
+@keyframes pulse-node {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 0.7;
+  }
+}
+
+/* Nexarch Data Flow Animation */
+@keyframes data-flow {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+.animate-data-flow {
+  animation: data-flow 3s ease-in-out infinite;
+}
+
+/* Nexarch Hexagon Rotate Animation */
+@keyframes hexagon-rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-hexagon-rotate {
+  animation: hexagon-rotate 20s linear infinite;
+}
+
+/* Nexarch Neural Connection Line Animation */
+@keyframes neural-connect {
+  0% {
+    stroke-dashoffset: 1000;
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0.3;
+  }
+}
+
+.animate-neural-connect {
+  animation: neural-connect 4s ease-in-out infinite;
+}
+
+/* Nexarch Glow Pulse (Cyan) */
+@keyframes glow-pulse-cyan {
+  0%, 100% {
+    box-shadow:
+      0 0 15px rgba(0, 212, 255, 0.4),
+      0 0 30px rgba(0, 212, 255, 0.2);
+  }
+  50% {
+    box-shadow:
+      0 0 25px rgba(0, 212, 255, 0.8),
+      0 0 50px rgba(0, 212, 255, 0.4);
+  }
+}
+
+.animate-glow-cyan {
+  animation: glow-pulse-cyan 2s ease-in-out infinite;
+}
+
+/* Nexarch Glow Pulse (Purple) */
+@keyframes glow-pulse-purple {
+  0%, 100% {
+    box-shadow:
+      0 0 15px rgba(255, 0, 255, 0.4),
+      0 0 30px rgba(255, 0, 255, 0.2);
+  }
+  50% {
+    box-shadow:
+      0 0 25px rgba(255, 0, 255, 0.8),
+      0 0 50px rgba(255, 0, 255, 0.4);
+  }
+}
+
+.animate-glow-purple {
+  animation: glow-pulse-purple 2s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .animate-pulse-glow {
+  .animate-pulse-glow,
+  .animate-data-flow,
+  .animate-hexagon-rotate,
+  .animate-neural-connect,
+  .animate-glow-cyan,
+  .animate-glow-purple {
     animation: none !important;
   }
 }

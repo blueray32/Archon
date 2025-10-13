@@ -132,11 +132,10 @@ export function Navigation({ className }: NavigationProps) {
     <nav
       className={cn(
         "flex flex-col items-center gap-6 py-6 px-3",
-        "rounded-xl w-[72px]",
-        // Using glassmorphism from primitives
-        glassmorphism.background.subtle,
-        "border border-gray-200 dark:border-zinc-800/50",
-        "shadow-[0_10px_30px_-15px_rgba(0,0,0,0.1)] dark:shadow-[0_10px_30px_-15px_rgba(0,0,0,0.7)]",
+        "rounded-2xl w-[72px]",
+        // Nexarch glassmorphism
+        "nexarch-glass",
+        "shadow-[0_10px_30px_-15px_rgba(0,212,255,0.3)] dark:shadow-[0_10px_30px_-15px_rgba(0,212,255,0.5)]",
         className,
       )}
     >
@@ -147,12 +146,15 @@ export function Navigation({ className }: NavigationProps) {
             <Link
               to="/projects"
               className={cn(
-                "relative p-2 rounded-lg transition-all duration-300",
+                "relative p-2 rounded-xl transition-all duration-300",
                 "flex items-center justify-center",
-                "hover:bg-white/10 dark:hover:bg-white/5",
+                "border border-transparent",
+                "hover:bg-gradient-to-br hover:from-cyan-500/10 hover:to-purple-500/10",
+                "hover:border-cyan-400/20",
                 isProjectsActive && [
-                  "bg-gradient-to-b from-white/20 to-white/5 dark:from-white/10 dark:to-black/20",
-                  "shadow-[0_5px_15px_-5px_rgba(59,130,246,0.3)] dark:shadow-[0_5px_15px_-5px_rgba(59,130,246,0.5)]",
+                  "bg-gradient-to-br from-cyan-500/20 to-purple-500/20",
+                  "border-cyan-400/40",
+                  "shadow-[0_0_15px_rgba(0,212,255,0.4),0_0_30px_rgba(255,0,255,0.2)]",
                   "transform scale-110",
                 ],
               )}
@@ -162,19 +164,22 @@ export function Navigation({ className }: NavigationProps) {
                 alt="Nexarch"
                 className={cn(
                   "w-8 h-8 transition-all duration-300",
-                  isProjectsActive && "filter drop-shadow-[0_0_8px_rgba(59,130,246,0.7)]",
+                  isProjectsActive && "filter drop-shadow-[0_0_12px_rgba(0,212,255,0.8)]",
                 )}
               />
-              {/* Active state decorations */}
+              {/* Hexagonal corner accents */}
               {isProjectsActive && (
                 <>
-                  <span className="absolute inset-0 rounded-lg border border-blue-300 dark:border-blue-500/30" />
-                  <span className="absolute bottom-0 left-[15%] right-[15%] w-[70%] mx-auto h-[2px] bg-blue-500 shadow-[0_0_10px_2px_rgba(59,130,246,0.4)] dark:shadow-[0_0_20px_5px_rgba(59,130,246,0.7)]" />
+                  <div className="absolute top-1 left-1 w-2 h-2 hexagon-sm bg-cyan-400/50" />
+                  <div className="absolute top-1 right-1 w-2 h-2 hexagon-sm bg-purple-400/50" />
+                  <div className="absolute bottom-1 left-1 w-2 h-2 hexagon-sm bg-pink-400/50" />
+                  <div className="absolute bottom-1 right-1 w-2 h-2 hexagon-sm bg-cyan-400/50" />
+                  <span className="absolute bottom-0 left-[15%] right-[15%] w-[70%] mx-auto h-[3px] bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 shadow-[0_0_15px_rgba(0,212,255,0.8)]" />
                 </>
               )}
             </Link>
           ) : (
-            <div className="p-2 rounded-lg opacity-50 cursor-not-allowed">
+            <div className="p-2 rounded-xl opacity-50 cursor-not-allowed border border-gray-300/20">
               <img src="/logo-neon.svg" alt="Nexarch" className="w-8 h-8 grayscale" />
             </div>
           )}
@@ -185,7 +190,7 @@ export function Navigation({ className }: NavigationProps) {
       </Tooltip>
 
       {/* Separator */}
-      <div className="w-8 h-px bg-gradient-to-r from-transparent via-gray-300 dark:via-gray-700 to-transparent" />
+      <div className="w-8 h-px bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent" />
 
       {/* Navigation Items */}
       <nav className="flex flex-col gap-4">
@@ -199,18 +204,21 @@ export function Navigation({ className }: NavigationProps) {
                 <Link
                   to={isEnabled ? item.path : "#"}
                   className={cn(
-                    "relative p-3 rounded-lg transition-all duration-300",
+                    "relative p-3 rounded-xl transition-all duration-300",
                     "flex items-center justify-center",
+                    "border border-transparent",
                     isActive
                       ? [
-                          "bg-gradient-to-b from-white/20 to-white/5 dark:from-white/10 dark:to-black/20",
-                          "text-blue-600 dark:text-blue-400",
-                          "shadow-[0_5px_15px_-5px_rgba(59,130,246,0.3)] dark:shadow-[0_5px_15px_-5px_rgba(59,130,246,0.5)]",
+                          "bg-gradient-to-br from-cyan-500/20 to-purple-500/20",
+                          "text-cyan-400 dark:text-cyan-300",
+                          "border-cyan-400/40",
+                          "shadow-[0_0_15px_rgba(0,212,255,0.4),0_0_30px_rgba(255,0,255,0.2)]",
                         ]
                       : [
                           "text-gray-500 dark:text-zinc-500",
-                          "hover:text-blue-600 dark:hover:text-blue-400",
-                          "hover:bg-white/10 dark:hover:bg-white/5",
+                          "hover:text-cyan-400 dark:hover:text-cyan-300",
+                          "hover:bg-gradient-to-br hover:from-cyan-500/10 hover:to-purple-500/10",
+                          "hover:border-cyan-400/20",
                         ],
                     !isEnabled && "opacity-50 cursor-not-allowed pointer-events-none",
                   )}
@@ -220,23 +228,30 @@ export function Navigation({ className }: NavigationProps) {
                     }
                   }}
                 >
+                  {/* Hexagonal corner accents */}
+                  {isActive && (
+                    <>
+                      <div className="absolute top-1 left-1 w-2 h-2 hexagon-sm bg-cyan-400/50" />
+                      <div className="absolute top-1 right-1 w-2 h-2 hexagon-sm bg-purple-400/50" />
+                      <div className="absolute bottom-1 left-1 w-2 h-2 hexagon-sm bg-pink-400/50" />
+                      <div className="absolute bottom-1 right-1 w-2 h-2 hexagon-sm bg-cyan-400/50" />
+                    </>
+                  )}
+
                   <div className="relative">
                     {item.icon}
                     {item.path === "/embeddings" && missingEmbeddings > 0 && (
                       <span
                         title={`${missingEmbeddings} missing embeddings (auto-refreshes every 60s)`}
-                        className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] leading-[18px] text-white bg-emerald-600 dark:bg-emerald-500 text-center"
+                        className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] leading-[18px] text-white bg-gradient-to-br from-cyan-500 to-purple-500 text-center shadow-[0_0_10px_rgba(0,212,255,0.6)]"
                       >
                         {missingEmbeddings > 99 ? "99+" : missingEmbeddings}
                       </span>
                     )}
                   </div>
-                  {/* Active state decorations with neon line */}
+                  {/* Active state decorations with hexagonal glow */}
                   {isActive && (
-                    <>
-                      <span className="absolute inset-0 rounded-lg border border-blue-300 dark:border-blue-500/30" />
-                      <span className="absolute bottom-0 left-[15%] right-[15%] w-[70%] mx-auto h-[2px] bg-blue-500 shadow-[0_0_10px_2px_rgba(59,130,246,0.4)] dark:shadow-[0_0_20px_5px_rgba(59,130,246,0.7)]" />
-                    </>
+                    <span className="absolute bottom-0 left-[15%] right-[15%] w-[70%] mx-auto h-[3px] bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 shadow-[0_0_15px_rgba(0,212,255,0.8)]" />
                   )}
                 </Link>
               </TooltipTrigger>

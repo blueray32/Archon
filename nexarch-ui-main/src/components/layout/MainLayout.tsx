@@ -11,6 +11,7 @@ import { VoiceEnabledChatPanel } from "../agent-chat/VoiceEnabledChatPanel";
 import { BackendStartupError } from "../BackendStartupError";
 import { useBackendHealth } from "./hooks/useBackendHealth";
 import { Navigation } from "./Navigation";
+import { NeuralBackground } from "./NeuralBackground";
 import { useAgentState } from "../../agents/AgentContext";
 
 interface MainLayoutProps {
@@ -164,6 +165,9 @@ export function MainLayout({ children, className }: MainLayoutProps) {
       {/* Fixed full-page background grid that doesn't scroll */}
       <div className="fixed inset-0 neon-grid pointer-events-none z-0" />
 
+      {/* Animated Neural Network Background */}
+      <NeuralBackground />
+
       {/* Floating Navigation */}
       <div className="fixed left-6 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-4">
         <Navigation />
@@ -199,20 +203,28 @@ export function MainLayout({ children, className }: MainLayoutProps) {
           <button
             type="button"
             onClick={() => setIsChatOpen(true)}
-            className="w-14 h-14 rounded-full flex items-center justify-center backdrop-blur-md bg-gradient-to-b from-blue-100/80 to-blue-50/60 dark:from-blue-500/20 dark:to-blue-600/20 shadow-[0_0_15px_rgba(59,130,246,0.4)] dark:shadow-[0_0_15px_rgba(59,130,246,0.6)] hover:shadow-[0_0_20px_rgba(59,130,246,0.6)] transition-all duration-300 overflow-hidden border border-blue-300 dark:border-blue-500/50 hover:border-blue-400 dark:hover:border-blue-400"
+            className="relative w-16 h-16 flex items-center justify-center backdrop-blur-md bg-gradient-to-br from-cyan-500/20 to-purple-500/20 dark:from-cyan-500/30 dark:to-purple-500/30 shadow-[0_0_20px_rgba(0,212,255,0.5),0_0_40px_rgba(255,0,255,0.3)] hover:shadow-[0_0_30px_rgba(0,212,255,0.8),0_0_60px_rgba(255,0,255,0.5)] transition-all duration-300 overflow-hidden border-2 border-cyan-400/50 hover:border-cyan-300 animate-glow-cyan"
+            style={{
+              clipPath: "polygon(30% 0%, 70% 0%, 100% 50%, 70% 100%, 30% 100%, 0% 50%)",
+            }}
             aria-label={`Open ${selectedAgent?.label || 'Agent'} Chat`}
           >
+            {/* Hexagonal corner accents */}
+            <div className="absolute top-1 left-1 w-2 h-2 hexagon-sm bg-cyan-400/60" />
+            <div className="absolute top-1 right-1 w-2 h-2 hexagon-sm bg-purple-400/60" />
+            <div className="absolute bottom-1 left-1 w-2 h-2 hexagon-sm bg-pink-400/60" />
+            <div className="absolute bottom-1 right-1 w-2 h-2 hexagon-sm bg-cyan-400/60" />
+
             <img
               src="/logo-neon.svg"
               alt="Nexarch"
-              className="w-7 h-7"
+              className="w-8 h-8 relative z-10"
             />
           </button>
           {/* Tooltip */}
-          <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-gray-800 dark:bg-gray-900 text-white text-sm rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
-            <div className="font-medium">{selectedAgent?.label || 'Agent Chat'}</div>
-            <div className="text-xs text-gray-300">{selectedAgent?.description || 'Chat with your selected agent'}</div>
-            <div className="absolute bottom-0 right-6 transform translate-y-1/2 rotate-45 w-2 h-2 bg-gray-800 dark:bg-gray-900"></div>
+          <div className="absolute bottom-full right-0 mb-3 px-4 py-2 nexarch-glass rounded-xl shadow-[0_0_20px_rgba(0,212,255,0.3)] opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
+            <div className="font-medium text-cyan-300">{selectedAgent?.label || 'Agent Chat'}</div>
+            <div className="text-xs text-gray-400">{selectedAgent?.description || 'Chat with your selected agent'}</div>
           </div>
         </div>
       )}
