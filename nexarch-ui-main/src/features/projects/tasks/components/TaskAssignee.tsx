@@ -27,7 +27,7 @@ const getAssigneeIcon = (assigneeName: Assignee, size: "sm" | "md" = "sm") => {
     case "AI IDE Agent":
       return <Bot className={cn(sizeClass, "text-purple-400")} />;
     case "Nexarch":
-      return <img src="/logo-neon.png" alt="Nexarch" className={sizeClass} />;
+      return <img src="/logo-neon.svg" alt="Nexarch" className={sizeClass} />;
     default:
       return <User className={cn(sizeClass, "text-blue-400")} />;
   }

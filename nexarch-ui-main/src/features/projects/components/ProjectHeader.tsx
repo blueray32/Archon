@@ -40,7 +40,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
         variants={titleVariants}
       >
         <img
-          src="/logo-neon.png"
+          src="/logo-neon.svg"
           alt="Projects"
           className="w-7 h-7 filter drop-shadow-[0_0_8px_rgba(59,130,246,0.8)]"
         />

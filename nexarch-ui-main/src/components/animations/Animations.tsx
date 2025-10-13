@@ -17,7 +17,7 @@ export const ArchonLoadingSpinner: React.FC<{
   className?: string;
 }> = ({
   size = 'md',
-  logoSrc = "/logo-neon.png",
+  logoSrc = "/logo-neon.svg",
   className = ''
 }) => {
   // Size mappings for the container and logo

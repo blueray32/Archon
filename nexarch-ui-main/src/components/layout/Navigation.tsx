@@ -158,7 +158,7 @@ export function Navigation({ className }: NavigationProps) {
               )}
             >
               <img
-                src="/logo-neon.png"
+                src="/logo-neon.svg"
                 alt="Nexarch"
                 className={cn(
                   "w-8 h-8 transition-all duration-300",
@@ -175,7 +175,7 @@ export function Navigation({ className }: NavigationProps) {
             </Link>
           ) : (
             <div className="p-2 rounded-lg opacity-50 cursor-not-allowed">
-              <img src="/logo-neon.png" alt="Nexarch" className="w-8 h-8 grayscale" />
+              <img src="/logo-neon.svg" alt="Nexarch" className="w-8 h-8 grayscale" />
             </div>
           )}
         </TooltipTrigger>

@@ -203,7 +203,7 @@ export function MainLayout({ children, className }: MainLayoutProps) {
             aria-label={`Open ${selectedAgent?.label || 'Agent'} Chat`}
           >
             <img
-              src="/logo-neon.png"
+              src="/logo-neon.svg"
               alt="Nexarch"
               className="w-7 h-7"
             />
