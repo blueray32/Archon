@@ -209,4 +209,21 @@ export const projectService = {
       throw error;
     }
   },
+
+  /**
+   * Delete a document from a project
+   */
+  async deleteDocument(projectId: string, docId: string): Promise<void> {
+    try {
+      await callAPIWithETag(`/api/projects/${projectId}/documents/${docId}`, {
+        method: "DELETE",
+      });
+
+      // Invalidate project cache to refresh documents
+      invalidateETagCache(`/api/projects/${projectId}`);
+    } catch (error) {
+      console.error(`Failed to delete document ${docId} from project ${projectId}:`, error);
+      throw error;
+    }
+  },
 };

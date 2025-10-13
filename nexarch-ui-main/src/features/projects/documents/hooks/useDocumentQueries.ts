@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { projectService } from "../../services";
 import type { ProjectDocument } from "../types";
 
@@ -9,7 +9,6 @@ const documentKeys = {
 
 /**
  * Get documents from project's docs JSONB field
- * Read-only - no mutations
  */
 export function useProjectDocuments(projectId: string | undefined) {
   return useQuery({
@@ -46,5 +45,24 @@ export function useProjectDocuments(projectId: string | undefined) {
       return valid;
     },
     enabled: !!projectId,
+  });
+}
+
+/**
+ * Delete a document from a project
+ */
+export function useDeleteDocument(projectId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (docId: string) => {
+      await projectService.deleteDocument(projectId, docId);
+    },
+    onSuccess: () => {
+      // Invalidate and refetch documents
+      queryClient.invalidateQueries({
+        queryKey: documentKeys.all(projectId),
+      });
+    },
   });
 }
