@@ -31,27 +31,27 @@ interface BackendStatusProps {
 function BackendStatus({ isHealthLoading, isBackendError, healthData }: BackendStatusProps) {
   if (isHealthLoading) {
     return (
-      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-yellow-50 dark:bg-yellow-950/30 text-yellow-700 dark:text-yellow-400 text-sm">
-        <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse" />
-        <span>Connecting...</span>
+      <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl nexarch-glass border border-yellow-400/30 text-yellow-300 dark:text-yellow-400 text-sm shadow-[0_0_15px_rgba(234,179,8,0.2)]">
+        <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(234,179,8,0.6)]" />
+        <span className="font-medium">Connecting...</span>
       </div>
     );
   }
 
   if (isBackendError) {
     return (
-      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 text-sm">
+      <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl nexarch-glass border border-red-400/30 text-red-300 dark:text-red-400 text-sm shadow-[0_0_15px_rgba(239,68,68,0.2)]">
         <WifiOff className="w-4 h-4" />
-        <span>Backend Offline</span>
+        <span className="font-medium">Backend Offline</span>
       </div>
     );
   }
 
   if (healthData?.ready === false) {
     return (
-      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-yellow-50 dark:bg-yellow-950/30 text-yellow-700 dark:text-yellow-400 text-sm">
+      <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl nexarch-glass border border-yellow-400/30 text-yellow-300 dark:text-yellow-400 text-sm shadow-[0_0_15px_rgba(234,179,8,0.2)]">
         <AlertCircle className="w-4 h-4" />
-        <span>Backend Starting...</span>
+        <span className="font-medium">Backend Starting...</span>
       </div>
     );
   }
@@ -173,19 +173,19 @@ export function MainLayout({ children, className }: MainLayoutProps) {
         <Navigation />
         <BackendStatus isHealthLoading={isHealthLoading} isBackendError={isBackendError} healthData={healthData} />
         {agentsOnline === null ? (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 text-sm">
-            <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse" />
-            <span>Agents Checking…</span>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl nexarch-glass border border-gray-400/30 text-gray-400 dark:text-gray-300 text-sm">
+            <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(156,163,175,0.6)]" />
+            <span className="font-medium">Agents Checking…</span>
           </div>
         ) : agentsOnline ? (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 text-sm">
-            <div className="w-2 h-2 bg-green-500 rounded-full" />
-            <span>Agents Online</span>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl nexarch-glass border border-cyan-400/40 text-cyan-300 dark:text-cyan-400 text-sm shadow-[0_0_15px_rgba(0,212,255,0.3)]">
+            <div className="w-2 h-2 bg-cyan-400 rounded-full shadow-[0_0_10px_rgba(0,212,255,0.8)]" />
+            <span className="font-medium">Agents Online</span>
           </div>
         ) : (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 text-sm">
-            <div className="w-2 h-2 bg-red-500 rounded-full" />
-            <span>Agents Offline</span>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl nexarch-glass border border-red-400/30 text-red-300 dark:text-red-400 text-sm shadow-[0_0_15px_rgba(239,68,68,0.2)]">
+            <div className="w-2 h-2 bg-red-400 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
+            <span className="font-medium">Agents Offline</span>
           </div>
         )}
       </div>
@@ -244,19 +244,15 @@ export function MainLayout({ children, className }: MainLayoutProps) {
  */
 export function MinimalLayout({ children, className }: MainLayoutProps) {
   return (
-    <div className={cn("min-h-screen bg-white dark:bg-black", "flex items-center justify-center", className)}>
-      {/* Background Grid Effect */}
-      <div
-        className="absolute inset-0 pointer-events-none opacity-50"
-        style={{
-          backgroundImage: `linear-gradient(rgba(59, 130, 246, 0.03) 1px, transparent 1px),
-                           linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px)`,
-          backgroundSize: "50px 50px",
-        }}
-      />
+    <div className={cn("min-h-screen bg-white dark:bg-black overflow-hidden", "flex items-center justify-center", className)}>
+      {/* Nexarch Hexagonal Grid Background */}
+      <div className="fixed inset-0 neon-grid pointer-events-none z-0" />
+
+      {/* Animated Neural Network Background */}
+      <NeuralBackground />
 
       {/* Centered Content */}
-      <div className="relative w-full max-w-4xl px-6">{children}</div>
+      <div className="relative w-full max-w-4xl px-6 z-10">{children}</div>
     </div>
   );
 }

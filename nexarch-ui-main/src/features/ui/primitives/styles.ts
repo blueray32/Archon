@@ -1,6 +1,7 @@
 /**
  * Shared style utilities for Radix primitives
- * Tron-inspired glassmorphism design system
+ * Nexarch Neural Architecture design system
+ * Hexagonal geometry with animated neural network aesthetics
  *
  * Theme Support:
  * - All styles use Tailwind's dark: prefix for automatic theme switching
@@ -141,6 +142,74 @@ export const compoundStyles = {
     ${glassmorphism.border.default}
     ${glassmorphism.shadow.md}
   `,
+};
+
+// Nexarch-specific design system
+export const nexarch = {
+  // Glassmorphism backgrounds with Nexarch brand colors
+  glass: {
+    default: "nexarch-glass",
+    subtle: "nexarch-glass opacity-80",
+    strong: "nexarch-glass backdrop-blur-xl",
+  },
+
+  // Hexagonal elements
+  hexagon: {
+    clip: "clip-path-[polygon(30%_0%,_70%_0%,_100%_50%,_70%_100%,_30%_100%,_0%_50%)]",
+    corners: {
+      cyan: "w-2 h-2 hexagon-sm bg-cyan-400/50",
+      purple: "w-2 h-2 hexagon-sm bg-purple-400/50",
+      pink: "w-2 h-2 hexagon-sm bg-pink-400/50",
+    },
+  },
+
+  // Brand color gradients
+  gradients: {
+    primary: "bg-gradient-to-br from-cyan-500/20 to-purple-500/20",
+    secondary: "bg-gradient-to-br from-purple-500/20 to-pink-500/20",
+    accent: "bg-gradient-to-br from-cyan-500/10 via-purple-500/10 to-pink-500/10",
+    neural: "bg-gradient-to-br from-cyan-500/20 via-purple-500/20 to-pink-500/20",
+  },
+
+  // Brand borders with glow
+  borders: {
+    cyan: "border border-cyan-400/40 shadow-[0_0_15px_rgba(0,212,255,0.3)]",
+    purple: "border border-purple-400/40 shadow-[0_0_15px_rgba(255,0,255,0.3)]",
+    pink: "border border-pink-400/40 shadow-[0_0_15px_rgba(255,0,128,0.3)]",
+    neural: "border border-cyan-400/30 shadow-[0_0_15px_rgba(0,212,255,0.2),0_0_30px_rgba(255,0,255,0.1)]",
+  },
+
+  // Glow effects
+  glow: {
+    cyan: "shadow-[0_0_20px_rgba(0,212,255,0.5),0_0_40px_rgba(255,0,255,0.3)]",
+    purple: "shadow-[0_0_20px_rgba(255,0,255,0.5),0_0_40px_rgba(255,0,128,0.3)]",
+    pink: "shadow-[0_0_20px_rgba(255,0,128,0.5),0_0_40px_rgba(255,0,255,0.3)]",
+    animated: "animate-glow-cyan",
+  },
+
+  // Text colors
+  text: {
+    cyan: "text-cyan-300 dark:text-cyan-400",
+    purple: "text-purple-300 dark:text-purple-400",
+    pink: "text-pink-300 dark:text-pink-400",
+    gradient: "bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent",
+  },
+
+  // Interactive states
+  hover: {
+    primary: "hover:bg-gradient-to-br hover:from-cyan-500/30 hover:to-purple-500/30",
+    secondary: "hover:bg-gradient-to-br hover:from-purple-500/30 hover:to-pink-500/30",
+    border: "hover:border-cyan-300",
+    glow: "hover:shadow-[0_0_30px_rgba(0,212,255,0.8),0_0_60px_rgba(255,0,255,0.5)]",
+  },
+
+  // Status indicators
+  status: {
+    online: "border border-cyan-400/40 text-cyan-300 dark:text-cyan-400 shadow-[0_0_15px_rgba(0,212,255,0.3)]",
+    offline: "border border-red-400/30 text-red-300 dark:text-red-400 shadow-[0_0_15px_rgba(239,68,68,0.2)]",
+    loading: "border border-yellow-400/30 text-yellow-300 dark:text-yellow-400 shadow-[0_0_15px_rgba(234,179,8,0.2)]",
+    neutral: "border border-gray-400/30 text-gray-400 dark:text-gray-300",
+  },
 };
 
 // Utility function to combine classes
